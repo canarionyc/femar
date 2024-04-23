@@ -1,0 +1,27 @@
+Package: femar
+Type: Package
+Title: Routines for Parsing and Doing Analysis on Loan Data Files from FEMA
+Version: 0.1.0
+Authors@R: c(
+    person(given = "Tomas", family = "Gonzalez", email = "structuredguy@gmail.com", role = c("aut", "cre")))
+Author: Tomas Gonzalez [aut, cre]
+Maintainer: Tomas Gonzalez <structuredguy@gmail.com>
+Description: Routines.
+License: file LICENSE
+Encoding: UTF-8
+Depends:
+  data.table
+Imports:
+  stats
+  , configr,utils
+  , lubridate,fst,fs,fstutils,units
+  , forcats
+  ,readxl
+  , dplyr
+  ,magrittr,purrr
+  ,stringi
+  ,sf,tigris,rgeoda,terra
+  ,censusapi
+Suggests:
+  Cairo
+RoxygenNote: 7.3.1
