@@ -16,7 +16,7 @@ validate_state<- function (state, .msg = interactive())
       if (state_sub %in% tigris::fips_codes$state_code) {
         message(sprintf("Using first two digits of %s - '%s' (%s) - for FIPS code.",
                         state, state_sub, tigris::fips_codes[tigris::fips_codes$state_code ==
-                                                       state_sub, "state_name"]), call. = FALSE)
+                                                               state_sub, "state_name"]), call. = FALSE)
         return(state_sub)
       }
       else {
@@ -31,9 +31,9 @@ validate_state<- function (state, .msg = interactive())
       if (.msg)
         message(sprintf("Using FIPS code '%s' for state '%s'",
                         tigris::fips_codes[tigris::fips_codes$state == state,
-                                   "state_code"], toupper(state)))
+                                           "state_code"], toupper(state)))
       return(tigris::fips_codes[tigris::fips_codes$state == state,
-                        "state_code"])
+                                "state_code"])
     }
     else if (nchar(state) > 2 & state %in% fips_codes$state_name) {
       if (.msg)
@@ -41,7 +41,7 @@ validate_state<- function (state, .msg = interactive())
                         fips_codes[fips_codes$state_name == state,
                                    "state_code"], simpleCapSO(state)))
       return(tigris::fips_codes[tigris::fips_codes$state_name ==
-                          state, "state_code"])
+                                  state, "state_code"])
     }
     else {
       warning(sprintf("'%s' is not a valid FIPS code or state name/abbreviation",state), call. = FALSE)
@@ -114,7 +114,7 @@ get_NRI_HazardInfo <- function(){
 #'
 get_NRI_ctys_sf <- function(state) {
   # browser()
- # browseURL(.nri_datadir)
+  # browseURL(.nri_datadir)
   NRI_GDB_ctys_gdb <- file.path(.nri_datadir, "NRI_GDB_Counties.gdb"); stopifnot(dir.exists(NRI_GDB_ctys_gdb))
   # print(st_layers(NRI_GDB_ctys_gdb))
 
@@ -135,23 +135,49 @@ get_NRI_ctys_sf <- function(state) {
   return(nri_ctys_sf)
 }
 
-#' Get NRI Hazards table
+#' Get NRI Hazards table by State
+#'
+#' @return a data.table
+#' @export
+#'
+get_NRI_states_dt <- function() {
+  # browser()
+  nri_states_fst <- file.path(.nri_workdir, "nri_states.fst"); print(file.info(nri_states_fst))
+  if(file.exists(nri_states_fst)) {
+    print(fst.metadata(nri_states_fst))
+    nri_states_dt <- read_fst(nri_states_fst, as.data.table = TRUE)
+  } else {
+  #  list.files(.nri_datadir)
+    nri_states_dt <- fread(file.path(.nri_datadir, "NRI_Table_States.csv"))
+    # nri_states_sf <- get_NRI_states_sf()
+    # nri_states <- data.table(st_drop_geometry(nri_states_sf), stringsAsFactors = TRUE)
+    area_cols <- grep("AREA$", names(nri_states_dt ), value=TRUE) # in sq miles
+    write_fst(nri_states_dt, path = nri_states_fst);   print(file.info(nri_states_fst))
+  }; str(nri_states_dt)
+  return(nri_states_dt)
+}
+
+
+#' Get NRI Hazards table by County
 #'
 #' @return a data.table
 #' @export
 #'
 get_NRI_ctys_dt <- function() {
-  browser()
+  # browser()
   nri_ctys_fst <- file.path(.nri_workdir, "nri_ctys.fst"); print(file.info(nri_ctys_fst))
   if(file.exists(nri_ctys_fst)) {
     print(fst.metadata(nri_ctys_fst))
-    nri_ctys <- read_fst(nri_ctys_fst, as.data.table = TRUE)
+    nri_ctys_dt <- read_fst(nri_ctys_fst, as.data.table = TRUE)
   } else {
-    nri_ctys_sf <- get_NRI_ctys_sf()
-    nri_ctys <- data.table(st_drop_geometry(nri_ctys_sf), stringsAsFactors = TRUE)
-    write_fst(nri_ctys, path = nri_ctys_fst);   print(file.info(nri_ctys_fst))
-  }; str(nri_ctys)
-  return(nri_ctys)
+    list.files(.nri_datadir)
+    nri_ctys_dt <- fread(file.path(.nri_datadir, "NRI_Table_Counties.csv"))
+    # nri_ctys_sf <- get_NRI_ctys_sf()
+    # nri_ctys <- data.table(st_drop_geometry(nri_ctys_sf), stringsAsFactors = TRUE)
+    area_cols <- grep("AREA$", names(nri_ctys_dt ), value=TRUE) # in sq miles
+    write_fst(nri_ctys_dt, path = nri_ctys_fst);   print(file.info(nri_ctys_fst))
+  }; str(nri_ctys_dt)
+  return(nri_ctys_dt)
 }
 
 get_hrcn_cat_dt <- function(){
