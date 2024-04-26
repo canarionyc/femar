@@ -155,6 +155,7 @@ get_best_points_cnty_sf <- function() {
     # ?st_intersection.sf
     # ?left_join.sf
     # ?join_by
+    best_points_sf <- get_best_points_sf()
     counties_sf <- counties(cb=FALSE)
     best_points_cnty_sf <- left_join(best_points_sf, counties_sf)
     (best_points_cnty_sf <- st_intersection(best_points_sf, counties_sf['COUNTYFP']))

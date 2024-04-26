@@ -3,6 +3,7 @@
 export(get_NRI_HazardInfo)
 export(get_NRI_ctys_dt)
 export(get_NRI_ctys_sf)
+export(get_NRI_states_dt)
 export(get_best_points_cnty_sf)
 export(get_best_points_sf)
 export(get_best_tracks_dt)

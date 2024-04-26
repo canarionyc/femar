@@ -35,11 +35,11 @@ validate_state<- function (state, .msg = interactive())
       return(tigris::fips_codes[tigris::fips_codes$state == state,
                                 "state_code"])
     }
-    else if (nchar(state) > 2 & state %in% fips_codes$state_name) {
+    else if (nchar(state) > 2 & state %in% tigris::fips_codes$state_name) {
       if (.msg)
         message(sprintf("Using FIPS code '%s' for state '%s'",
-                        fips_codes[fips_codes$state_name == state,
-                                   "state_code"], simpleCapSO(state)))
+                        tigris::fips_codes[tigris::fips_codes$state_name == state,
+                                   "state_code"], stringi::stri_trans_totitle(state)))
       return(tigris::fips_codes[tigris::fips_codes$state_name ==
                                   state, "state_code"])
     }
@@ -62,8 +62,8 @@ get_fips_code <- function (state, county = NULL)
   if (is.null(state))
     stop("Invalid state", call. = FALSE)
   if (!is.null(county)) {
-    vals <- fips_codes[fips_codes$state_code == state &
-                         grepl(sprintf("^%s",county), fips_codes$county, ignore.case = TRUE),
+    vals <- tigris::fips_codes[tigris::fips_codes$state_code == state &
+                         grepl(sprintf("^%s",county), tigris::fips_codes$county, ignore.case = TRUE),
     ]
     message(paste0("The code for ", vals$state_name, " is '",
                    vals$state_code, "'", " and the code for ", vals$county,
@@ -71,7 +71,7 @@ get_fips_code <- function (state, county = NULL)
     return(vals$county_code)
   }
   else {
-    vals <- utils::head(fips_codes[fips_codes$state_code == state,1:3], 1)
+    vals <- utils::head(tigris::fips_codes[tigris::fips_codes$state_code == state,1:3], 1)
     message(paste0("The code for ", vals$state_name, " is '",
                    vals$state_code, "'."))
     return(vals$state_code)
@@ -135,26 +135,34 @@ get_NRI_ctys_sf <- function(state) {
   return(nri_ctys_sf)
 }
 
+NRI_states_info <- function() {
+  nri_states_fst <- file.path(.nri_workdir, "nri_states.fst"); print(file.info(nri_states_fst))
+  dput(names(fst(nri_states_fst)))
+  print(fst.metadata(nri_states_fst))
+
+}
+
 #' Get NRI Hazards table by State
 #'
 #' @return a data.table
 #' @export
 #'
-get_NRI_states_dt <- function() {
+get_NRI_states_dt <- function(select_cols=NULL) {
   # browser()
   nri_states_fst <- file.path(.nri_workdir, "nri_states.fst"); print(file.info(nri_states_fst))
   if(file.exists(nri_states_fst)) {
     print(fst.metadata(nri_states_fst))
-    nri_states_dt <- read_fst(nri_states_fst, as.data.table = TRUE)
+    nri_states_dt <- read_fst(nri_states_fst, as.data.table = TRUE, columns = select_cols)
   } else {
   #  list.files(.nri_datadir)
     nri_states_dt <- fread(file.path(.nri_datadir, "NRI_Table_States.csv"))
     # nri_states_sf <- get_NRI_states_sf()
     # nri_states <- data.table(st_drop_geometry(nri_states_sf), stringsAsFactors = TRUE)
-    area_cols <- grep("AREA$", names(nri_states_dt ), value=TRUE) # in sq miles
+    # area_cols <- grep("AREA$", names(nri_states_dt ), value=TRUE) # in sq miles
     write_fst(nri_states_dt, path = nri_states_fst);   print(file.info(nri_states_fst))
   }; str(nri_states_dt)
-  return(nri_states_dt)
+
+  return(subset(nri_states_dt, select=select_cols))
 }
 
 

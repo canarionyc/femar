@@ -2,7 +2,7 @@
 % Please edit documentation in R/NRI_utils.R
 \name{get_NRI_ctys_dt}
 \alias{get_NRI_ctys_dt}
-\title{Get NRI Hazards table}
+\title{Get NRI Hazards table by County}
 \usage{
 get_NRI_ctys_dt()
 }
@@ -10,5 +10,5 @@ get_NRI_ctys_dt()
 a data.table
 }
 \description{
-Get NRI Hazards table
+Get NRI Hazards table by County
 }

@@ -23,5 +23,5 @@ Imports:
   ,sf,tigris,rgeoda,terra
   ,censusapi
 Suggests:
-  Cairo
+  Cairo,clipr,devtools
 RoxygenNote: 7.3.1

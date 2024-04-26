@@ -29,7 +29,7 @@ browseURL(NRIDataDictionary_xlsx)
 NRIDataDictionary <- fread(file.path(.nri_datadir, "NRIDataDictionary.csv"))
 NRIDataDictionary
 
-# nri_stats_dt --------------------------------------------------------
+# nri_states_dt --------------------------------------------------------
 
 devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_ctys_dt); nri_states_dt <- get_NRI_states_dt()
 
