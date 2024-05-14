@@ -12,6 +12,10 @@ list.files(.nri_datadir, full.names = TRUE)
 
 browseURL(.nri_workdir)
 
+
+
+
+
 # best[, c('SEASON', 'USA_SSHS'):=lapply(.SD, drop_units), .SDcols =  c('SEASON', 'USA_SSHS')]
 
 # best_tracks_dt ----------------------------------------------------------

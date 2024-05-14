@@ -12,12 +12,10 @@ Encoding: UTF-8
 Depends:
   data.table
 Imports:
-  stats
-  , configr,utils
+   configr,utils
   , lubridate,fst,fs,fstutils,units
   , forcats
-  ,readxl
-  , dplyr
+  , readxl, dplyr
   ,magrittr,purrr
   ,stringi
   ,sf,tigris,rgeoda,terra

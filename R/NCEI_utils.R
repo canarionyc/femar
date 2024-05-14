@@ -6,7 +6,7 @@
 #' @import units
 #' @import fstutils
 #' @import magrittr
-#' @import dplyr
+#' @importFrom dplyr filter select
 #' @import sf
 #' @importFrom purrr map2_dfc
 #' @export
@@ -16,8 +16,8 @@ get_best_tracks_dt <- function(){
   # browser()
   best_tracks_rds <- file.path(.noaa_workdir, "best.rds"); print(file.info(best_tracks_rds))
   if(file.exists(best_tracks_rds)) {
-    best <- readRDS(best_tracks_rds)
-    print(nrow(best))
+    best_tracks <- readRDS(best_tracks_rds)
+    print(nrow(best_tracks))
     # best[, c('SEASON', 'USA_SSHS'):=lapply(.SD, drop_units), .SDcols =  c('SEASON', 'USA_SSHS')]
     # str(best[, .SD,  .SDcols =  c('SEASON', 'USA_SSHS')])
     # saveRDS(best, file = best_tracks_rds)

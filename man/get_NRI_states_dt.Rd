@@ -6,6 +6,9 @@
 \usage{
 get_NRI_states_dt(select_cols = NULL)
 }
+\arguments{
+\item{select_cols}{character}
+}
 \value{
 a data.table
 }

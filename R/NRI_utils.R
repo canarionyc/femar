@@ -144,6 +144,7 @@ NRI_states_info <- function() {
 
 #' Get NRI Hazards table by State
 #'
+#' @param select_cols character
 #' @return a data.table
 #' @export
 #'
