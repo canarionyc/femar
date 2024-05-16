@@ -10,16 +10,16 @@ Description: Routines.
 License: file LICENSE
 Encoding: UTF-8
 Depends:
-  data.table
+   data.table
 Imports:
-   configr,utils
+  configr,utils
   , lubridate,fst,fs,fstutils,units
   , forcats
   , readxl, dplyr
   ,magrittr,purrr
   ,stringi
   ,sf,tigris,rgeoda,terra
-  ,censusapi
+  ,RCurl,censusapi
 Suggests:
   Cairo,clipr,devtools
 RoxygenNote: 7.3.1

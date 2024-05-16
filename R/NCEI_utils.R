@@ -4,6 +4,8 @@
 #' as POINT geometry
 #' @return a data.table with units
 #' @import units
+#' @import utils
+#' @import fst
 #' @import fstutils
 #' @import magrittr
 #' @importFrom dplyr filter select
@@ -146,6 +148,8 @@ get_best_tracks_sf <- function(){
 #' Get best points with county info
 #'
 #' @return simple feature
+#' @import tigris
+#' @importFrom dplyr left_join
 #' @export
 get_best_points_cnty_sf <- function() {
   best_points_cnty_dsn <- file.path(.noaa_workdir, "best_points_cnty.gpkg"); print(file.info(best_points_cnty_dsn))
@@ -156,13 +160,13 @@ get_best_points_cnty_sf <- function() {
     # ?left_join.sf
     # ?join_by
     best_points_sf <- get_best_points_sf()
-    counties_sf <- counties(cb=FALSE)
-    best_points_cnty_sf <- left_join(best_points_sf, counties_sf)
+    counties_sf <- tigris::counties(cb=FALSE)
+    best_points_cnty_sf <- dplyr::left_join(best_points_sf, counties_sf)
     (best_points_cnty_sf <- st_intersection(best_points_sf, counties_sf['COUNTYFP']))
 
     # ?st_write
     st_write(best_points_cnty_sf,best_points_cnty_dsn)
-    browseURL(.noaa_workdir)
+    # browseURL(.noaa_workdir)
   }; print(best_points_cnty_sf)
   print(sum(table(best_points_cnty_sf$COUNTYFP)))
   return(best_points_cnty_sf)

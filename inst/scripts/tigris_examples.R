@@ -17,7 +17,7 @@ cat("TIGRIS_CACHE_DIR:", Sys.getenv('TIGRIS_CACHE_DIR'))
 
 source("~/Spatial/Tigris/.RProfile")
 
-browseURL(.census_dir)
+browseURL(.census_workdir)
 
 
 
@@ -177,7 +177,7 @@ plot(st_geometry(cbsa_tx_m1_sf), add=TRUE)
 
 # cbsa_tx_png ----
 
-cbsa_tx_png <- file.path(.census_dir, format(Sys.time(),"cbsa_tx_%Y%m%d_%H%M.png")); print(file.info(cbsa_tx_png))
+cbsa_tx_png <- file.path(.census_workdir, format(Sys.time(),"cbsa_tx_%Y%m%d_%H%M.png")); print(file.info(cbsa_tx_png))
 library(Cairo)
 Cairo::CairoPNG(filename = cbsa_tx_png, width = 10.0, height = 6.0, dpi=300, units="in")
 tx_sf %>% vect %>% plot(lwd=2,main="MSAs in Texas")
@@ -293,7 +293,7 @@ head(ca_places@data)
 
 
 # cbsas and counties within cbsas in TX -------------------------------------------------------------
-state_cbsa_gpkg <- file.path(.census_dir, "tx_cbsa_sf.gpkg"); print(file.info(state_cbsa_gpkg))
+state_cbsa_gpkg <- file.path(.census_workdir, "tx_cbsa_sf.gpkg"); print(file.info(state_cbsa_gpkg))
 if(file.exists(state_cbsa_gpkg)) {
   tx_cbsa_sf <- st_read(state_cbsa_gpkg, layer = 'State_CBSA')
   tx_counties_sf <-  st_read(state_cbsa_gpkg, layer = 'State_Counties')
@@ -302,7 +302,7 @@ if(file.exists(state_cbsa_gpkg)) {
   tx_cbsa_sf
 
   ?st_write
-  # state_cbsa_shp <- file.path(.census_dir, "tx_cbsa_sf.shp"); print(file.info(state_cbsa_shp))
+  # state_cbsa_shp <- file.path(.census_workdir, "tx_cbsa_sf.shp"); print(file.info(state_cbsa_shp))
   # st_write(tx_cbsa_sf, dsn = state_cbsa_shp) # produces warnings
   # tx_cbsa_sf <- st_read(state_cbsa_shp)
 
@@ -337,9 +337,9 @@ library(foreach); library(iterators)
 options(tigris_year = 2010L)
 debugonce(zctas)
 foreach(state =iter( states_sf$STUSPS), .errorhandling='pass', .verbose=TRUE) %do% {
-  state_zcta_rds <- file.path(.census_dir, sprintf("%s_zcta_%d_sf.rds",state, getOption("tigris_year"))); print(file.info(state_zcta_rds))
-  state_zcta3_rds <- file.path(.census_dir, sprintf("%s_zcta3_%d_sf.rds",state, getOption("tigris_year"))); print(file.info(state_zcta3_rds))
-  options(tigris_year = 2010L); state_zcta3_gpkg <- file.path(.census_dir, sprintf("%s_zcta3_%d_sf.gpkg",state, getOption("tigris_year"))); print(file.info(state_zcta3_gpkg))
+  state_zcta_rds <- file.path(.census_workdir, sprintf("%s_zcta_%d_sf.rds",state, getOption("tigris_year"))); print(file.info(state_zcta_rds))
+  state_zcta3_rds <- file.path(.census_workdir, sprintf("%s_zcta3_%d_sf.rds",state, getOption("tigris_year"))); print(file.info(state_zcta3_rds))
+  options(tigris_year = 2010L); state_zcta3_gpkg <- file.path(.census_workdir, sprintf("%s_zcta3_%d_sf.gpkg",state, getOption("tigris_year"))); print(file.info(state_zcta3_gpkg))
   if(!file.exists(state_zcta3_gpkg)) {
     state_zcta_sf <- zctas(cb=FALSE,
                            #                         year=2010,

@@ -37,13 +37,13 @@ get_counties_within_cbsas <- function() {
 #' @return simple feature
 #' @export
 #'
-get_cty_cbsa_nri_sf <- function(){
+get_cty_cbsa_NRI_sf <- function(){
   counties_sf <- counties(cb = FALSE, year=2021)
   stopifnot(anyDuplicated(counties_sf$GEOID)==0)
 
-  nri_ctys_dt <- get_NRI_ctys_dt()
-  stopifnot(anyDuplicated(nri_ctys_dt$STCOFIPS)==0)
-  cty_cbsa_nri_sf <- merge(counties_sf, nri_ctys_dt, by.x=c('GEOID'), by.y=c('STCOFIPS'))
-  return(cty_cbsa_nri_sf)
+  NRI_ctys_dt <- get_NRI_ctys_dt()
+  stopifnot(anyDuplicated(NRI_ctys_dt$STCOFIPS)==0)
+  cty_cbsa_NRI_sf <- merge(counties_sf, NRI_ctys_dt, by.x=c('GEOID'), by.y=c('STCOFIPS'))
+  return(cty_cbsa_NRI_sf)
 }
 

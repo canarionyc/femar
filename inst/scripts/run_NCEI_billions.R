@@ -9,9 +9,9 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 
 stop()
 
-list.files(.nri_datadir, full.names = TRUE)
+list.files(.NRI_datadir, full.names = TRUE)
 
-browseURL(.nri_workdir)
+browseURL(.NRI_workdir)
 
 # time-series of costs unnormalized cpi-adjusted -------------------------------------------------------------
 # https://www.ncei.noaa.gov/access/billions/time-series/NECR/cost

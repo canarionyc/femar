@@ -39,7 +39,7 @@ validate_state<- function (state, .msg = interactive())
       if (.msg)
         message(sprintf("Using FIPS code '%s' for state '%s'",
                         tigris::fips_codes[tigris::fips_codes$state_name == state,
-                                   "state_code"], stringi::stri_trans_totitle(state)))
+                                           "state_code"], stringi::stri_trans_totitle(state)))
       return(tigris::fips_codes[tigris::fips_codes$state_name ==
                                   state, "state_code"])
     }
@@ -63,7 +63,7 @@ get_fips_code <- function (state, county = NULL)
     stop("Invalid state", call. = FALSE)
   if (!is.null(county)) {
     vals <- tigris::fips_codes[tigris::fips_codes$state_code == state &
-                         grepl(sprintf("^%s",county), tigris::fips_codes$county, ignore.case = TRUE),
+                                 grepl(sprintf("^%s",county), tigris::fips_codes$county, ignore.case = TRUE),
     ]
     message(paste0("The code for ", vals$state_name, " is '",
                    vals$state_code, "'", " and the code for ", vals$county,
@@ -155,7 +155,7 @@ get_NRI_states_dt <- function(select_cols=NULL) {
     print(fst.metadata(NRI_states_fst))
     NRI_states_dt <- read_fst(NRI_states_fst, as.data.table = TRUE, columns = select_cols)
   } else {
-  #  list.files(.NRI_datadir)
+    #  list.files(.NRI_datadir)
     NRI_states_dt <- fread(file.path(.NRI_datadir, "NRI_Table_States.csv"))
     # NRI_states_sf <- get_NRI_states_sf()
     # NRI_states <- data.table(st_drop_geometry(NRI_states_sf), stringsAsFactors = TRUE)
@@ -185,7 +185,7 @@ get_NRI_ctys_dt <- function() {
     # NRI_ctys_sf <- get_NRI_ctys_sf()
     # NRI_ctys <- data.table(st_drop_geometry(NRI_ctys_sf), stringsAsFactors = TRUE)
     area_cols <- grep("AREA$", names(NRI_ctys_dt ), value=TRUE) # in sq miles
-print(area_cols)
+    print(area_cols)
 
     ?fct_relevel
 
@@ -194,7 +194,7 @@ print(area_cols)
 
     NRI_ctys_dt[, SOVI_RATNG:=factor(SOVI_RATNG,, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Data Unavailable"))]
     print(levels(NRI_ctys_dt$SOVI_RATNG))
-print(table(NRI_ctys_dt$SOVI_RATNG))
+    print(table(NRI_ctys_dt$SOVI_RATNG))
     write_fst(NRI_ctys_dt, path = NRI_ctys_fst);   print(file.info(NRI_ctys_fst))
   }; str(NRI_ctys_dt)
   return(NRI_ctys_dt)

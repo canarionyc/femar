@@ -4,7 +4,7 @@ options("yaml.eval.expr"=TRUE)
 # browser()
   msgs <- c( sprintf("Running .onAttach(%s)", pkgname)
              ,
-             paste(".nri_workdir",  .nri_workdir, sep=": " )
+             paste(".NRI_workdir",  .NRI_workdir, sep=": " )
              ,
     sprintf("TMPDIR=%s", Sys.getenv("TMPDIR", unset = NA))
     )

@@ -8,9 +8,9 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 # source("~/Spatial/Tigris/tigris_setup.R")
 
 stop()
-list.files(.nri_datadir, full.names = TRUE)
+list.files(.NRI_datadir, full.names = TRUE)
 
-browseURL(.nri_workdir)
+browseURL(.NRI_workdir)
 
 
 
@@ -174,122 +174,122 @@ fips_state_table <- tigris:::fips_state_table
 save(fips_state_table, file=file.path(system.file("R", package="femar"),"sysdata.Rda"))
 
 # NRIDataDictionary.csv ---------------------------------------------------
-NRIDataDictionary_xlsx <- file.path(.nri_datadir, "NRIDataDictionary.xlsx")
+NRIDataDictionary_xlsx <- file.path(.NRI_datadir, "NRIDataDictionary.xlsx")
 browseURL(NRIDataDictionary_xlsx)
 
-NRIDataDictionary <- fread(file.path(.nri_datadir, "NRIDataDictionary.csv"))
+NRIDataDictionary <- fread(file.path(.NRI_datadir, "NRIDataDictionary.csv"))
 NRIDataDictionary
 
 
-# nri_states_sf ------------------------------------------------------------------
-NRI_GDB_states_gdb <- file.path(.nri_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
+# NRI_states_sf ------------------------------------------------------------------
+NRI_GDB_states_gdb <- file.path(.NRI_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
 st_layers(NRI_GDB_states_gdb)
 
-nri_states_sf <- st_read(NRI_GDB_states_gdb, layer = "NRI_States")
-nri_states_sf
+NRI_states_sf <- st_read(NRI_GDB_states_gdb, layer = "NRI_States")
+NRI_states_sf
 
 # NRI_HazardInfo ----------------------------------------------------------
 devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_HazardInfo); hur_info <- get_NRI_HazardInfo()
 str(hur_info)
 
 
-# nri_states_conus_sf <- subset(nri_states_sf, ! STATEABBRV %in% states_noconus)
+# NRI_states_conus_sf <- subset(NRI_states_sf, ! STATEABBRV %in% states_noconus)
 
-# nri_conus_png ----
+# NRI_conus_png ----
 
 library(grid)
 
-plot(nri_states_conus_sf['EAL_SCORE'])
+plot(NRI_states_conus_sf['EAL_SCORE'])
 
-nri_conus_png <- file.path(.nri_workdir, format(Sys.time(),"nri_conus_%Y%m%d_%H%M.png")); print(file.info(nri_conus_png))
+NRI_conus_png <- file.path(.NRI_workdir, format(Sys.time(),"NRI_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_conus_png))
 library(Cairo)
-Cairo::CairoPNG(filename = nri_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(nri_states_conus_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_states_conus_sf['EAL_SCORE'])
 dev.off()
-print(file.info(nri_conus_png))
-browseURL(dirname(nri_conus_png))
+print(file.info(NRI_conus_png))
+browseURL(dirname(NRI_conus_png))
 
-# nri_ctys_sf ------------------------------------------------------------------
-devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_GDB_ctys_sf); nri_ctys_sf <- get_NRI_ctys_sf('TX')
-str(nri_ctys_sf)
+# NRI_ctys_sf ------------------------------------------------------------------
+devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_GDB_ctys_sf); NRI_ctys_sf <- get_NRI_ctys_sf('TX')
+str(NRI_ctys_sf)
 
-# nri_ctys --------------------------------------------------------
+# NRI_ctys --------------------------------------------------------
 
-devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_ctys); nri_ctys <- get_NRI_ctys()
-nri_ctys[, .(STATEFIPS         ,COUNTYFIPS,COUNTYTYPE    ,BUILDVALUE,AREA,EAL_VALB,ALR_VALB,Shape_Area)]
+devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_ctys); NRI_ctys <- get_NRI_ctys()
+NRI_ctys[, .(STATEFIPS         ,COUNTYFIPS,COUNTYTYPE    ,BUILDVALUE,AREA,EAL_VALB,ALR_VALB,Shape_Area)]
 
 library(sf)
 ?merge.sf
 ?base::merge
-merge(counties_sf, nri_ctys, by=)
+merge(counties_sf, NRI_ctys, by=)
 
-# nri_hrcn_ctys -------------------------------------------------------
+# NRI_hrcn_ctys -------------------------------------------------------
 
-sel <- c(1:which(names(nri_ctys)=="CRF_VALUE"),grep("^HRCN",names(nri_ctys)))
+sel <- c(1:which(names(NRI_ctys)=="CRF_VALUE"),grep("^HRCN",names(NRI_ctys)))
 
-nri_ctys_hrcn <- nri_ctys[, ..sel]
+NRI_ctys_hrcn <- NRI_ctys[, ..sel]
 
-# nri_ctys_conus_png ----
-nri_ctys_conus_sf <- subset(nri_ctys_sf, ! STATEABBRV %in% states_noconus)
-nri_ctys_conus_png <- file.path(.nri_workdir, format(Sys.time(),"nri_ctys_conus_%Y%m%d_%H%M.png")); print(file.info(nri_ctys_conus_png))
+# NRI_ctys_conus_png ----
+NRI_ctys_conus_sf <- subset(NRI_ctys_sf, ! STATEABBRV %in% states_noconus)
+NRI_ctys_conus_png <- file.path(.NRI_workdir, format(Sys.time(),"NRI_ctys_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_conus_png))
 library(Cairo)
-Cairo::CairoPNG(filename = nri_ctys_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(nri_ctys_conus_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_ctys_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_ctys_conus_sf['EAL_SCORE'])
 dev.off()
-print(file.info(nri_ctys_conus_png))
-browseURL(dirname(nri_ctys_conus_png))
+print(file.info(NRI_ctys_conus_png))
+browseURL(dirname(NRI_ctys_conus_png))
 
 # hurricane frequencies ---------------------------------------------------
-nrow(nri_ctys_hrcn)
-attach(nri_ctys_hrcn)
+nrow(NRI_ctys_hrcn)
+attach(NRI_ctys_hrcn)
 
 cbind(COUNTYFIPS, HRCN_AFREQ, HRCN_EVNTS)
 
 sum(HRCN_EVNTS, na.rm = TRUE)
-detach(nri_ctys_hrcn)
+detach(NRI_ctys_hrcn)
 
-# nri_ctys_tx_sf <- subset(nri_ctys_sf, STATEABBRV %in% 'TX')
-# nri_ctys_tx_sf
+# NRI_ctys_tx_sf <- subset(NRI_ctys_sf, STATEABBRV %in% 'TX')
+# NRI_ctys_tx_sf
 
-# nri_ctys_tx_png ----
+# NRI_ctys_tx_png ----
 
-nri_ctys_tx_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"nri_ctys_tx_%Y%m%d_%H%M.png")); print(file.info(nri_ctys_tx_png))
+NRI_ctys_tx_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"NRI_ctys_tx_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_tx_png))
 library(Cairo)
-Cairo::CairoPNG(filename = nri_ctys_tx_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(nri_ctys_tx_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_ctys_tx_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_ctys_tx_sf['EAL_SCORE'])
 dev.off()
-print(file.info(nri_ctys_tx_png))
-browseURL(dirname(nri_ctys_tx_png))
+print(file.info(NRI_ctys_tx_png))
+browseURL(dirname(NRI_ctys_tx_png))
 
 
 
-# nri_ctys_ok_png ----
-nri_ctys_ok_sf <- subset(nri_ctys_sf, STATEABBRV %in% 'OK')
-nri_ctys_ok_sf
+# NRI_ctys_ok_png ----
+NRI_ctys_ok_sf <- subset(NRI_ctys_sf, STATEABBRV %in% 'OK')
+NRI_ctys_ok_sf
 
 
-nri_ctys_ok_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"nri_ctys_ok_%Y%m%d_%H%M.png")); print(file.info(nri_ctys_ok_png))
+NRI_ctys_ok_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"NRI_ctys_ok_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_ok_png))
 library(Cairo)
-Cairo::CairoPNG(filename = nri_ctys_ok_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(nri_ctys_ok_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_ctys_ok_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_ctys_ok_sf['EAL_SCORE'])
 dev.off()
-print(file.info(nri_ctys_ok_png))
-browseURL(dirname(nri_ctys_ok_png))
+print(file.info(NRI_ctys_ok_png))
+browseURL(dirname(NRI_ctys_ok_png))
 
 # Hurricanes --------------------------------------------------------------
 (Prefix <- NRI_HazardInfo%>% subset(Hazard=="Hurricane", select="Prefix") %>% as.character())
 
-nri_ctys_haz1_sf <- get_nri_ctys_haz1(Prefix)
-nri_ctys_haz1_sf
+NRI_ctys_haz1_sf <- get_NRI_ctys_haz1(Prefix)
+NRI_ctys_haz1_sf
 
 ?natural_breaks
 library(rgeoda)
 undebug(rgeoda::natural_breaks)
-inherits(nri_ctys_haz1_sf, "data.frame")
+inherits(NRI_ctys_haz1_sf, "data.frame")
 # col.name <- 'HRCN_EALB'; col.descr <- "Expected Annualized Loss in Building value (EALB) due to Hurricane (in $USD)"
 col.name <- 'HRCN_ALRB'; col.descr <- "Annualized Loss Rate on Building value (ALRB) due to Hurricane"
 (breaks <- rgeoda::natural_breaks(k = 5
-                                  ,df = na.omit(nri_ctys_haz1_sf[, col.name])
+                                  ,df = na.omit(NRI_ctys_haz1_sf[, col.name])
                                   )
   )
 print(breaks, digits = 4L)
@@ -305,9 +305,9 @@ library(Cairo)
 Cairo::CairoPNG(filename = hrcn_alrb_png, width = 10.0, height = 6.0, dpi=300, units="in")
 
 
-lo <- min(nri_ctys_haz1_sf[[col.name]], na.rm = TRUE)
-hi <- max(nri_ctys_haz1_sf[[col.name]], na.rm = TRUE)
-plot(vect(nri_ctys_haz1_sf), col.name, breaks=c(lo,breaks,hi)
+lo <- min(NRI_ctys_haz1_sf[[col.name]], na.rm = TRUE)
+hi <- max(NRI_ctys_haz1_sf[[col.name]], na.rm = TRUE)
+plot(vect(NRI_ctys_haz1_sf), col.name, breaks=c(lo,breaks,hi)
      , main=paste("Texas", col.descr)
      , plg=list(title=col.name)
 )
@@ -320,28 +320,28 @@ browseURL(dirname(hrcn_alrb_png))
 # tornadoes ---------------------------------------------------------------
 (Prefix <- NRI_HazardInfo%>% subset(Hazard=="Tornado", select="Prefix") %>% as.character())
 
-get_nri_ctys_haz1 <- function(Prefix) {
-  select <- c(1:grep("CRF_VALUE", names(nri_ctys_sf))
-              ,grep(paste0("^",Prefix), names(nri_ctys_sf), value = FALSE)
-              ,grep("Shape", names(nri_ctys_sf))
+get_NRI_ctys_haz1 <- function(Prefix) {
+  select <- c(1:grep("CRF_VALUE", names(NRI_ctys_sf))
+              ,grep(paste0("^",Prefix), names(NRI_ctys_sf), value = FALSE)
+              ,grep("Shape", names(NRI_ctys_sf))
   )
 
-  nri_ctys_haz1_sf <- subset(nri_ctys_sf , select=select )
-  print(names(nri_ctys_haz1_sf))
-  nri_ctys_haz1_sf
+  NRI_ctys_haz1_sf <- subset(NRI_ctys_sf , select=select )
+  print(names(NRI_ctys_haz1_sf))
+  NRI_ctys_haz1_sf
 }
 
-nri_ctys_ok_tornadoes_sf <- subset(nri_ctys_sf, subset=STATEABBRV %in% 'OK'
-                                           , select=c(1:grep("CRF_VALUE", names(nri_ctys_sf)), grep("TRND", names(nri_ctys_sf)), grep("Shape", names(nri_ctys_sf)))
+NRI_ctys_ok_tornadoes_sf <- subset(NRI_ctys_sf, subset=STATEABBRV %in% 'OK'
+                                           , select=c(1:grep("CRF_VALUE", names(NRI_ctys_sf)), grep("TRND", names(NRI_ctys_sf)), grep("Shape", names(NRI_ctys_sf)))
 )
 
-nri_ctys_ok_tornadoes_sf
+NRI_ctys_ok_tornadoes_sf
 
-nri_ctys_ok_tornadoes_dt <- st_drop_geometry(nri_ctys_ok_tornadoes_sf) %>% setDT() %>% subset(select=county_building_cols)
+NRI_ctys_ok_tornadoes_dt <- st_drop_geometry(NRI_ctys_ok_tornadoes_sf) %>% setDT() %>% subset(select=county_building_cols)
 
-(county_building_cols <- grep("^(COUNTY|EAL_VALB|TRND)", names(nri_ctys_ok_tornadoes_sf), value = TRUE) %>%
+(county_building_cols <- grep("^(COUNTY|EAL_VALB|TRND)", names(NRI_ctys_ok_tornadoes_sf), value = TRUE) %>%
     grep(pattern="(EXPP|EXPPE|EXPA|EXPT|HLRP|HLRA|EALP|EALPE|EALA|EALT|ALRP|ALRA)", invert = TRUE, value = TRUE))
 
-nri_ctys_ok_tornadoes_dt[,  TRND_EVNTS_PER_EXP_AREA:=TRND_EVNTS/TRND_EXP_AREA]
+NRI_ctys_ok_tornadoes_dt[,  TRND_EVNTS_PER_EXP_AREA:=TRND_EVNTS/TRND_EXP_AREA]
 
-nri_ctys_ok_tornadoes_dt[, .(TRND_AFREQ,12/TRND_EVNTS)]
+NRI_ctys_ok_tornadoes_dt[, .(TRND_AFREQ,12/TRND_EVNTS)]

@@ -10,6 +10,7 @@ library(stringr)
 library(readr)
 
 # Read in the IRS data
+
 zcta_url <- "https://www.irs.gov/pub/irs-soi/13zpallnoagi.csv"
 irs_soi <- data.table(read_csv(zcta_url), stringsAsFactors = TRUE)
 summary(irs_soi)
@@ -26,8 +27,6 @@ saveRDS(irs_zcta3, file=file.path(Sys.getenv("WORKDIR"), "IRS","irs_zcta3.rds"))
 names(us_zcta3)
 ?geo_join
 # us_irs_zcta3 <- tigris::geo_join(us_zcta3, irs_zcta3, by_sp=names, by_df = "zcta3")
-names(us_irs_zcta3)
 
 
 
-# Legal and statistical entities ----
