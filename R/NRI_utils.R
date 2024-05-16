@@ -87,14 +87,14 @@ get_fips_code <- function (state, county = NULL)
 
 get_NRI_HazardInfo <- function(){
 
-  NRI_HazardInfo_fst <- file.path(.nri_workdir , "NRI_HazardInfo.fst"); print(file.info(NRI_HazardInfo_fst))
+  NRI_HazardInfo_fst <- file.path(.NRI_workdir , "NRI_HazardInfo.fst"); print(file.info(NRI_HazardInfo_fst))
   if(file.exists(NRI_HazardInfo_fst)) {
     print(fst.metadata(NRI_HazardInfo_fst))
     NRI_HazardInfo  <- read_fst(NRI_HazardInfo_fst, as.data.table = TRUE)
   } else {
 
-    stopifnot(dir.exists(.nri_datadir))
-    NRI_GDB_states_gdb <- file.path(.nri_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
+    stopifnot(dir.exists(.NRI_datadir))
+    NRI_GDB_states_gdb <- file.path(.NRI_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
 
     suppressWarnings(NRI_HazardInfo <- st_read(NRI_GDB_states_gdb, layer = "NRI_HazardInfo"))
     fst::write_fst(NRI_HazardInfo, path = NRI_HazardInfo_fst);  print(file.info(NRI_HazardInfo_fst))
@@ -114,31 +114,31 @@ get_NRI_HazardInfo <- function(){
 #'
 get_NRI_ctys_sf <- function(state) {
   # browser()
-  # browseURL(.nri_datadir)
-  NRI_GDB_ctys_gdb <- file.path(.nri_datadir, "NRI_GDB_Counties.gdb"); stopifnot(dir.exists(NRI_GDB_ctys_gdb))
+  # browseURL(.NRI_datadir)
+  NRI_GDB_ctys_gdb <- file.path(.NRI_datadir, "NRI_GDB_Counties.gdb"); stopifnot(dir.exists(NRI_GDB_ctys_gdb))
   # print(st_layers(NRI_GDB_ctys_gdb))
 
   # ?st_read
   # debugonce(st_read)
 
   if(missing(state)) {
-    nri_ctys_sf <- st_read(dsn = NRI_GDB_ctys_gdb
+    NRI_ctys_sf <- st_read(dsn = NRI_GDB_ctys_gdb
                            , layer = "NRI_Counties")
   } else{
     statefips <- get_fips_code(state)
     str(tigris::fips_codes)
-    nri_ctys_sf <- st_read(dsn = NRI_GDB_ctys_gdb
+    NRI_ctys_sf <- st_read(dsn = NRI_GDB_ctys_gdb
                            , layer = "NRI_Counties"
                            , query = sprintf("SELECT * FROM NRI_Counties where STATEFIPS  = '%d'", statefips))
   }
 
-  return(nri_ctys_sf)
+  return(NRI_ctys_sf)
 }
 
 NRI_states_info <- function() {
-  nri_states_fst <- file.path(.nri_workdir, "nri_states.fst"); print(file.info(nri_states_fst))
-  dput(names(fst(nri_states_fst)))
-  print(fst.metadata(nri_states_fst))
+  NRI_states_fst <- file.path(.NRI_workdir, "NRI_states.fst"); print(file.info(NRI_states_fst))
+  dput(names(fst(NRI_states_fst)))
+  print(fst.metadata(NRI_states_fst))
 
 }
 
@@ -150,48 +150,59 @@ NRI_states_info <- function() {
 #'
 get_NRI_states_dt <- function(select_cols=NULL) {
   # browser()
-  nri_states_fst <- file.path(.nri_workdir, "nri_states.fst"); print(file.info(nri_states_fst))
-  if(file.exists(nri_states_fst)) {
-    print(fst.metadata(nri_states_fst))
-    nri_states_dt <- read_fst(nri_states_fst, as.data.table = TRUE, columns = select_cols)
+  NRI_states_fst <- file.path(.NRI_workdir, "NRI_states.fst"); print(file.info(NRI_states_fst))
+  if(file.exists(NRI_states_fst)) {
+    print(fst.metadata(NRI_states_fst))
+    NRI_states_dt <- read_fst(NRI_states_fst, as.data.table = TRUE, columns = select_cols)
   } else {
-  #  list.files(.nri_datadir)
-    nri_states_dt <- fread(file.path(.nri_datadir, "NRI_Table_States.csv"))
-    # nri_states_sf <- get_NRI_states_sf()
-    # nri_states <- data.table(st_drop_geometry(nri_states_sf), stringsAsFactors = TRUE)
-    # area_cols <- grep("AREA$", names(nri_states_dt ), value=TRUE) # in sq miles
-    write_fst(nri_states_dt, path = nri_states_fst);   print(file.info(nri_states_fst))
-  }; str(nri_states_dt)
+  #  list.files(.NRI_datadir)
+    NRI_states_dt <- fread(file.path(.NRI_datadir, "NRI_Table_States.csv"))
+    # NRI_states_sf <- get_NRI_states_sf()
+    # NRI_states <- data.table(st_drop_geometry(NRI_states_sf), stringsAsFactors = TRUE)
+    # area_cols <- grep("AREA$", names(NRI_states_dt ), value=TRUE) # in sq miles
+    write_fst(NRI_states_dt, path = NRI_states_fst);   print(file.info(NRI_states_fst))
+  }; str(NRI_states_dt)
 
-  return(subset(nri_states_dt, select=select_cols))
+  return(subset(NRI_states_dt, select=select_cols))
 }
 
 
 #' Get NRI Hazards table by County
 #'
 #' @return a data.table
+#' @import forcats
 #' @export
 #'
 get_NRI_ctys_dt <- function() {
   # browser()
-  nri_ctys_fst <- file.path(.nri_workdir, "nri_ctys.fst"); print(file.info(nri_ctys_fst))
-  if(file.exists(nri_ctys_fst)) {
-    print(fst.metadata(nri_ctys_fst))
-    nri_ctys_dt <- read_fst(nri_ctys_fst, as.data.table = TRUE)
+  NRI_ctys_fst <- file.path(.NRI_workdir, "NRI_ctys.fst"); print(file.info(NRI_ctys_fst))
+  if(file.exists(NRI_ctys_fst)) {
+    print(fst.metadata(NRI_ctys_fst))
+    NRI_ctys_dt <- read_fst(NRI_ctys_fst, as.data.table = TRUE)
   } else {
-    list.files(.nri_datadir)
-    nri_ctys_dt <- fread(file.path(.nri_datadir, "NRI_Table_Counties.csv"))
-    # nri_ctys_sf <- get_NRI_ctys_sf()
-    # nri_ctys <- data.table(st_drop_geometry(nri_ctys_sf), stringsAsFactors = TRUE)
-    area_cols <- grep("AREA$", names(nri_ctys_dt ), value=TRUE) # in sq miles
-    write_fst(nri_ctys_dt, path = nri_ctys_fst);   print(file.info(nri_ctys_fst))
-  }; str(nri_ctys_dt)
-  return(nri_ctys_dt)
+    # list.files(.NRI_datadir)
+    NRI_ctys_dt <- fread(file.path(.NRI_datadir, "NRI_Table_Counties.csv"))
+    # NRI_ctys_sf <- get_NRI_ctys_sf()
+    # NRI_ctys <- data.table(st_drop_geometry(NRI_ctys_sf), stringsAsFactors = TRUE)
+    area_cols <- grep("AREA$", names(NRI_ctys_dt ), value=TRUE) # in sq miles
+print(area_cols)
+
+    ?fct_relevel
+
+    NRI_ctys_dt[, RISK_RATNG:=factor(RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Insufficient Data"))]
+    print(table(NRI_ctys_dt$RISK_RATNG))
+
+    NRI_ctys_dt[, SOVI_RATNG:=factor(SOVI_RATNG,, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Data Unavailable"))]
+    print(levels(NRI_ctys_dt$SOVI_RATNG))
+print(table(NRI_ctys_dt$SOVI_RATNG))
+    write_fst(NRI_ctys_dt, path = NRI_ctys_fst);   print(file.info(NRI_ctys_fst))
+  }; str(NRI_ctys_dt)
+  return(NRI_ctys_dt)
 }
 
 get_hrcn_cat_dt <- function(){
 
-  hrcn_cat_rds <- file.path(.nri_workdir, "hrcn_cat.rds"); print(file.info(hrcn_cat_rds))
+  hrcn_cat_rds <- file.path(.NRI_workdir, "hrcn_cat.rds"); print(file.info(hrcn_cat_rds))
   if(file.exists(  hrcn_cat_rds)) {
     hrcn_cat <- readRDS(hrcn_cat_rds)
   } else {
