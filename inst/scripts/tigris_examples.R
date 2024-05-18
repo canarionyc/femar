@@ -414,28 +414,27 @@ legend("topright", legend = c("Republican", "Democrat"),
 library(censusapi)
 library(tidyverse)
 library(tmap)
-
+library(tigris)
 chi_counties <- c("Cook", "DeKalb", "DuPage", "Grundy", "Lake",
                   "Kane", "Kendall", "McHenry", "Will County")
 
-chi_tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE)
+(chi_tracts <- tracts(state = "IL", county = chi_counties, cb = TRUE))
 names(chi_tracts)
-head(chi_tracts@data)
+head(chi_tracts)
 
 # key <- "7787afde3f23dfbf16910395148c2259f8e9cbc2"
 
-data_from_api <- getCensus(name = "acs/acs5", vintage = 2015, # key = key,
+data_from_api <- censusapi::getCensus(name = "acs/acs5", vintage = 2015, # key = key,
                            vars = "B25077_001E",
                            region = "tract:*", regionin = "state:17", show_call = TRUE)
 str(data_from_api)
-
 
 values <- data_from_api %>%
   transmute(GEOID = paste0(state, county, tract),
             value = B25077_001E)
 
 library(dplyr)
-chi_joined <- geo_join(chi_tracts, values, by_sp = 'GEOID', by_df='GEOID')
+(chi_joined <- geo_join(chi_tracts, values, by_sp = 'GEOID', by_df='GEOID'))
 
 library(tmap)
 library(tmaptools)
@@ -448,6 +447,7 @@ tm_shape(chi_joined, projection = 26916) +
 # Slide 23 ----
 
 ttm()
+st_crs(26916)
 
 tm_shape(chi_joined, projection = 26916) +
   tm_fill("value", style = "quantile", n = 7, palette = "Greens",

@@ -56,8 +56,7 @@ validate_state<- function (state, .msg = interactive())
 
 #' @import tigris
 #' @import utils
-get_fips_code <- function (state, county = NULL)
-{
+get_fips_code <- function (state, county = NULL){
   state <- validate_state(state, .msg = FALSE)
   if (is.null(state))
     stop("Invalid state", call. = FALSE)
@@ -96,7 +95,7 @@ get_NRI_HazardInfo <- function(){
     stopifnot(dir.exists(.NRI_datadir))
     NRI_GDB_states_gdb <- file.path(.NRI_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
 
-    suppressWarnings(NRI_HazardInfo <- st_read(NRI_GDB_states_gdb, layer = "NRI_HazardInfo"))
+    suppressWarnings(NRI_HazardInfo <- sf::st_read(NRI_GDB_states_gdb, layer = "NRI_HazardInfo"))
     fst::write_fst(NRI_HazardInfo, path = NRI_HazardInfo_fst);  print(file.info(NRI_HazardInfo_fst))
   }; utils::str(NRI_HazardInfo )
 
@@ -110,28 +109,58 @@ get_NRI_HazardInfo <- function(){
 #' @param state character
 #'
 #' @return sf simple feature
+#' @import sf
 #' @export
 #'
 get_NRI_ctys_sf <- function(state) {
   # browser()
   # browseURL(.NRI_datadir)
-  NRI_GDB_ctys_gdb <- file.path(.NRI_datadir, "NRI_GDB_Counties.gdb"); stopifnot(dir.exists(NRI_GDB_ctys_gdb))
-  # print(st_layers(NRI_GDB_ctys_gdb))
+  NRI_ctys_sf_Rds <- file.path(.NRI_workdir, "NRI_ctys_sf.Rds"); print(file.info(NRI_ctys_sf_Rds))
 
-  # ?st_read
-  # debugonce(st_read)
+  if(file.exists(NRI_ctys_sf_Rds)) {
+    return(readRDS(NRI_ctys_sf_Rds))
+  } else {
+    NRI_GDB_ctys_gdb <- file.path(.NRI_datadir, "NRI_GDB_Counties.gdb"); stopifnot(dir.exists(NRI_GDB_ctys_gdb))
+    # print(st_layers(NRI_GDB_ctys_gdb))
 
-  if(missing(state)) {
-    NRI_ctys_sf <- st_read(dsn = NRI_GDB_ctys_gdb
-                           , layer = "NRI_Counties")
-  } else{
-    statefips <- get_fips_code(state)
-    str(tigris::fips_codes)
-    NRI_ctys_sf <- st_read(dsn = NRI_GDB_ctys_gdb
-                           , layer = "NRI_Counties"
-                           , query = sprintf("SELECT * FROM NRI_Counties where STATEFIPS  = '%d'", statefips))
+    # ?st_read
+    # debugonce(st_read)
+
+    if(missing(state)) {
+      NRI_ctys_sf <- sf::st_read(dsn = NRI_GDB_ctys_gdb
+                                 , layer = "NRI_Counties"
+                                 ,quiet=TRUE)
+    } else{
+      statefips <- get_fips_code(state)
+      str(tigris::fips_codes)
+      NRI_ctys_sf <- sf::st_read(dsn = NRI_GDB_ctys_gdb
+                                 , layer = "NRI_Counties"
+                                 , query = sprintf("SELECT * FROM NRI_Counties where STATEFIPS  = '%d'", statefips))
+
+    }
+
+    NRI_ctys_sf$RISK_RATNG<- factor(NRI_ctys_sf$RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
+                                                                       ,"Insufficient Data"))
+    NRI_ctys_sf$RISK_RATNG <- fct_na_level_to_value(NRI_ctys_sf$RISK_RATNG,extra_levels  = "Insufficient Data" )
+
+    print(table(NRI_ctys_sf$RISK_RATNG))
+
+    NRI_ctys_sf$SOVI_RATNG <- factor(NRI_ctys_sf$SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Data Unavailable"))
+    print(levels(NRI_ctys_sf$SOVI_RATNG))
+    NRI_ctys_sf$SOVI_RATNG <- fct_na_level_to_value(NRI_ctys_sf$SOVI_RATNG,extra_levels  = "Data Unavailable" )
+
+    print(table(NRI_ctys_sf$SOVI_RATNG))
+
+
+    # ?sf::st_is_valid.sf
+    table(polygon_ok <- sf::st_is_valid(NRI_ctys_sf), useNA = "ifany")
+    NRI_ctys_sf[!polygon_ok ,  'STCOFIPS']
+    if(!all(polygon_ok)){
+
+      NRI_ctys_sf <- NRI_ctys_sf %>% sf::st_make_valid()
+    }
+    saveRDS(NRI_ctys_sf, NRI_ctys_sf_Rds)
   }
-
   return(NRI_ctys_sf)
 }
 
@@ -182,6 +211,8 @@ get_NRI_ctys_dt <- function() {
   } else {
     # list.files(.NRI_datadir)
     NRI_ctys_dt <- fread(file.path(.NRI_datadir, "NRI_Table_Counties.csv"))
+    NRI_ctys_dt[, STATEFIPS:=sprintf("%02d", STATEFIPS)]
+
     # NRI_ctys_sf <- get_NRI_ctys_sf()
     # NRI_ctys <- data.table(st_drop_geometry(NRI_ctys_sf), stringsAsFactors = TRUE)
     area_cols <- grep("AREA$", names(NRI_ctys_dt ), value=TRUE) # in sq miles
@@ -192,7 +223,7 @@ get_NRI_ctys_dt <- function() {
     NRI_ctys_dt[, RISK_RATNG:=factor(RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Insufficient Data"))]
     print(table(NRI_ctys_dt$RISK_RATNG))
 
-    NRI_ctys_dt[, SOVI_RATNG:=factor(SOVI_RATNG,, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Data Unavailable"))]
+    NRI_ctys_dt[, SOVI_RATNG:=factor(SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ,"Data Unavailable"))]
     print(levels(NRI_ctys_dt$SOVI_RATNG))
     print(table(NRI_ctys_dt$SOVI_RATNG))
     write_fst(NRI_ctys_dt, path = NRI_ctys_fst);   print(file.info(NRI_ctys_fst))

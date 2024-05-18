@@ -1,3 +1,15 @@
+# function to obtain US county shape
+get_US_county_2010_shape <- function() {
+  dir <- Sys.getenv("TIGRIS_CACHE_DIR")
+  url <- "http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_us_050_00_20m.zip"
+  destfile <- file.path(dir, basename(url))
+  download.file(url, destfile = destfile)
+  exdir <- fs::path_ext_remove(destfile)
+  unzip(destfile, exdir = exdir)
+  US <- read_sf(exdir)
+  levels(US$NAME) <- iconv(levels(US$NAME), from = "latin1", to = "utf8")
+  US
+}
 
 ?load_tiger
 (counties_sf <- tigris::counties(cb=FALSE,
