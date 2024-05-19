@@ -131,7 +131,7 @@ str(hur_info)
 
 # NRI_states_conus_sf <- subset(NRI_states_sf, ! STATEABBRV %in% states_noconus)
 
-# NRI_conus_png ----
+## NRI_conus_png ----
 
 library(grid)
 
@@ -150,13 +150,13 @@ devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_GDB_ctys_sf); NRI_
 str(NRI_ctys_sf)
 
 
-# NRI_hrcn_ctys -------------------------------------------------------
+## NRI_hrcn_ctys -------------------------------------------------------
 
 sel <- c(1:which(names(NRI_ctys)=="CRF_VALUE"),grep("^HRCN",names(NRI_ctys)))
 
 NRI_ctys_hrcn <- NRI_ctys[, ..sel]
 
-# NRI_ctys_conus_png ----
+## NRI_ctys_conus_png ----
 NRI_ctys_conus_sf <- subset(NRI_ctys_sf, ! STATEABBRV %in% states_noconus)
 NRI_ctys_conus_png <- file.path(.NRI_workdir, format(Sys.time(),"NRI_ctys_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_conus_png))
 library(Cairo)
@@ -272,3 +272,10 @@ NRI_ctys_ok_tornadoes_dt <- st_drop_geometry(NRI_ctys_ok_tornadoes_sf) %>% setDT
 NRI_ctys_ok_tornadoes_dt[,  TRND_EVNTS_PER_EXP_AREA:=TRND_EVNTS/TRND_EXP_AREA]
 
 NRI_ctys_ok_tornadoes_dt[, .(TRND_AFREQ,12/TRND_EVNTS)]
+
+
+# NRI tracts --------------------------------------------------------------
+
+library(tmap)
+?tm_fill
+NRI_tracts_sf %>% subset(STATEFIPS  =='06') %>% tm_shape()+ tm_fill(fill='SOVI_SCORE', col=NA)

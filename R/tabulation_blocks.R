@@ -72,9 +72,9 @@ get_tabblock <- function(){
 
     (tabblock_fst.vec <- list.files(.census_workdir, pattern = "tl_2023_\\d{2}_tabblock20\\.fst", full.names = TRUE))
 
-tabblock[, UR20:=as.factor(UR20)]
-print(tabblock[, table(UR20, useNA = "ifany")])
-tabblock_dt <- lapply(tabblock_fst.vec, read_fst) %>% rbindlist(fill=TRUE)
+    tabblock[, UR20:=as.factor(UR20)]
+    print(tabblock[, table(UR20, useNA = "ifany")])
+    tabblock_dt <- lapply(tabblock_fst.vec, read_fst) %>% rbindlist(fill=TRUE)
 
     stopifnot(anyDuplicated(tabblock$GEOID20)==0)
     setkeyv(tabblock, c('GEOID20'))

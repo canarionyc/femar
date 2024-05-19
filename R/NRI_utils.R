@@ -259,3 +259,63 @@ get_hrcn_cat_dt <- function(){
   }; str(hrcn_cat)
   return(invisible(hrcn_cat))
 }
+
+#' NRI Hazard Info by Census Tabulation Block
+#'
+#' @param state character
+#'
+#' @return sf simple feature
+#' @import sf
+#' @export
+#'
+get_NRI_tracts_sf <- function(state) {
+  # browser()
+  # browseURL(.NRI_datadir)
+  NRI_tracts_sf_Rds <- file.path(.NRI_workdir, "NRI_tracts_sf.Rds"); print(file.info(NRI_tracts_sf_Rds))
+
+  if(file.exists(NRI_tracts_sf_Rds)) {
+    return(readRDS(NRI_tracts_sf_Rds))
+  } else {
+    NRI_GDB_tracts_gdb <- file.path(.NRI_datadir, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
+    # print(st_layers(NRI_GDB_tracts_gdb))
+
+    # ?st_read
+    # debugonce(st_read)
+
+    if(missing(state)) {
+      NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
+                                 , layer = "NRI_CensusTracts"
+                                 ,quiet=TRUE)
+    } else{
+      statefips <- get_fips_code(state)
+      str(tigris::fips_codes)
+      NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
+                                 , layer = "NRI_CensusTracts"
+                                 , query = sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS  = '%d'", statefips))
+
+    }
+
+    NRI_tracts_sf$RISK_RATNG<- factor(NRI_tracts_sf$RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
+                                                                       ))
+    # NRI_tracts_sf$RISK_RATNG <- fct_na_level_to_value(NRI_tracts_sf$RISK_RATNG,extra_levels  = "Insufficient Data" )
+
+    print(table(NRI_tracts_sf$RISK_RATNG, useNA = "ifany"))
+
+    NRI_tracts_sf$SOVI_RATNG <- factor(NRI_tracts_sf$SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ))
+    print(levels(NRI_tracts_sf$SOVI_RATNG))
+    # NRI_tracts_sf$SOVI_RATNG <- fct_na_level_to_value(NRI_tracts_sf$SOVI_RATNG,extra_levels  = "Data Unavailable" )
+
+    print(table(NRI_tracts_sf$SOVI_RATNG))
+
+
+    # ?sf::st_is_valid.sf
+    print(table(polygon_ok <- sf::st_is_valid(NRI_tracts_sf), useNA = "ifany"))
+    print(NRI_tracts_sf[!polygon_ok ,  'STCOFIPS'])
+    if(!all(polygon_ok)){
+
+      NRI_tracts_sf <- NRI_tracts_sf %>% sf::st_make_valid()
+    }
+    saveRDS(NRI_tracts_sf, NRI_tracts_sf_Rds)
+  }
+  return(NRI_tracts_sf)
+}
