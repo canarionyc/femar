@@ -92,12 +92,11 @@ get_states_sf <- function(){
   states_sf_rds <- file.path(.census_workdir, sprintf("states_%d.rds", getOption("tigris_year"))); print(file.info(states_sf_rds))
   if(file.exists(states_sf_rds)) {
     states_sf <- readRDS(states_sf_rds)
-  }
-  if(file.exists(states_gpkg)) {
+  } else if(file.exists(states_gpkg)) {
     states_sf <- st_read(states_gpkg)
   } else {
-    print(getOption("tigris_year"))
-    ?states
+    # print(getOption("tigris_year"))
+    # ?states
     (states_sf <- tigris::states(cb=TRUE
                                  , year=getOption("tigris_year")
                                  , class="sf"
