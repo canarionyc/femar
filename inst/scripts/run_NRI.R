@@ -29,11 +29,6 @@ browseURL(NRIDataDictionary_xlsx)
 NRIDataDictionary <- fread(file.path(.NRI_datadir, "NRIDataDictionary.csv"))
 NRIDataDictionary
 
-# NRI_states_dt --------------------------------------------------------
-
-devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_ctys_dt); NRI_states_dt <- get_NRI_states_dt()
-
-NRI_states_dt[, .(sum(HRCN_EVNTS, na.rm = TRUE))]
 
 # NRI_ctys --------------------------------------------------------
 
@@ -116,13 +111,6 @@ fips_state_table <- tigris:::fips_state_table
 save(fips_state_table, file=file.path(system.file("R", package="femar"),"sysdata.Rda"))
 
 
-
-# NRI_states_sf ------------------------------------------------------------------
-NRI_GDB_states_gdb <- file.path(.NRI_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
-st_layers(NRI_GDB_states_gdb)
-
-NRI_states_sf <- st_read(NRI_GDB_states_gdb, layer = "NRI_States")
-NRI_states_sf
 
 # NRI_HazardInfo ----------------------------------------------------------
 devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_HazardInfo); hur_info <- get_NRI_HazardInfo()

@@ -99,7 +99,7 @@ get_best_points_sf <- function(){
     # browseURL( file.path(.noaa_datadir,"NCEI"))
     st_layers(best_points_dsn)
     IBTrACS.ALL.points_sf <- st_read(best_points_dsn
-                                     , query = "select * from \"IBTrACS.ALL.list.v04r00.points\" where BASIN='NA' and WMO_AGENCY='hurdat_atl' and  USA_WIND>34 and USA_SSHS>0 and USA_RMW is not null"
+#                                     , query = "select * from \"IBTrACS.ALL.list.v04r00.points\" where BASIN='NA' and WMO_AGENCY='hurdat_atl' and  USA_WIND>34 and USA_SSHS>0 and USA_RMW is not null"
     ) # %>% st_set_crs(4269) %>% st_transform(st_crs(lcc))
     print(st_crs(IBTrACS.ALL.points_sf))
     saveRDS(IBTrACS.ALL.points_sf , best_points_rds); print(file.info(best_points_rds))
@@ -108,6 +108,7 @@ get_best_points_sf <- function(){
   IBTrACS.ALL.points_sf
 }
 
+#' @title get best tracks
 #' Get hurricane location history
 #' https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/best_points/IBTrACS.ALL.list.v04r00.lines.zip
 #' as LINES geometry (one feature per hurricane and 6 hours interval)
@@ -123,7 +124,7 @@ get_best_tracks_sf <- function(){
   } else {
     # library(shapefiles)
 
-    best_tracks_zip <- file.path(.noaa_datadir,"NCEI", basename(best_tracks_url)); print(file.info(best_tracks_zip))
+    best_tracks_zip <- file.path(.ncei_datadir, basename(best_tracks_url)); print(file.info(best_tracks_zip))
     # download.file(best_tracks_url, destfile = best_tracks_zip)
     (best_tracks_dsn <- tools::file_path_sans_ext(best_tracks_zip))
     print(st_layers(best_tracks_dsn))
@@ -132,7 +133,7 @@ get_best_tracks_sf <- function(){
     # browseURL( file.path(.noaa_datadir,"NCEI"))
 
     best_tracks_sf <- st_read(best_tracks_dsn
-                              , query = "select * from \"IBTrACS.ALL.list.v04r00.lines\" where BASIN='NA' and WMO_AGENCY='hurdat_atl' and  USA_WIND>34 and USA_SSHS>0 and USA_RMW is not null"
+#                              , query = "select * from \"IBTrACS.ALL.list.v04r00.lines\" where BASIN='NA' and WMO_AGENCY='hurdat_atl' and  USA_WIND>34 and USA_SSHS>0 and USA_RMW is not null"
     )# %>% st_set_crs(4269) %>% st_transform(st_crs(lcc))
 
     print(st_crs(best_tracks_sf))

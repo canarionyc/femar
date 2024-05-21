@@ -1,3 +1,17 @@
+utils::globalVariables(c('.'))
+
+# fips codes --------------------------------------------------------------
+
+utils::globalVariables(c('STATEFIPS','COUNTYFIPS','STCOFIPS','TRACT','TRACTFIPS'))
+
+# states ------------------------------------------------------------------
+utils::globalVariables(c("STATEFP", "STATENS", "AFFGEOID", "GEOID", "STUSPS", "NAME",
+                         "LSAD", "ALAND", "AWATER", "geometry"))
+
+
+# counties ----------------------------------------------------------------
+
+
 utils::globalVariables(c("STATEFP", "COUNTYFP", "COUNTYNS", "GEOID", "NAME", "NAMELSAD",
                          "LSAD", "CLASSFP", "MTFCC", "CSAFP", "CBSAFP", "METDIVFP", "FUNCSTAT",
                          "ALAND", "AWATER", "INTPTLAT", "INTPTLON", "geometry"))
