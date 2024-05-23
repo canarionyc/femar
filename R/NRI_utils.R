@@ -26,41 +26,6 @@ get_NRI_HazardInfo <- function(){
 
 
 
-NRI_states_info <- function() {
-  NRI_states_fst <- file.path(.NRI_workdir, "NRI_states.fst"); print(file.info(NRI_states_fst))
-  dput(names(fst(NRI_states_fst)))
-  print(fst.metadata(NRI_states_fst))
-
-}
-
-#' Get NRI Hazards table by State
-#'
-#' @param select_cols character
-#' @return a data.table
-#' @export
-#'
-get_NRI_states_dt <- function(select_cols=NULL) {
-  # browser()
-  NRI_states_dt_rds <- file.path(.NRI_workdir, "NRI_states_dt.rds"); print(file.info(NRI_states_dt_rds))
-  NRI_states_fst <- file.path(.NRI_workdir, "NRI_states.fst"); print(file.info(NRI_states_fst))
-  if(file.exists(NRI_states_dt_rds)) {
-
-    NRI_states_dt <- readRDS(NRI_states_dt_rds)
-  } else if(file.exists(NRI_states_fst)) {
-    print(fst.metadata(NRI_states_fst))
-    NRI_states_dt <- read_fst(NRI_states_fst, as.data.table = TRUE, columns = select_cols)
-  } else {
-    #  list.files(.NRI_datadir)
-    NRI_states_dt <- fread(file.path(.NRI_datadir, "NRI_Table_States.csv"))
-    # NRI_states_sf <- get_NRI_states_sf()
-    # NRI_states <- data.table(st_drop_geometry(NRI_states_sf), stringsAsFactors = TRUE)
-    # area_cols <- grep("AREA$", names(NRI_states_dt ), value=TRUE) # in sq miles
-    write_fst(NRI_states_dt, path = NRI_states_fst);   print(file.info(NRI_states_fst))
-    saveRDS(NRI_states_dt, NRI_states_dt_rds)
-  }; str(NRI_states_dt)
-
-  return(subset(NRI_states_dt, select=select_cols))
-}
 
 
 #' Get NRI Hazards table by County

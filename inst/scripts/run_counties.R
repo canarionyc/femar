@@ -11,6 +11,18 @@ get_US_county_2010_shape <- function() {
   US
 }
 
+
+## RISK_SCORE.cty.shingle --------------------------------------------------
+
+(risk_intervals.cty <- NRI_ctys_dt[, .(COUNT=.N,MIN_RISK_SCORE=min(RISK_SCORE, na.rm = TRUE), MAX_RISK_SCORE=max(RISK_SCORE, na.rm = TRUE)), keyby=.(RISK_RATNG)])
+(risk_intervals.cty.mat <- as.matrix(na.omit(risk_intervals.cty[, .(MIN_RISK_SCORE, MAX_RISK_SCORE)])))
+library(lattice)
+?shingle
+RISK_SCORE.cty.shingle <- shingle(NRI_ctys_dt$RISK_SCORE, intervals = risk_intervals.cty.mat)
+plot(RISK_SCORE.cty.shingle, main="NRI RISK rating vs score at County level", xlab = 'RISK_SCORE', ylab='RISK_RATNG')
+
+
+
 ?load_tiger
 (counties_sf <- tigris::counties(cb=FALSE,
                                  keep_zipped_shapefile = TRUE ))
@@ -30,8 +42,20 @@ plot(counties_lcc_buff_sf['NAME'])
 
 # coastal counties buffered -----------------------------------------------
 
+
+## Lambers Conical Confocal ------------------------------------------------
+
+
 (counties.coastline_buff_lst <- st_intersects(counties_lcc_buff_sf, coastline_lcc_sf))
 
 (coastal_counties_lcc_sf  <- counties_lcc_sf %>% subset(lengths(counties.coastline_buff_lst)>0)) %>%
   subset(subset=STATEFP!="02" & STATEFP !="15" & STATEFP<60) %>%
   st_geometry() %>% plot()
+
+
+# Puerto Rico -------------------------------------------------------------
+
+str(counties_sf)
+(pr_ctys_sf <- counties_sf %>% subset(STUSPS   =='PR' & STATEFP=='72'))
+summary(pr_ctys_sf)
+

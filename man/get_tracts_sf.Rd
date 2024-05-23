@@ -9,6 +9,9 @@ crosswalks.}
 \usage{
 get_tracts_sf(year = getOption("tigris_year"))
 }
+\arguments{
+\item{year}{int tigris year}
+}
 \value{
 simple feature
 }
