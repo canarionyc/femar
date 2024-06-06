@@ -2,7 +2,6 @@ utils::globalVariables(c('.NRI_datadir', 'Hazard'
                          ,'RISK_RATNG', 'SOVI_RATNG'))
 # NRI by state ------------------------------------------------------------
 
-
 utils::globalVariables(c("OID_", "NRI_ID", "STATE", "STATEABBRV", "STATEFIPS", "POPULATION",
                          "BUILDVALUE", "AGRIVALUE", "AREA", "EAL_SCORE", "EAL_RATNG",
                          "EAL_VALT", "EAL_VALB", "EAL_VALP", "EAL_VALPE", "EAL_VALA",

@@ -1,10 +1,10 @@
 #' @import configr
-
+#' @rawNamespace import(stats, except = filter)
 options(yaml.eval.expr=TRUE)
 
 .onLoad  <- function(libname, pkgname) {
   # print(stringr::str_glue("About to load {libname}/{pkgname}"))
-  .datatable.aware <- TRUE
+
 
   # options(scipen=999L)
   suppressWarnings({
@@ -20,6 +20,8 @@ options(yaml.eval.expr=TRUE)
 
     .census_workdir <- configr::eval.config("CENSUS_WORKDIR",eval.expr=TRUE)
     })
+
+
 }
 
 # onUnLoad ----------------------------------------------------------------

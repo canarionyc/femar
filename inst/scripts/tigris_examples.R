@@ -318,58 +318,6 @@ st_drivers()
 plot(vect(tx_cbsa_sf),'CBSAFP', lwd=2)
 plot(vect(tx_counties_sf), add=TRUE)
 
-# us_zctas ----
-options(tigris_use_cache = TRUE)
-getOption("tigris_use_cache")
-(us_zctas <- zctas(cb = TRUE, starts_with = NULL
-                   , year = 2020
-                   , state = NULL)
-)
-gc()
-
-# state_zcta3_sf ----
-options(tigris_year=2010L)
-browseURL("https://www2.census.gov/geo/tiger/TIGER2010/ZCTA5")
-
-?zctas
-state <- 'TX'
-library(foreach); library(iterators)
-options(tigris_year = 2010L)
-debugonce(zctas)
-foreach(state =iter( states_sf$STUSPS), .errorhandling='pass', .verbose=TRUE) %do% {
-  state_zcta_rds <- file.path(.census_workdir, sprintf("%s_zcta_%d_sf.rds",state, getOption("tigris_year"))); print(file.info(state_zcta_rds))
-  state_zcta3_rds <- file.path(.census_workdir, sprintf("%s_zcta3_%d_sf.rds",state, getOption("tigris_year"))); print(file.info(state_zcta3_rds))
-  options(tigris_year = 2010L); state_zcta3_gpkg <- file.path(.census_workdir, sprintf("%s_zcta3_%d_sf.gpkg",state, getOption("tigris_year"))); print(file.info(state_zcta3_gpkg))
-  if(!file.exists(state_zcta3_gpkg)) {
-    state_zcta_sf <- zctas(cb=FALSE,
-                           #                         year=2010,
-                           state = state
-                           , keep_zipped_shapefile=TRUE)
-    print(state_zcta_sf)
-    # plot(st_geometry(state_zcta_sf))
-    plot(vect(state_zcta_sf), 'ZCTA5CE10')
-    # ?aggregate.sf
-    state_zcta_sf$ZCTA3CE10 <-substr(state_zcta_sf$ZCTA5CE10, 1,3)
-    state_zcta_sf['ZCTA3CE10']
-    # ?st_union
-    #    (tmp_sf <- state_zcta_sf[c(   'ALAND10', 'AWATER10'  ,'ZCTA3CE10')][1:3,])
-    state_zcta3_sf <- aggregate(state_zcta_sf[,c('ALAND10', 'AWATER10')], by=list(ZCTA3CE10=state_zcta_sf$ZCTA3CE10), FUN=sum )
-    names(state_zcta3_sf)[1] <- 'ZCTA3CE10'
-
-    # plot(st_geometry(state_zcta3_sf))
-    plot(vect(state_zcta3_sf), 'ZCTA3CE10')
-    #
-    # state_zcta3_sf <- unionSpatialPolygons(state_zcta_sf, substr(state_zcta_sf$zctaCE10, 1,3))
-    # plot(state_zcta3_sf )
-    saveRDS(state_zcta3_sf, file=state_zcta3_rds); cat(state_zcta3_rds, file.size(state_zcta3_rds), "bytes\n")
-    st_write(state_zcta3_sf, dsn = state_zcta3_gpkg , layer = "State_ZCTA3")
-  }
-  else {
-  #   state_zcta3_sf <- readRDS(file=state_zcta3_rds)
-    state_zcta3_sf <- st_read(dsn = state_zcta3_gpkg , layer = "State_ZCTA3")
-   }
-}
-
 
 
 # urban_areas -------------------------------------------------------------

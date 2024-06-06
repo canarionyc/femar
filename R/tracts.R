@@ -6,7 +6,8 @@
 #' @param year int tigris year
 #' @return simple feature
 #' @export
-get_tracts_sf <- function(year=getOption("tigris_year")){
+get_tracts_sf <- function(year=getOption("tigris_year", 2020L)){
+  message(paste("Retrieving census tracts for year", year))
   tracts_sf_rds <- file.path(.census_workdir, sprintf("tracts_%d.rds", year)); print(file.info(tracts_sf_rds))
   if(file.exists(  tracts_sf_rds)) {
     tracts_sf <- readRDS(tracts_sf_rds)
@@ -18,19 +19,18 @@ get_tracts_sf <- function(year=getOption("tigris_year")){
     # tracts_sf.lst <- lapply(tracts_dsn, st_read)
     #
     # tracts_sf <- do.call("rbind", tracts_sf.lst)
+    ?tracts
+    (tracts_sf <- tracts(cb=TRUE,year=year,keep_zipped_shapefile = TRUE) %>% st_transform( st_crs(3857)))
 
-    (tracts_sf <- tracts(cb=TRUE,keep_zipped_shapefile = TRUE) %>% st_transform( st_crs(3857)))
 
-
-# add coastline -----------------------------------------------------------
+    # add coastline -----------------------------------------------------------
+    # ?tigris::coastline
     (coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857))) # %>% subset(NAME!="Arctic")
     coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
 
     tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=tracts_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()
     print(summary(tmp_df))
     (tracts_sf <- cbind(tracts_sf, tmp_df))
-
-
 
     saveRDS(tracts_sf,   tracts_sf_rds); print(file.info(tracts_sf_rds))
   }; str(tracts_sf)
@@ -46,67 +46,76 @@ get_tracts_sf <- function(year=getOption("tigris_year")){
 #' @export
 #'
 get_NRI_tracts_sf <- function(state) {
-  # browser()
+
   # browseURL(.NRI_datadir)
-  NRI_tracts_sf_Rds <- file.path(.NRI_workdir, "NRI_tracts_sf.Rds"); print(file.info(NRI_tracts_sf_Rds))
+  if(missing(state)) {
+    NRI_tracts_sf_Rds <- file.path(.NRI_workdir, "NRI_tracts_sf.Rds"); print(file.info(NRI_tracts_sf_Rds))
 
-  if(file.exists(NRI_tracts_sf_Rds)) {
-    NRI_tracts_sf<- readRDS(NRI_tracts_sf_Rds)
-    return(NRI_tracts_sf)
-  } else {
-    NRI_GDB_tracts_gdb <- file.path(.NRI_datadir, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
-    # print(st_layers(NRI_GDB_tracts_gdb))
+    if(file.exists(NRI_tracts_sf_Rds)) {
+      NRI_tracts_sf<- readRDS(NRI_tracts_sf_Rds)
 
-    # ?st_read
-    # debugonce(st_read)
+    } else {
+      NRI_GDB_tracts_gdb <- file.path(.NRI_datadir, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
+      # print(st_layers(NRI_GDB_tracts_gdb))
 
-    if(missing(state)) {
+      # ?st_read
+      # debugonce(st_read)
+
       NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
                                    , layer = "NRI_CensusTracts"
                                    ,quiet=TRUE)
-    } else{
-      statefips <- get_fips_code(state)
-      str(tigris::fips_codes)
-      NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
-                                   , layer = "NRI_CensusTracts"
-                                   , query = sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS  = '%d'", statefips))
-
+      saveRDS(NRI_tracts_sf, NRI_tracts_sf_Rds)
     }
 
-    NRI_tracts_sf$RISK_RATNG<- factor(NRI_tracts_sf$RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-    ))
-    # NRI_tracts_sf$RISK_RATNG <- fct_na_level_to_value(NRI_tracts_sf$RISK_RATNG,extra_levels  = "Insufficient Data" )
+  } else{
+    # browser()
+    state <- toupper(state)
+    statefips <- get_fips_code(state)
+    message(sprintf("Getting NRI tracts for state %s fips %s",state,statefips))
+    NRI_GDB_tracts_gdb <- file.path(.NRI_datadir, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
+    NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
+                                 , layer = "NRI_CensusTracts"
+                                 , query = sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS  = '%s'", statefips))
 
-    print(table(NRI_tracts_sf$RISK_RATNG, useNA = "ifany"))
 
-    NRI_tracts_sf$RISK_RATNG2 <- forcats::fct_collapse(NRI_tracts_sf$RISK_RATNG
-                                                    , 'High'=c('Very High','Relatively High')
-                                                    , 'Moderate'="Relatively Moderate"
-                                                    , "Low"=c("Relatively Low","Very Low"))
 
-    NRI_tracts_sf$SOVI_RATNG <- factor(NRI_tracts_sf$SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ))
-    print(levels(NRI_tracts_sf$SOVI_RATNG))
-    # NRI_tracts_sf$SOVI_RATNG <- fct_na_level_to_value(NRI_tracts_sf$SOVI_RATNG,extra_levels  = "Data Unavailable" )
 
-    print(table(NRI_tracts_sf$SOVI_RATNG, useNA = "ifany"))
-
-    # add coastline -----------------------------------------------------------
-    (coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857))) # %>% subset(NAME!="Arctic")
-    coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
-
-    tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()
-    print(summary(tmp_df))
-    (NRI_tracts_sf <- cbind(NRI_tracts_sf, tmp_df))
-
-    # ?sf::st_is_valid.sf
-    print(table(polygon_ok <- sf::st_is_valid(NRI_tracts_sf), useNA = "ifany"))
-    print(NRI_tracts_sf[!polygon_ok ,  'STCOFIPS'])
-    if(!all(polygon_ok)){
-
-      NRI_tracts_sf <- NRI_tracts_sf %>% sf::st_make_valid()
-    }
-    saveRDS(NRI_tracts_sf, NRI_tracts_sf_Rds)
   }
+  NRI_tracts_sf$RISK_RATNG<- factor(NRI_tracts_sf$RISK_RATNG
+                                    , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"))
+  # NRI_tracts_sf$RISK_RATNG <- fct_na_level_to_value(NRI_tracts_sf$RISK_RATNG,extra_levels  = "Insufficient Data" )
+
+  print(table(NRI_tracts_sf$RISK_RATNG, useNA = "ifany"))
+
+  # NRI_tracts_sf$RISK_RATNG2 <- forcats::fct_collapse(NRI_tracts_sf$RISK_RATNG
+  #                                                    , 'High'=c('Very High','Relatively High')
+  #                                                    , 'Moderate'="Relatively Moderate"
+  #                                                    , "Low"=c("Relatively Low","Very Low"))
+
+  NRI_tracts_sf$SOVI_RATNG <- factor(NRI_tracts_sf$SOVI_RATNG
+                                     , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ))
+  print(levels(NRI_tracts_sf$SOVI_RATNG))
+  # NRI_tracts_sf$SOVI_RATNG <- fct_na_level_to_value(NRI_tracts_sf$SOVI_RATNG,extra_levels  = "Data Unavailable" )
+
+  print(table(NRI_tracts_sf$SOVI_RATNG, useNA = "ifany"))
+
+  # add coastline -----------------------------------------------------------
+  coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
+  coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
+
+  tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()
+  print(summary(tmp_df))
+  (NRI_tracts_sf <- cbind(NRI_tracts_sf, tmp_df))
+
+  # ?sf::st_is_valid.sf
+  print(table(polygon_ok <- sf::st_is_valid(NRI_tracts_sf), useNA = "ifany"))
+  print(NRI_tracts_sf[!polygon_ok ,  'STCOFIPS'])
+  if(!all(polygon_ok)){
+
+    NRI_tracts_sf <- NRI_tracts_sf %>% sf::st_make_valid()
+  }
+
+
   return(NRI_tracts_sf)
 }
 

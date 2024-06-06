@@ -26,59 +26,6 @@ get_NRI_HazardInfo <- function(){
 
 
 
-
-
-#' Get NRI Hazards table by County
-#'
-#' @return a data.table
-#' @import forcats
-#' @export
-#'
-get_NRI_ctys_dt <- function() {
-  # browser()
-  NRI_ctys_rds <- file.path(.NRI_workdir, "NRI_ctys.rds"); print(file.info(NRI_ctys_rds))
-  NRI_ctys_fst <- file.path(.NRI_workdir, "NRI_ctys.fst"); print(file.info(NRI_ctys_fst))
-  if(file.exists(NRI_ctys_rds)) {
-
-    NRI_ctys_dt <- readRDS(NRI_ctys_rds)
-  } else if(file.exists(NRI_ctys_fst)) {
-    print(fst.metadata(NRI_ctys_fst))
-    NRI_ctys_dt <- read_fst(NRI_ctys_fst, as.data.table = TRUE)
-  } else {
-    # list.files(.NRI_datadir)
-    NRI_ctys_dt <- fread(file.path(.NRI_datadir, "NRI_Table_Counties.csv"))
-    NRI_ctys_dt[, STATEFIPS:=sprintf("%02d", STATEFIPS)]
-    str(NRI_ctys_dt$STATEFIPS)
-    print(range(NRI_ctys_dt$STCOFIPS))
-    NRI_ctys_dt[, STCOFIPS:=sprintf("%05d", STCOFIPS)]
-    str(NRI_ctys_dt$STCOFIPS)
-    # NRI_ctys_sf <- get_NRI_ctys_sf()
-    # NRI_ctys <- data.table(st_drop_geometry(NRI_ctys_sf), stringsAsFactors = TRUE)
-    area_cols <- grep("AREA$", names(NRI_ctys_dt ), value=TRUE) # in sq miles
-    print(area_cols)
-    # NRI_ctys_dt[, AREA:=set_units(AREA, "mile^2")]
-    # str(NRI_ctys_dt$AREA)
-    NRI_ctys_dt[, (area_cols):=lapply(.SD, set_units,  "mile^2"), .SDcols = area_cols]
-    str(NRI_ctys_dt[,  .SD,.SDcols = area_cols])
-    # ?fct_relevel
-
-    NRI_ctys_dt[, RISK_RATNG:=factor(RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                           # ,"Insufficient Data"
-                                                            ))]
-    print(table(NRI_ctys_dt$RISK_RATNG, useNA = "ifany"))
-
-    NRI_ctys_dt[, SOVI_RATNG:=factor(SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                         #    ,"Data Unavailable"
-                                                             ))]
-    print(levels(NRI_ctys_dt$SOVI_RATNG))
-    print(table(NRI_ctys_dt$SOVI_RATNG, useNA = "ifany"))
-    write_fst(NRI_ctys_dt, path = NRI_ctys_fst);   print(file.info(NRI_ctys_fst))
-    saveRDS(NRI_ctys_dt, NRI_ctys_rds);   print(file.info(NRI_ctys_rds))
-  }# ; str(NRI_ctys_dt)
-  print(summary(NRI_ctys_dt))
-  return(NRI_ctys_dt)
-}
-
 get_hrcn_cat_dt <- function(){
 
   hrcn_cat_rds <- file.path(.NRI_workdir, "hrcn_cat.rds"); print(file.info(hrcn_cat_rds))

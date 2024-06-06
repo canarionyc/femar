@@ -1,5 +1,5 @@
 # setup -------------------------------------------------------------------
-rm(list = ls())
+# rm(list = ls())
 source("~/Spatial/.RProfile")
 library(configr)
 configr::read.config()
@@ -30,10 +30,10 @@ NRIDataDictionary <- fread(file.path(.NRI_datadir, "NRIDataDictionary.csv"))
 NRIDataDictionary
 
 
-# NRI_ctys --------------------------------------------------------
+# NRI_counties --------------------------------------------------------
 
-devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_ctys_dt); NRI_ctys <- get_NRI_ctys_dt()
-NRI_ctys[, .(STATEFIPS         ,COUNTYFIPS,COUNTYTYPE    ,BUILDVALUE,AREA,EAL_VALB,ALR_VALB,Shape_Area
+devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_counties_dt); NRI_counties <- get_NRI_counties_dt()
+NRI_counties[, .(STATEFIPS         ,COUNTYFIPS,COUNTYTYPE    ,BUILDVALUE,AREA,EAL_VALB,ALR_VALB,Shape_Area
              ,HRCN_EVNTS
              ,HRCN_AFREQ
              ,HRCN_EXPB
@@ -53,7 +53,7 @@ NRI_ctys[, .(STATEFIPS         ,COUNTYFIPS,COUNTYTYPE    ,BUILDVALUE,AREA,EAL_VA
 library(sf)
 ?merge.sf
 ?base::merge
-merge(counties_sf, NRI_ctys, by=)
+merge(counties_sf, NRI_counties, by=)
 
 # hrcn_cat ----------------------------------------------------------------
 
@@ -67,16 +67,16 @@ hrcn_cat <- get_hrcn_cat()
 # east coast counties  ----------------------------------------------------
 
 ?plot.sf
-(ctys_east_coast_sf <- counties(state = c('LA','MS', 'AL','GA','FL'), cb=TRUE, keep_zipped_shapefile =TRUE) %>%
+(counties_east_coast_sf <- counties(state = c('LA','MS', 'AL','GA','FL'), cb=TRUE, keep_zipped_shapefile =TRUE) %>%
   st_transform(st_crs(lcc)))
 
-ctys_east_coast_sf %>% st_bbox()
+counties_east_coast_sf %>% st_bbox()
 
 
-# ctys_east_coast_best_tracks_png -----------------------------------------
+# counties_east_coast_best_tracks_png -----------------------------------------
 
 
-ctys_east_coast_sf%>%
+counties_east_coast_sf%>%
   st_geometry() %>%
   plot(axes=TRUE, graticule=TRUE, reset=FALSE)
 plot(best_tracks_sf_buff['NAME'] # %>% subset(NAME=="KATRINA")
@@ -133,78 +133,78 @@ dev.off()
 print(file.info(NRI_conus_png))
 browseURL(dirname(NRI_conus_png))
 
-# NRI_ctys_sf ------------------------------------------------------------------
-devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_GDB_ctys_sf); NRI_ctys_sf <- get_NRI_ctys_sf('TX')
-str(NRI_ctys_sf)
+# NRI_counties_sf ------------------------------------------------------------------
+devtools::load_all("~/Spatial/FEMA/femar"); debugonce(get_NRI_GDB_counties_sf); NRI_counties_sf <- get_NRI_counties_sf('TX')
+str(NRI_counties_sf)
 
 
-## NRI_hrcn_ctys -------------------------------------------------------
+## NRI_hrcn_counties -------------------------------------------------------
 
-sel <- c(1:which(names(NRI_ctys)=="CRF_VALUE"),grep("^HRCN",names(NRI_ctys)))
+sel <- c(1:which(names(NRI_counties)=="CRF_VALUE"),grep("^HRCN",names(NRI_counties)))
 
-NRI_ctys_hrcn <- NRI_ctys[, ..sel]
+NRI_counties_hrcn <- NRI_counties[, ..sel]
 
-## NRI_ctys_conus_png ----
-NRI_ctys_conus_sf <- subset(NRI_ctys_sf, ! STATEABBRV %in% states_noconus)
-NRI_ctys_conus_png <- file.path(.NRI_workdir, format(Sys.time(),"NRI_ctys_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_conus_png))
+## NRI_counties_conus_png ----
+NRI_counties_conus_sf <- subset(NRI_counties_sf, ! STATEABBRV %in% states_noconus)
+NRI_counties_conus_png <- file.path(.NRI_workdir, format(Sys.time(),"NRI_counties_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_counties_conus_png))
 library(Cairo)
-Cairo::CairoPNG(filename = NRI_ctys_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(NRI_ctys_conus_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_counties_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_counties_conus_sf['EAL_SCORE'])
 dev.off()
-print(file.info(NRI_ctys_conus_png))
-browseURL(dirname(NRI_ctys_conus_png))
+print(file.info(NRI_counties_conus_png))
+browseURL(dirname(NRI_counties_conus_png))
 
 # hurricane frequencies ---------------------------------------------------
-nrow(NRI_ctys_hrcn)
-attach(NRI_ctys_hrcn)
+nrow(NRI_counties_hrcn)
+attach(NRI_counties_hrcn)
 
 cbind(COUNTYFIPS, HRCN_AFREQ, HRCN_EVNTS)
 
 sum(HRCN_EVNTS, na.rm = TRUE)
-detach(NRI_ctys_hrcn)
+detach(NRI_counties_hrcn)
 
-# NRI_ctys_tx_sf <- subset(NRI_ctys_sf, STATEABBRV %in% 'TX')
-# NRI_ctys_tx_sf
+# NRI_counties_tx_sf <- subset(NRI_counties_sf, STATEABBRV %in% 'TX')
+# NRI_counties_tx_sf
 
-# NRI_ctys_tx_png ----
+# NRI_counties_tx_png ----
 
-NRI_ctys_tx_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"NRI_ctys_tx_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_tx_png))
+NRI_counties_tx_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"NRI_counties_tx_%Y%m%d_%H%M.png")); print(file.info(NRI_counties_tx_png))
 library(Cairo)
-Cairo::CairoPNG(filename = NRI_ctys_tx_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(NRI_ctys_tx_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_counties_tx_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_counties_tx_sf['EAL_SCORE'])
 dev.off()
-print(file.info(NRI_ctys_tx_png))
-browseURL(dirname(NRI_ctys_tx_png))
+print(file.info(NRI_counties_tx_png))
+browseURL(dirname(NRI_counties_tx_png))
 
 
 
-# NRI_ctys_ok_png ----
-NRI_ctys_ok_sf <- subset(NRI_ctys_sf, STATEABBRV %in% 'OK')
-NRI_ctys_ok_sf
+# NRI_counties_ok_png ----
+NRI_counties_ok_sf <- subset(NRI_counties_sf, STATEABBRV %in% 'OK')
+NRI_counties_ok_sf
 
 
-NRI_ctys_ok_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"NRI_ctys_ok_%Y%m%d_%H%M.png")); print(file.info(NRI_ctys_ok_png))
+NRI_counties_ok_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"NRI_counties_ok_%Y%m%d_%H%M.png")); print(file.info(NRI_counties_ok_png))
 library(Cairo)
-Cairo::CairoPNG(filename = NRI_ctys_ok_png, width = 10.0, height = 6.0, dpi=300, units="in")
-plot(NRI_ctys_ok_sf['EAL_SCORE'])
+Cairo::CairoPNG(filename = NRI_counties_ok_png, width = 10.0, height = 6.0, dpi=300, units="in")
+plot(NRI_counties_ok_sf['EAL_SCORE'])
 dev.off()
-print(file.info(NRI_ctys_ok_png))
-browseURL(dirname(NRI_ctys_ok_png))
+print(file.info(NRI_counties_ok_png))
+browseURL(dirname(NRI_counties_ok_png))
 
 # Hurricanes --------------------------------------------------------------
 (Prefix <- NRI_HazardInfo%>% subset(Hazard=="Hurricane", select="Prefix") %>% as.character())
 
-NRI_ctys_haz1_sf <- get_NRI_ctys_haz1(Prefix)
-NRI_ctys_haz1_sf
+NRI_counties_haz1_sf <- get_NRI_counties_haz1(Prefix)
+NRI_counties_haz1_sf
 
 ?natural_breaks
 library(rgeoda)
 undebug(rgeoda::natural_breaks)
-inherits(NRI_ctys_haz1_sf, "data.frame")
+inherits(NRI_counties_haz1_sf, "data.frame")
 # col.name <- 'HRCN_EALB'; col.descr <- "Expected Annualized Loss in Building value (EALB) due to Hurricane (in $USD)"
 col.name <- 'HRCN_ALRB'; col.descr <- "Annualized Loss Rate on Building value (ALRB) due to Hurricane"
 (breaks <- rgeoda::natural_breaks(k = 5
-                                  ,df = na.omit(NRI_ctys_haz1_sf[, col.name])
+                                  ,df = na.omit(NRI_counties_haz1_sf[, col.name])
                                   )
   )
 print(breaks, digits = 4L)
@@ -220,9 +220,9 @@ library(Cairo)
 Cairo::CairoPNG(filename = hrcn_alrb_png, width = 10.0, height = 6.0, dpi=300, units="in")
 
 
-lo <- min(NRI_ctys_haz1_sf[[col.name]], na.rm = TRUE)
-hi <- max(NRI_ctys_haz1_sf[[col.name]], na.rm = TRUE)
-plot(vect(NRI_ctys_haz1_sf), col.name, breaks=c(lo,breaks,hi)
+lo <- min(NRI_counties_haz1_sf[[col.name]], na.rm = TRUE)
+hi <- max(NRI_counties_haz1_sf[[col.name]], na.rm = TRUE)
+plot(vect(NRI_counties_haz1_sf), col.name, breaks=c(lo,breaks,hi)
      , main=paste("Texas", col.descr)
      , plg=list(title=col.name)
 )
@@ -235,31 +235,31 @@ browseURL(dirname(hrcn_alrb_png))
 # tornadoes ---------------------------------------------------------------
 (Prefix <- NRI_HazardInfo%>% subset(Hazard=="Tornado", select="Prefix") %>% as.character())
 
-get_NRI_ctys_haz1 <- function(Prefix) {
-  select <- c(1:grep("CRF_VALUE", names(NRI_ctys_sf))
-              ,grep(paste0("^",Prefix), names(NRI_ctys_sf), value = FALSE)
-              ,grep("Shape", names(NRI_ctys_sf))
+get_NRI_counties_haz1 <- function(Prefix) {
+  select <- c(1:grep("CRF_VALUE", names(NRI_counties_sf))
+              ,grep(paste0("^",Prefix), names(NRI_counties_sf), value = FALSE)
+              ,grep("Shape", names(NRI_counties_sf))
   )
 
-  NRI_ctys_haz1_sf <- subset(NRI_ctys_sf , select=select )
-  print(names(NRI_ctys_haz1_sf))
-  NRI_ctys_haz1_sf
+  NRI_counties_haz1_sf <- subset(NRI_counties_sf , select=select )
+  print(names(NRI_counties_haz1_sf))
+  NRI_counties_haz1_sf
 }
 
-NRI_ctys_ok_tornadoes_sf <- subset(NRI_ctys_sf, subset=STATEABBRV %in% 'OK'
-                                           , select=c(1:grep("CRF_VALUE", names(NRI_ctys_sf)), grep("TRND", names(NRI_ctys_sf)), grep("Shape", names(NRI_ctys_sf)))
+NRI_counties_ok_tornadoes_sf <- subset(NRI_counties_sf, subset=STATEABBRV %in% 'OK'
+                                           , select=c(1:grep("CRF_VALUE", names(NRI_counties_sf)), grep("TRND", names(NRI_counties_sf)), grep("Shape", names(NRI_counties_sf)))
 )
 
-NRI_ctys_ok_tornadoes_sf
+NRI_counties_ok_tornadoes_sf
 
-NRI_ctys_ok_tornadoes_dt <- st_drop_geometry(NRI_ctys_ok_tornadoes_sf) %>% setDT() %>% subset(select=county_building_cols)
+NRI_counties_ok_tornadoes_dt <- st_drop_geometry(NRI_counties_ok_tornadoes_sf) %>% setDT() %>% subset(select=county_building_cols)
 
-(county_building_cols <- grep("^(COUNTY|EAL_VALB|TRND)", names(NRI_ctys_ok_tornadoes_sf), value = TRUE) %>%
+(county_building_cols <- grep("^(COUNTY|EAL_VALB|TRND)", names(NRI_counties_ok_tornadoes_sf), value = TRUE) %>%
     grep(pattern="(EXPP|EXPPE|EXPA|EXPT|HLRP|HLRA|EALP|EALPE|EALA|EALT|ALRP|ALRA)", invert = TRUE, value = TRUE))
 
-NRI_ctys_ok_tornadoes_dt[,  TRND_EVNTS_PER_EXP_AREA:=TRND_EVNTS/TRND_EXP_AREA]
+NRI_counties_ok_tornadoes_dt[,  TRND_EVNTS_PER_EXP_AREA:=TRND_EVNTS/TRND_EXP_AREA]
 
-NRI_ctys_ok_tornadoes_dt[, .(TRND_AFREQ,12/TRND_EVNTS)]
+NRI_counties_ok_tornadoes_dt[, .(TRND_AFREQ,12/TRND_EVNTS)]
 
 
 # NRI tracts --------------------------------------------------------------
