@@ -1,15 +1,16 @@
-get_FEMA_Regions_dt <- function(){
+get_FEMA_Regions_dt <- function(.msg=interactive()){
 
-  FEMA_Regions_dt_rds <- file.path(.fema_workdir, "FEMA_Regions_dt.rds"); print(file.info(FEMA_Regions_dt_rds))
+  FEMA_Regions_dt_rds <- file.path(.fema_workdir, "FEMA_Regions_dt.rds") ; if(.msg) print(file.info(FEMA_Regions_dt_rds))
   if(file.exists(  FEMA_Regions_dt_rds)) {
     FEMA_Regions_dt <- readRDS(FEMA_Regions_dt_rds)
-
-
   } else {
-    FEMA_Regions_dt <- readxl::read_xlsx(file.path(.fema_datadir, "DataSets.xlsx"), sheet = "Regions") %>% setDT() %>% sanitize()
-    FEMA_Regions_dt[, DOWNLOAD_DATA:=NULL]
+    ?readxl::read_xlsx
+    DataSets.xlsx <- file.path(.fema_datadir, "DataSets.xlsx")
+
+    FEMA_Regions_dt <- readxl::read_xlsx(DataSets.xlsx,  range = "Regions!A1:B11", .name_repair=sanitize) %>% setDT()
+
     FEMA_Regions_dt[, STATES_SERVING:=strsplit(STATES_SERVING, ",\\s+", perl = TRUE)]
-    saveRDS(FEMA_Regions_dt,   FEMA_Regions_dt_rds); print(file.info(FEMA_Regions_dt_rds))
+    saveRDS(FEMA_Regions_dt,   FEMA_Regions_dt_rds); if(.msg) print(file.info(FEMA_Regions_dt_rds))
   }# ; str(FEMA_Regions_dt)
 
   # str(FEMA_Regions_dt)
@@ -17,7 +18,7 @@ get_FEMA_Regions_dt <- function(){
 }
 
 get_FEMA_Regions_sf <- function(){
-  FEMA_Regions_sf_rds <- file.path(.fema_workdir, "FEMA_Regions_sf.rds"); print(file.info(FEMA_Regions_sf_rds))
+  FEMA_Regions_sf_rds <- file.path(.fema_workdir, "FEMA_Regions_sf.rds")# ; print(file.info(FEMA_Regions_sf_rds))
   if(file.exists(  FEMA_Regions_sf_rds)) {
     FEMA_Regions_sf <- readRDS(FEMA_Regions_sf_rds)
   } else {

@@ -102,9 +102,6 @@ get_counties_within_cbsas <- function() {
 #
 # nrow(counties_sf)
 
-
-
-
 #' Get NRI Hazards table by County
 #'
 #' @return a data.table
