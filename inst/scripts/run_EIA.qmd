@@ -1,5 +1,4 @@
-
-#+ setup -------------------------------------------------------------------
+```{r setup}
 # rm(list = ls())
 source("~/Spatial/.RProfile")
 library(configr)
@@ -8,7 +7,7 @@ devtools::load_all("~/fstutils/", export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 print(getOption("tigris_year"))
 # source("~/lattice_setup.R")
-source("~/lattice_setup.R")
+library(readr)
 
 library(survey)
 browseURL("https://r-survey.r-forge.r-project.org/survey/")
@@ -17,7 +16,7 @@ browseURL(.EIA_workdir)
 list.files(.EIA_datadir, full.names = TRUE, recursive = TRUE)
 #dir.create(.EIA_workdir)
 ?strOptions
-op <- options(str=strOptions())
+strOptions()
 
 # https://www.eia.gov/consumption/residential/
 
@@ -28,20 +27,21 @@ op <- options(str=strOptions())
 # 4 Apartment in a building with 2 to 4 units
 # 5 Apartment in a building with 5 or more units
 
-levels(RECS2020$TYPEHUQ) <- c("MH", "SF.detached", "SF.attached", "APT.2-4u", "APT.5u+")
 RECS2020 <- get_RECS2020()
 dim(RECS2020)
-str(RECS2020, give.attr=FALSE, list.len=999L)
-View(RECS2020)
-
-
-?svytotal
-
+# Total number of households
+RECS2020[, .(NWEIGHT=sum(NWEIGHT))]
 
 str(RECS2020$TYPEHUQ)
 
 # ?fct_recode
 # RECS2020$TYPEHUQ <- fct_recode()
+
+
+
+attach(RECS2020)
+RECS2020[, table(TYPEHUQ, useNA = "ifany")]
+detach(RECS2020)
 
 # recs_mf <- RECS2020[TYPEHUQ=="5"]
 # recs_mf%>% as_tibble()
@@ -53,13 +53,29 @@ str(RECS2020$TYPEHUQ)
 
 
 
-#+ Climate -----------------------------------------------------------------
+```
+
+```{r Climate}
 RECS2020[, .(CLIMATE_REGION, BA_CLIMATE, IECC_CLIMATE_CODE)]
 
 RECS2020[, table(CLIMATE_REGION, useNA = "ifany")]
 RECS2020[, table(BA_CLIMATE, useNA = "ifany")]
 RECS2020[, table(IECC_CLIMATE_CODE, useNA = "ifany")]
 
+```
+
+# Calculate the frequency and RSE of households that used natural gas as their main space-heating fuel (Table HC6.1)
+
+
+```{r Natural_Gas}
+## Step 1 ----
+
+# Create a new variable to flag the records of households that used
+# natural gas as their main space-heating fuel. This new variable
+# NG_MAINSPACEHEAT is equal to 1 if the household used natural gas as its main
+# space-heating fuel and 0 otherwise.
+
+# grep("HEAT", names(RECS2020), value = TRUE)
 
 # FUELHEAT
 # 5 Electricity
@@ -69,21 +85,6 @@ RECS2020[, table(IECC_CLIMATE_CODE, useNA = "ifany")]
 # 7 Wood or pellets
 # 99 Other
 # -2 Not applicable
-
-
-
-
-#+ Natural_Gas ----
-
-# Calculate the frequency and RSE of households that used natural gas as their
-# main space-heating fuel (Table HC6.1)
-
-## Step 1 ----
-
-# Create a new variable to flag the records of households that used
-# natural gas as their main space-heating fuel. This new variable
-# NG_MAINSPACEHEAT is equal to 1 if the household used natural gas as its main
-# space-heating fuel and 0 otherwise.
 
 RECS2020$NG_MAINSPACEHEAT <- ifelse(RECS2020$FUELHEAT == 1, 1, 0)
 
@@ -97,6 +98,8 @@ RECS2020$NG_MAINSPACEHEAT <- ifelse(RECS2020$FUELHEAT == 1, 1, 0)
 # Number of household that use NG heating in main space
 RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT))]%>% as_tibble()
 
+# percent of household that use NG
+RECS2020[, weighted.mean(NG_MAINSPACEHEAT,NWEIGHT)]
 
 # Number of household that use NG heating in main space per property type
 RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT),NWEIGHT=sum(NWEIGHT)), keyby = .(TYPEHUQ)]%>% as_tibble()
@@ -104,7 +107,6 @@ RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT),NWEIGHT=sum(NWEIGHT)
 # Define the survey design with the Jackknife replicate weights to calculate
 # appropriate standard errors uising `svrepdesign`:
 ?svrepdesign
-RECS2020[, COUNT:=1]
 (RECS <- svrepdesign(data = RECS2020,
                      weight = ~NWEIGHT,
                      repweights = repweights,
@@ -113,32 +115,11 @@ RECS2020[, COUNT:=1]
                      scale = (ncol(repweights)-1)/ncol(repweights),
                      mse = TRUE))
 summary(RECS)
-class(RECS); methods(class="svyrep.design")
+class(RECS)
+methods(class="svyrep.design")
 dim(RECS)
 
 
-# Total number of households ----
-RECS2020[, .(NWEIGHT=sum(NWEIGHT))]
-svytotal(~COUNT, RECS)
-
-# Total BTU All Homes (CE1.1.pdf) -------------------------------------------------------
-
-svytotal(~COUNT+TOTSQFT_EN+TOTALBTU, design = RECS)
-## Site energy consumption
-svyratio(~TOTALBTU,~COUNT, design = RECS) # 76.8 thousand BTU per household
-svyratio(~TOTALBTU,~TOTSQFT_EN, RECS) # 42.2 thousand BTU/sqf
-svyratio(~TOTALBTU,~NHSLDMEM, RECS) # 31.4 million BTU per household member
-## Consumption Expenditures
-(consumption.df <- as.data.frame(svytotal(~
-         DOLLAREL+DOLLARNG+DOLLARLP+
-DOLLARFO
-         , design = RECS)))
-colSums(consumption.df) %>% as_tibble() # 232.7 billion dollars
-
-?svyby
-(RECS2020.stats <- svyby(~COUNT+TOTSQFT_EN+TOTALBTU, by=~STATE_POSTAL+TYPEHUQ, design = RECS, FUN = svytotal
-                         ,keep.var=FALSE))
-print(RECS2020.stats)
 
 library(weights)
 help(package="weights")
@@ -149,31 +130,21 @@ weights(RECS) %>% colSums() %>% as_tibble()# total number of household
 # Use `svytotal` to sum the number of households by `NG_MAINSPACEHEAT`, using the survey design defined above.
 # debugonce(svytotal)
 ?svytotal
-(NG_MAINSPACEHEAT_Total<-svytotal(~NG_MAINSPACEHEAT,RECS))
-methods(class="svrepstat")
-
+(NG_MAINSPACEHEAT_Total<-as.data.frame(svytotal(~NG_MAINSPACEHEAT,RECS)))
 RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT))]%>% as_tibble()
 # Answer. The estimated total households that used natural gas as their main
 # space-heating fuel is 62,713,449 households. The calculation for the RSE is
 # (483,047 / 62,713,449)*100 = 0.77. The sampling error is less than 1% of the
 # estimate, which is relatively small. Alternatively, the RSE can be derived
 # from:
-(NG_MAINSPACEHEAT_Total_RSE<-(SE(NG_MAINSPACEHEAT_Total)/coef(NG_MAINSPACEHEAT_Total))*100)
+(NG_MAINSPACEHEAT_Total$RSE<-(NG_MAINSPACEHEAT_Total$SE/NG_MAINSPACEHEAT_Total$total)*100)
 
-# percent of household that use NG
-# To obtain the proportion estimate, use the `svymean()` function instead of the
-# `svytotal` in the expression in Step 4. In addition, the confint() function
-# provides the 95% confidence limits.
+# To obtain the proportion estimate, use the `svymean()` function instead of the `svytotal` in the expression in Step 4. In addition, the confint() function provides the 95% confidence limits.
 svymean(~NG_MAINSPACEHEAT,RECS)
 
-RECS2020[, weighted.mean(NG_MAINSPACEHEAT,NWEIGHT)]
-#+ ----
-attach(RECS2020)
-(TOTSQFT_EN_by_STATE_POSTAL<-svyby(~TOTSQFT_EN, by=~STATE_POSTAL, RECS, svytotal))
+```
 
-(TOTSQFT_EN_by_STATE_POSTAL_TYPEHUQ<-svyby(~TOTSQFT_EN, by=~STATE_POSTAL+TYPEHUQ, RECS, svytotal))
-
-#+ BTU_NG  ----
+```{r R Example 2}
 # https://www.eia.gov/consumption/residential/data/2020/state/pdf/ce4.1.ng.st.pdf
 # Calculate the sum and average of the total natural gas used for the households
 # in South Carolina (SC) (Table CE4.1.NG.ST Annual household site natural gas
@@ -188,30 +159,19 @@ attach(RECS2020)
 # to 1 if BTUNG is greater than 0 and 0 otherwise. Then, run the survey design
 # for the dataset again before producing estimates using the functions mentioned
 # above.
-lattice:: histogram(RECS2020$BTUNG)
 
 RECS2020$NGUSE <- ifelse(RECS2020$BTUNG > 0, 1,0)
 (RECS <- svrepdesign(data = RECS2020,
-                     weight = ~NWEIGHT,
-                     repweights = repweights,
-                     type = "JK1",
-                     combined.weights = TRUE,
-                     scale = (ncol(repweights)-1)/ncol(repweights),
-                     mse = TRUE)
+                    weight = ~NWEIGHT,
+                    repweights = repweights,
+                    type = "JK1",
+                    combined.weights = TRUE,
+                    scale = (ncol(repweights)-1)/ncol(repweights),
+                    mse = TRUE)
 )
 
 # calculate the total:
 (BTUNG_TOTAL<-svyby(~BTUNG, by=~STATE_POSTAL+NGUSE, RECS, svytotal))
-# BTUNG_TOTAL<- BTUNG_TOTAL%>% subset(NGUSE==1)
-class(BTUNG_TOTAL)
-survey::dotchart(BTUNG_TOTAL)
-
-?dotplot
-BTUNG_TOTAL$STATE_POSTAL <- fct_reorder(BTUNG_TOTAL$STATE_POSTAL , BTUNG_TOTAL$BTUNG)
-dotplot(STATE_POSTAL ~ BTUNG, BTUNG_TOTAL, subset=NGUSE==1)
-
-?survey::dotchart.svyby
-
 (BTUNG_SCTOTAL<-subset(BTUNG_TOTAL, STATE_POSTAL=='SC')) %>% as_tibble # trillion BTU
 
 
@@ -220,14 +180,7 @@ dotplot(STATE_POSTAL ~ BTUNG, BTUNG_TOTAL, subset=NGUSE==1)
 # (Btu). The RSE for the total is ( 2509266634/26220994238)*100 = 9.6%.
 
 # calculate the mean:
-?svyby
-(BTUNG_MEAN<-svyby(~BTUNG, by=~STATE_POSTAL+NGUSE, subset(RECS, NGUSE==1), svymean))
-BTUNG_MEAN$STATE_POSTAL <- fct_reorder(BTUNG_MEAN$STATE_POSTAL , BTUNG_MEAN$BTUNG)
-class(BTUNG_MEAN)
-dotchart(BTUNG_MEAN)
-
-dotplot(STATE_POSTAL ~ BTUNG, BTUNG_MEAN, subset=NGUSE==1)
-
+(BTUNG_MEAN<-svyby(~BTUNG, by=~STATE_POSTAL+NGUSE, RECS, svymean))
 (BTUNG_SCMEAN<-subset(BTUNG_MEAN, STATE_POSTAL=='SC'))
 
 # The average consumption per household is 34.4 million BTU, with RSE=6.3. As
@@ -235,20 +188,28 @@ dotplot(STATE_POSTAL ~ BTUNG, BTUNG_MEAN, subset=NGUSE==1)
 # function. Note that the estimates for NGUSE = 0 reflect consumption for homes
 # that do not use any natural gas.
 
-#+ BTU_PER_SQFT ----
+
+```
+
+```{r R Example 3}
 
 # Calculate the energy intensity per square foot by climate zone for the United
 # States (Table CE1.1)
 
 # https://www.eia.gov/consumption/residential/data/2020/c&e/pdf/ce1.1.pdf
 
-## Step 1 ----
+## Step 1. ----
 
 #Create a new variable called CLIMATE_REGION to combine climate zones, and rerun
 #the survey design RECS.
-
-?fct_collapse
-
+RECS2020$CLIMATE_REGION <- as.factor(ifelse(RECS2020$BA_CLIMATE=='Subarctic', 'Very cold/Cold',
+                                            ifelse(RECS2020$BA_CLIMATE=='Very-Cold', 'Very cold/Cold',
+                                                   ifelse(RECS2020$BA_CLIMATE=='Cold', 'Very cold/Cold',
+                                                          ifelse(RECS2020$BA_CLIMATE=='Mixed-Humid', 'Mixed-humid',
+                                                                 ifelse(RECS2020$BA_CLIMATE=='Mixed-Dry', 'Mixed-dry/Hot-dry',
+                                                                        ifelse(RECS2020$BA_CLIMATE=='Hot-Dry', 'Mixed-dry/Hot-dry',
+                                                                               ifelse(RECS2020$BA_CLIMATE=='Hot-Humid', 'Hot-humid',
+                                                                                      ifelse(RECS2020$BA_CLIMATE=='Marine', 'Marine', NA)))))))))
 (RECS <- svrepdesign(data = RECS2020,
                      weight = ~NWEIGHT,
                      repweights = repweights,
@@ -261,101 +222,40 @@ dotplot(STATE_POSTAL ~ BTUNG, BTUNG_MEAN, subset=NGUSE==1)
 
 # To calculate the energy intensity per square foot for all U.S. homes, use the
 # `svyratio()` function.
-(TOTALBTU_per_TOTSQFT_EN<-svyratio(~TOTALBTU, ~TOTSQFT_EN, RECS))
+(BTUPERSQFT<-svyratio(~TOTALBTU, ~TOTSQFT_EN, RECS))
 
 # The national estimate for energy intensity per square foot is about 42,000
 # Btu, as shown in Table CE1.1. The RSE is (0.1801853/42.20056)*100 = 0.43.
 
-
-# TOTALBTU_per_TOTSQFT_EN_by_CLIMATE_REGION --------------------------------------------
-
-
-# To calculate the regional energy intensity per square foot, use `svyratio` with
+#To calculate the regional energy intensity per square foot, use `svyratio` with
 #`svyby()`.
-(TOTALBTU_per_TOTSQFT_EN_by_CLIMATE_REGION<-svyby(~TOTALBTU,denominator=~TOTSQFT_EN, by=~CLIMATE_REGION, RECS, svyratio))
+(BTUPERSQFT_BY_CLIMATE_REGION<-svyby(~TOTALBTU, by=~CLIMATE_REGION,denominator=~TOTSQFT_EN, RECS, svyratio))
 
-?svyboxplot
-svyboxplot(TOTALBTU~CLIMATE_REGION,design = RECS, all.outliers=TRUE)
-class(RECS)
-methods(class="svyrep.design")
-model.frame(RECS) %>% as_tibble()
 # As an example, the average total consumption per square foot in the hot-humid
 # climate is about 35,000 Btu, as shown in the table below.
 
+```
 
-# TOTALBTU_per_TOTSQFT_EN_by_STATE_POSTAL ----------------------------------------------
-
-
-(TOTALBTU_per_TOTSQFT_EN_by_STATE_POSTAL<-svyby(~TOTALBTU, by=~STATE_POSTAL,denominator=~TOTSQFT_EN, RECS, svyratio))
-
-?graphics::dotchart
-?dotchart.svyby
-?dotchart.svrepstat
-survey::dotchart(TOTALBTU_per_TOTSQFT_EN_by_STATE_POSTAL, main="TOTALBTU_per_TOTSQFT_EN_by_STATE_POSTAL", xlab="BTU per sqf")
-
-# TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ ----------------------------------------------
-
-(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ<-svyby(~TOTALBTU,denominator=~TOTSQFT_EN, RECS, svyratio, by=~TYPEHUQ))
-
-svytable()
-?svychisq
-
-# TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_CLIMATE_REGION ------------------------------------
-
-
-(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_CLIMATE_REGION<-svyby(~TOTALBTU,denominator=~TOTSQFT_EN, RECS, svyratio, by=~TYPEHUQ+CLIMATE_REGION))
-ftable(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_CLIMATE_REGION)
-methods(class="ftable")
-
-(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_CLIMATE_REGION.df <- as.data.frame(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_CLIMATE_REGION))
-
-xyplot(`TOTALBTU/TOTSQFT_EN`~TYPEHUQ, groups = CLIMATE_REGION, data = TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_CLIMATE_REGION.df, type="b")
-
-# TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL ------------------------------------
-
-TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst <- file.path(.EIA_workdir, "TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL.fst"); print(file.info(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst))
-if(file.exists(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst)) {
-  print(fst.metadata(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst))
-  TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL <- read_fst(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst, as.data.table = TRUE)
-} else {
-
-  (TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL<-svyby(~TOTALBTU,denominator=~TOTSQFT_EN, RECS, svyratio, by=~TYPEHUQ+STATE_POSTAL))
-  ftable(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL)
-  methods(class="ftable")
-
-  (TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL.df <- as.data.frame(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL))
-  str(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL.df)
-  TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL <- setDT(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL.df, key = c('TYPEHUQ','STATE_POSTAL'))
-  str(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL)
-  write_fst(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL, path = TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst);   print(file.info(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL_fst))
-}; str(TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL)
-TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL
-
-
-xyplot(`TOTALBTU/TOTSQFT_EN`~TYPEHUQ, groups = STATE_POSTAL, data = TOTALBTU_per_TOTSQFT_EN_by_TYPEHUQ_STATE_POSTAL.df, type="b")
-
-#+ R Example 4 ----
+```{r R Example 4}
 
 #Compare if the proportions and the consumption means for households using
 #natural gas as their main space-heating fuel are statistically different among
-#the households in different Census regions.
-
-#Use the `svychisq()` function to obtain chi-square statistics.
+#the households in different Census regions. To compare if the proportions of
+#households using natural gas as their main space-heating fuel are different
+#among the Census regions, use the `svychisq()` function to obtain chi-square
+#statistics.
 ?svyby
 # BTU per Sqft by census region
 ? svyratio
 ?svymean
 ?svytotal
-(TOTALBTU_per_TOTSQFT_EN_by_REGIONC<-svyby(formula = ~TOTALBTU, by=~REGIONC,denominator=~TOTSQFT_EN
+(BTUPERSQFT_BY_REGIONC<-svyby(formula = ~TOTALBTU, by=~REGIONC,denominator=~TOTSQFT_EN
                               , design = RECS, FUN=svyratio))
 
-survey::dotchart(TOTALBTU_per_TOTSQFT_EN_by_REGIONC)
+
 (NGSPH_CHISQ<-svychisq(~NG_MAINSPACEHEAT+REGIONC,design=RECS,statistic="Chisq"))
 class(NGSPH_CHISQ)
 methods(class="htest")
-
-
-
 
 # To compare if the average space-heating consumption estimates for households
 # using natural gas as their main space-heating fuel are different among the
@@ -368,7 +268,10 @@ svytotal(x = ~TOTALBTUSPH,design = RECS_NGSPH)
 
 (regTermTest(NGSPH_REGIONGLM, ~factor(REGIONC), method="Wald"))
 
-#+ cleanup -----------------------------------------------------------------
+
+```
+
+```{r cleanup}
 
 save.image(file = file.path(.NRI_workdir, "run_EIA.RData"))
 
@@ -408,3 +311,4 @@ save.image(file = file.path(.NRI_workdir, "run_EIA.RData"))
 # References
 # Lohr, S.L. (2010). Sampling: Desing and Analysis. 2nd ed. Boston: Brooks/Cole. Page 380–383.
 # Lumley, T. (2017) "Survey: analysis of complex survey samples". R package version 4.1-1.
+```
