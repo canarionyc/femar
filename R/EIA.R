@@ -815,6 +815,7 @@ get_RECS2020 <- function(){
                                 )) %>% setDT(key = c('DOEID'))
     write_fst(RECS2020, path = RECS2020_fst);   print(file.info(RECS2020_fst))
   }; str(RECS2020,give.attr = FALSE)
+  RECS2020[, COUNT:=1]
 
   RECS2020[, CLIMATE_REGION := fct_collapse(BA_CLIMATE
                                             , 'Very cold/Cold'=c('Subarctic','Very-Cold','Cold')

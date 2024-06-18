@@ -2,6 +2,8 @@
 #+ setup -------------------------------------------------------------------
 # rm(list = ls())
 source("~/Spatial/.RProfile")
+options(scipen = 999L);getOption("scipen")
+
 library(configr)
 configr::read.config()
 devtools::load_all("~/fstutils/", export_all = TRUE)
@@ -10,14 +12,35 @@ print(getOption("tigris_year"))
 # source("~/lattice_setup.R")
 source("~/lattice_setup.R")
 
+options(rio.import.class='data.table')
+getOption("rio.import.class")
+?rio::import
 library(survey)
+getOption("survey.multicore")
+
+?svybys
+?as.formula
+by.vars <- c('TYPEHUQ'
+             #             ,'CLIMATE_REGION'
+             ,'STATE_POSTAL'
+             #             ,'KOWNRENT'
+             ,'YEARMADERANGE')
+(by.vars.fmla <- as.formula(paste("~ ", paste(by.vars, collapse= "+"))))
+
+
+
 browseURL("https://r-survey.r-forge.r-project.org/survey/")
 stop()
+file.choose()
+load( file.path(.NRI_workdir, "run_EIA.RData"))
+
 browseURL(.EIA_workdir)
 list.files(.EIA_datadir, full.names = TRUE, recursive = TRUE)
 #dir.create(.EIA_workdir)
 ?strOptions
 op <- options(str=strOptions())
+
+
 
 # https://www.eia.gov/consumption/residential/
 
@@ -28,7 +51,8 @@ op <- options(str=strOptions())
 # 4 Apartment in a building with 2 to 4 units
 # 5 Apartment in a building with 5 or more units
 
-levels(RECS2020$TYPEHUQ) <- c("MH", "SF.detached", "SF.attached", "APT.2-4u", "APT.5u+")
+# levels(RECS2020$TYPEHUQ) <- c("MH", "SF.detached", "SF.attached", "APT.2-4u", "APT.5u+")
+levels(RECS2020$TYPEHUQ) <- as.character(1:5)
 RECS2020 <- get_RECS2020()
 dim(RECS2020)
 str(RECS2020, give.attr=FALSE, list.len=999L)
@@ -104,7 +128,7 @@ RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT),NWEIGHT=sum(NWEIGHT)
 # Define the survey design with the Jackknife replicate weights to calculate
 # appropriate standard errors uising `svrepdesign`:
 ?svrepdesign
-RECS2020[, COUNT:=1]
+
 (RECS <- svrepdesign(data = RECS2020,
                      weight = ~NWEIGHT,
                      repweights = repweights,
@@ -116,33 +140,407 @@ summary(RECS)
 class(RECS); methods(class="svyrep.design")
 dim(RECS)
 
+# Structural and geographic characteristics ----
+## by Housing unit type (HC2.1) ----
+browseURL("https://www.eia.gov/consumption/residential/data/2020/hc/pdf/HC%202.1.pdf")
+browseURL(file.path(.EIA_datadir, "RECS", "HC 2.1.xlsx"))
+
 
 # Total number of households ----
-RECS2020[, .(NWEIGHT=sum(NWEIGHT))]
-svytotal(~COUNT, RECS)
+?svyrepstat
+RECS2020[, .(NWEIGHT=sum(NWEIGHT))]; out <- svytotal(~COUNT, RECS)
+class(out)
+methods(class="svrepstat")
 
-# Total BTU All Homes (CE1.1.pdf) -------------------------------------------------------
+RECS.mf <- subset(RECS, TYPEHUQ %in% 4:5)
 
-svytotal(~COUNT+TOTSQFT_EN+TOTALBTU, design = RECS)
-## Site energy consumption
-svyratio(~TOTALBTU,~COUNT, design = RECS) # 76.8 thousand BTU per household
-svyratio(~TOTALBTU,~TOTSQFT_EN, RECS) # 42.2 thousand BTU/sqf
+svytotal(~COUNT, design = subset(RECS, TYPEHUQ %in% 5))
+
+svyby(~COUNT, by=~TYPEHUQ, RECS.mf, FUN = svytotal)
+
+library(weights)
+help(package="weights")
+weights(RECS) %>% colSums() %>% as_tibble()# total number of household
+
+# Square Footage ----------------------------------------------------------
+
+## Total square footage of U.S. homes (HC10.1) ----
+# https://www.eia.gov/consumption/residential/data/2020/hc/pdf/HC%2010.1.pdf
+browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.1.pdf")
+
+sqft.col_names <- grep("^[^Z]", names(RECS2020), value = TRUE) %>%
+  grep(pattern="RANGE",  value = TRUE, invert = TRUE) %>%
+  grep(pattern="INC",  value = TRUE, invert = TRUE) %>%
+  grep(pattern="SQFT", x=., value = TRUE, perl = TRUE)
+
+(sqft.fmla <- as.formula(paste("~COUNT+", paste(sqft.col_names,collapse  = "+"), sep =  " ")))
+
+# stri_detect_regex(names(RECS2020), pattern = "^[^Z].*SQ")
+
+RECS2020$ZSQFTRANGE
+browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.1.pdf")
+browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.1.xlsx")
+# Number of housing units (million)	Total square footage (billion square feet)
+#           Total U.S.a	Totalb	Heated	Cooled
+# All homes	  123.53	  224.62	199.32	164.87
+
+HC10_1_rda <- file.path(.EIA_workdir, "HC10_1.rda"); print(file.info(HC10_1_rda))
+if(file.exists(  HC10_1_rda)) {
+  load(HC10_1_rda, verbose=TRUE)
+} else {
+
+  HC10_1.svytotal <- svytotal(~COUNT+TOTSQFT_EN+TOTHSQFT+TOTCSQFT, RECS)
+  print(HC10_1.svytotal)
+
+  ?svybys
+  # debugonce(svybys)
+  HC10_1.svyby.svytotal <- svyby(~COUNT+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
+  #                      +YEARMADERANGE
+                        , design = RECS, FUN = svytotal)
+  str(HC10_1.svyby.svytotal)
+
+  HC10_1.svybys.svytotal <- svybys(~COUNT+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL, design = RECS, FUN = svytotal)
+  print(HC10_1.svybys.svytotal)
+  save(list = ls(pattern = "HC10_1\\.svy"), file = HC10_1_rda); print(file.info(HC10_1_rda))
+}; str(HC10_1)
+
+HC10_1.svyby.dt <- as.data.table(HC10_1.svyby)
+HC10_1.svyby.dt[, .(sum(COUNT),TOTSQFT_EN=sum(TOTSQFT_EN))]
+
+## Average square footage of U.S. homes (HC10.9) ---------------------------
+browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.9.pdf")
+list.files(file.path(.EIA_datadir, "RECS"), pattern = "\\.xlsx", full.names = TRUE)
+browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.9.xlsx")
+?svyratio
+HC10_9.rda <- file.path(.EIA_workdir, "HC10_9.rda"); print(file.info(HC10_9.rda))
+
+if(file.exists(  HC10_9.rda)) {
+  load(HC10_9.rda, verbose=TRUE)
+} else {
+
+  HC10_9.out1 <- svyratio(sqft.fmla,~COUNT, RECS)
+  print(HC10_9.out1)
+
+  (HC10_9 <- readxl::read_xlsx("E:\\Datasets\\EIA\\RECS\\HC 10.9.xlsx", skip=3))
+  names(HC10_9)
+  str(HC10_9)
+  print(HC10_9[1,])
+  # class(HC10_9.out1)
+  # ?svyby
+
+  ## Housing unit type -------------------------------------------------------
+
+  # HC10_9.svybys.svyratio <- svybys(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
+  #                                  ,denominator=~COUNT
+  #                       , RECS, svyratio, keep.var=TRUE)
+
+print(HC10_9.svybys.svyratio)
+  ?svytable
+  ?svyboxplot
+  # ?save
+
+  # Census region and division
+  # Number of housing units (million)		"Average square footage per housing unit"
+
+  # Northeast	                21.92		  1,827
+  # Midwest	                  27.04		  2,006
+  # South	                    46.84		  1,806
+  # West	                    27.72		  1,650
+
+
+(HC10_9.svyby_REGIONC <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~REGIONC
+
+                               ,denominator=~COUNT, RECS, svyratio, keep.var=TRUE))
+(HC10_9.svyby_TYPEHUQ_REGIONC <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+REGIONC
+                               #                       +YEARMADERANGE
+                               ,denominator=~COUNT, RECS, svyratio, keep.var=TRUE))
+?svyratio
+  methods(class="svyratio")
+  ?svyby
+  HC10_9.svyby_TYPEHUQ_STATE_POSTAL <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
+
+                       ,denominator=~COUNT, RECS, svyratio, keep.var=TRUE)
+class(HC10_9.svyby_TYPEHUQ_STATE_POSTAL)
+  HC10_9.svyby_TYPEHUQ_STATE_POSTAL %>%
+    subset(TYPEHUQ %in% 4:5) %>%
+    subset(STATE_POSTAL %in% c('CA')) %>%
+    print()
+
+  ?save
+  save(HC10_9.svyby_REGIONC,HC10_9.svyby_TYPEHUQ_REGIONC,HC10_9.svyby_TYPEHUQ_STATE_POSTAL, file=HC10_9.rda); print(file.info(HC10_9.rda))
+}; str(HC10_9.out1)
+
+
+coef(HC10_9.svybys.svyratio)
+
+
+# plot sqft per home ------------------------------------------------------
+
+# HC10_1_rda <- file.path(.EIA_workdir, "HC10_1.rda"); print(file.info(HC10_1_rda))
+# stopifnot(file.exists(  HC10_1_rda))
+#   load(HC10_1_rda, verbose=TRUE)
+
+
+
+## sqft per household ----
+
+HC10_9.rda <- file.path(.EIA_workdir, "HC10_9.rda"); print(file.info(HC10_9.rda))
+stopifnot(file.exists(HC10_9.rda))
+load(HC10_9.rda, verbose=TRUE)
+
+methods(class = "svyby")
+(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt <- setDT(HC10_9.svyby_TYPEHUQ_STATE_POSTAL, key = c('TYPEHUQ', 'STATE_POSTAL'))%>% sanitize())
+# (HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt <- HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt[! TYPEHUQ %in% 1:3, ] %>% droplevels())
+
+
+HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt[, (3:8):=lapply(.SD, round), .SDcols = 3:8]
+HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt
+
+levels(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt$TYPEHUQ)
+?lattice::dotplot
+?fct_reorder
+?dcast.data.table
+(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide <- dcast(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt, STATE_POSTAL~TYPEHUQ
+                                     , value.var = c('TOTSQFT_EN_SLASH_COUNT'
+                                                     ,'TOTHSQFT_SLASH_COUNT', 'TOTCSQFT_SLASH_COUNT'
+                                                     ,'SETOTSQFT_EN_SLASH_COUNT')))
+
+HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide[, STATE_POSTAL:=fct_reorder(STATE_POSTAL, TOTSQFT_EN_SLASH_COUNT_4)]
+levels(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide$STATE_POSTAL)
+dotplot(STATE_POSTAL ~TOTSQFT_EN_SLASH_COUNT_2+TOTSQFT_EN_SLASH_COUNT_4+TOTSQFT_EN_SLASH_COUNT_5
+        , data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide
+        ,drop.unused.levels = TRUE)
+
+as.formula(paste("~",paste(c('TOTSQFT_EN_SLASH_COUNT' ,'TOTHSQFT_SLASH_COUNT', 'TOTCSQFT_SLASH_COUNT'), collapse = "+")))
+
+dotplot(STATE_POSTAL ~TOTSQFT_EN_SLASH_COUNT_2+TOTSQFT_EN_SLASH_COUNT_4+TOTSQFT_EN_SLASH_COUNT_5
+        , data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide
+        ,drop.unused.levels = TRUE)
+
+dotplot(STATE_POSTAL ~TOTHSQFT_SLASH_COUNT, groups=TYPEHUQ, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
+dotplot(STATE_POSTAL ~TOTCSQFT_SLASH_COUNT, groups=TYPEHUQ, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
+
+
+bwplot( TYPEHUQ ~TOTHSQFT_SLASH_COUNT, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
+HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt[TOTHSQFT_SLASH_COUNT<500] # Hawai
+
+bwplot( TYPEHUQ ~TOTCSQFT_SLASH_COUNT, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
+
+bwplot( TYPEHUQ ~TOTSQFT_EN_SLASH_COUNT, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
+
+
+
+# Consumption and Expenditures (Site Energy) ----
+# https://www.eia.gov/consumption/residential/data/2020/index.php?view=consumption
+## CE1.1 Summary consumption and expenditures in the U.S.  -------------------------------------------------------
+?svytotal
+# Total U.S.b	Total (trillion Btu)
+# All homes	123.53	9,481
+
+# CE1.1 Summary consumption and expenditures in the U.S. - totals and intensities
+#https://www.eia.gov/consumption/residential/data/2020/c&e/pdf/ce1.1.pdf
+# https://www.eia.gov/consumption/residential/data/2020/c&e/xls/ce1.1.xlsx
+browseURL("https://www.eia.gov/consumption/residential/data/2020/c&e/xls/ce1.1.xlsx")
+CE1_1_rda <- file.path(.EIA_workdir, "CE1_1.rda"); print(file.info(CE1_1_rda))
+if(file.exists(  CE1_1_rda)) {
+  load(CE1_1_rda, verbose=TRUE)
+} else {
+  (CE1_1_total<- svytotal(~COUNT+TOTSQFT_EN+TOTALBTU, design = RECS))
+  print(CE1_1_total)
+
+
+  # (CE1_1_bys <- svybys(~COUNT+TOTSQFT_EN+TOTALBTU
+  #                      , by=by.vars.fmla
+  #                      , design = RECS, FUN = svytotal
+  #                      ,keep.var =FALSE
+  #                      ,verbose=TRUE))
+
+
+  # names(CE1_1_bys) <- by.vars
+  # str(CE1_1_bys)
+
+  save(list=ls(pattern = "CE1_1_(total|bys)"),    file=CE1_1_rda); print(file.info(CE1_1_rda))
+}; str(CE1_1)
+
+methods(class = "svrepstat")
+
+
+
+## by Fuel (includes Btu and physical unit tabs) ---------------------------
+# Number of housing units (million)	"Total site energy consumptiona
+# (trillion Btu)"
+# Total U.S.b	                    Total	Electricity	Natural gas	Propane	Fuel oil or kerosene
+# All homes	              123.53	9,481	    4,453	4,241	391	396
+# Main heating fuel
+# Natural gas	              62.71	5,996	    1,933	4,052	4	7
+# Electricity	              42.57	2,081	    1,899	133	43	5
+# Fuel oil or kerosene	     4.93	  547	      152	11	11	373
+# Propane	                   5.21	  512	      198	1	312	Q
+# Wood	                     2.25	  115	       83	5	18	9
+# Some other fuelg	            Q	Q	Q	Q	Q	Q
+# Does not use heating equipment	5.79	229	186	39	3	Q
+
+
+
+# https://www.eia.gov/consumption/residential/data/2020/c&e/xls/ce2.1.xlsx
+CE2_1_xlsx <- file.path(.EIA_datadir, "RECS", "ce2.1.xlsx"); print(file.info(CE2_1_xlsx))
+?download.file
+browseURL("https://www.eia.gov/consumption/residential/data/2020/c&e/xls/ce2.1.xlsx")
+# capabilities("libcurl")
+#  download.file("https://www.eia.gov/consumption/residential/data/2020/c&e/xls/ce2.1.xlsx"
+#                , destfile = CE2_1_xlsx, method = "auto",cacheOK = FALSE )
+browseURL(CE2_1_xlsx)
+
+## btu_by_fuel_type: site energy consumption ----
+
+btu.fmla <- ~BUEL
+class(btu.fmla)
+?svytotal
+(btu_by_fuel_type <- svytotal(
+  ~BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
+  +BTUNG # Total natural gas use, in thousand Btu, 2020
+  +BTULP # Total propane use, in thousand Btu, 2020
+  +BTUFO # Total fuel oil/kerosene use, in thousand Btu, 2020
+  +BTUWD # Total wood use, in thousand Btu, 2020
+  # +TOTALBTUSPH # Total usage for space heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUWTH # Total usage for water heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUOTH # Total usage for 'Other' including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  , design = RECS))
+print(btu_by_fuel_type)
+class(btu_by_fuel_type)
+methods(class="svrepstat")
+
+# btu_fuel_type_per_household_by_household_type_and_state -----------------
+
+(btu_fuel_type_by_household_type_and_state <- svyby(
+  ~TOTALBTU
+  +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
+  +BTUNG # Total natural gas use, in thousand Btu, 2020
+  +BTULP # Total propane use, in thousand Btu, 2020
+  +BTUFO # Total fuel oil/kerosene use, in thousand Btu, 2020
+  +BTUWD # Total wood use, in thousand Btu, 2020
+  # +TOTALBTUSPH # Total usage for space heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUWTH # Total usage for water heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUOTH # Total usage for 'Other' including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  , by=~TYPEHUQ+STATE_POSTAL
+  , FUN=svytotal
+  , design = RECS))
+
+btu_fuel_type_by_household_type_and_state.df<- as.data.frame(btu_fuel_type_by_household_type_and_state)
+sum(btu_fuel_type_by_household_type_and_state.df$TOTALBTU)/1e12 # 9.48 trillion btu
+
+(btu_fuel_type_per_household_by_household_type_and_state <- svyby(
+  ~TOTALBTU
+  +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
+  +BTUNG # Total natural gas use, in thousand Btu, 2020
+  +BTULP # Total propane use, in thousand Btu, 2020
+  +BTUFO # Total fuel oil/kerosene use, in thousand Btu, 2020
+  +BTUWD # Total wood use, in thousand Btu, 2020
+  # +TOTALBTUSPH # Total usage for space heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUWTH # Total usage for water heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUOTH # Total usage for 'Other' including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  , by=~TYPEHUQ+STATE_POSTAL
+  , FUN=svyratio,denominator=~COUNT
+  , design = RECS))
+
+?as.data.table
+?base::as.data.frame
+
+(btu_fuel_type_per_household_by_household_type_and_state.dt <- as.data.table(btu_fuel_type_per_household_by_household_type_and_state) %>% sanitize())
+
+site_to_source.df
+str(btu_fuel_type_per_household_by_household_type_and_state.dt)
+btu_fuel_type_per_household_by_household_type_and_state.dt[, SOURCE_BTUEL_SLASH_COUNT:=2.8*BTUEL_SLASH_COUNT]
+?melt.data.table
+(btu_fuel_type_per_household_by_household_type_and_state.long <- melt.data.table(btu_fuel_type_per_household_by_household_type_and_state.dt
+                                                                                , id.vars = c('TYPEHUQ', 'STATE_POSTAL')
+                                                                                , value.name = "site_value")
+)
+unique(btu_fuel_type_per_household_by_household_type_and_state.long$variable)
+?stri_startswith
+stri_startswith_fixed(str = "BTUEL/COUNT", "BTUEL")
+btu_fuel_type_per_household_by_household_type_and_state.long[, source_to_site:=fifelse(
+  grepl(pattern = "BTUEL", x = variable), yes=2.80,
+  no=fifelse(grepl(pattern = "BTUNG", x = variable), yes=1.05,
+  no=fifelse(grepl(pattern = "(BTULP|BTUFO)", x = variable), yes=1.01, no=1.0
+  ,na = 1.0)
+  )
+  )]
+btu_fuel_type_per_household_by_household_type_and_state.long[grepl(pattern = "BTUEL", x = variable) & STATE_POSTAL=="CA"]
+btu_fuel_type_per_household_by_household_type_and_state.long[grepl(pattern = "BTUNG", x = variable)& STATE_POSTAL=="CA"]
+btu_fuel_type_per_household_by_household_type_and_state.long[grepl(pattern = "(BTULP|BTUFO)", x = variable)& STATE_POSTAL=="CA"]
+# btu_fuel_type_per_household_by_household_type_and_state.long[, value:=round(value,0)]
+
+site_to_source.df
+?as.data.table.data.frame
+(btu_by_fuel_type.dt <- btu_by_fuel_type %>% as.data.table(keep.rownames="fuel_type"))
+
+
+# source_energy_consumption -----------------------------------------------
+
+btu_by_fuel_type.dt[site_to_source.df,source_total:=total*fuel_source_to_site,  on='fuel_type']
+
+btu_by_fuel_type.dt
+
+btu_by_fuel_type.dt[, sum(total)]/1e12 #  9.82627 trillion BTU
+
+
+# site_to_source.df -------------------------------------------------------
+
+site_to_source_detailed <- list("Electricity (Grid Purchase)"= 2.80
+                                ,"Electricity (Onsite Solar or Wind - regardless of REC ownership)"= 1.00
+                                ,"Natural Gas" =1.05
+                                ,"Fuel Oil (No. 1,2,4,5,6, Diesel, Kerosene)"= 1.01
+                                ,"Propane & Liquid Propane"= 1.01
+                                ,"Steam" =1.20
+                                ,"Hot Water" =1.20
+                                ,"Chilled Water" =0.91
+                                ,'Wood'= 1.00
+                                ,"Coal/Coke" =1.00
+                                ,"Other" =1.00)
+(site_to_source.lst <- list(BTUEL=2.8, BTUNG       =1.05, BTULP        =1.01, BTUFO        =1.01, BTUWD        =1.00))
+unlist(site_to_source.lst) %>%as.data.frame()
+
+?unlist
+
+(site_to_source.df <- data.frame(fuel_type=names(site_to_source.lst), fuel_source_to_site=unlist(site_to_source.lst, use.names = FALSE)))
+
+
+# site_btu_by_usage ------------------------------------------------------------
+
+(btu_by_usage <- svytotal(
+  ~TOTALBTUSPH # Total usage for space heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  +TOTALBTUWTH # Total usage for water heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  +TOTALBTUOTH # Total usage for 'Other' including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  , design = RECS) %>% as.data.frame())
+sum(btu_by_usage$total)
+
+sum(coef(btu_by_fuel_type))/1e12
+svyratio(~TOTALBTU,~COUNT, design = RECS);coef(out)['TOTALBTU']/coef(out)['COUNT'] # 76.8 thousand BTU per household
+svyratio(~TOTALBTU,~TOTSQFT_EN, RECS);coef(out)['TOTALBTU']/coef(out)['TOTSQFT_EN'] # 42.2 thousand BTU/sqf
 svyratio(~TOTALBTU,~NHSLDMEM, RECS) # 31.4 million BTU per household member
-## Consumption Expenditures
+
+
+# consumption -------------------------------------------------------------
+
+
 (consumption.df <- as.data.frame(svytotal(~
-         DOLLAREL+DOLLARNG+DOLLARLP+
-DOLLARFO
-         , design = RECS)))
+                                            DOLLAREL+DOLLARNG+DOLLARLP+
+                                            DOLLARFO
+                                          , design = RECS)))
 colSums(consumption.df) %>% as_tibble() # 232.7 billion dollars
 
 ?svyby
 (RECS2020.stats <- svyby(~COUNT+TOTSQFT_EN+TOTALBTU, by=~STATE_POSTAL+TYPEHUQ, design = RECS, FUN = svytotal
                          ,keep.var=FALSE))
+class(RECS2020.stats)
 print(RECS2020.stats)
 
-library(weights)
-help(package="weights")
-weights(RECS) %>% colSums() %>% as_tibble()# total number of household
+
 
 ## Step 4. ----
 
@@ -167,11 +565,11 @@ RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT))]%>% as_tibble()
 svymean(~NG_MAINSPACEHEAT,RECS)
 
 RECS2020[, weighted.mean(NG_MAINSPACEHEAT,NWEIGHT)]
-#+ ----
-attach(RECS2020)
-(TOTSQFT_EN_by_STATE_POSTAL<-svyby(~TOTSQFT_EN, by=~STATE_POSTAL, RECS, svytotal))
 
-(TOTSQFT_EN_by_STATE_POSTAL_TYPEHUQ<-svyby(~TOTSQFT_EN, by=~STATE_POSTAL+TYPEHUQ, RECS, svytotal))
+
+# Total BTU usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020 ----
+
+svytotal(~TOTALBTU, RECS)
 
 #+ BTU_NG  ----
 # https://www.eia.gov/consumption/residential/data/2020/state/pdf/ce4.1.ng.st.pdf
@@ -266,16 +664,17 @@ dotplot(STATE_POSTAL ~ BTUNG, BTUNG_MEAN, subset=NGUSE==1)
 # The national estimate for energy intensity per square foot is about 42,000
 # Btu, as shown in Table CE1.1. The RSE is (0.1801853/42.20056)*100 = 0.43.
 
-
 # TOTALBTU_per_TOTSQFT_EN_by_CLIMATE_REGION --------------------------------------------
-
 
 # To calculate the regional energy intensity per square foot, use `svyratio` with
 #`svyby()`.
 (TOTALBTU_per_TOTSQFT_EN_by_CLIMATE_REGION<-svyby(~TOTALBTU,denominator=~TOTSQFT_EN, by=~CLIMATE_REGION, RECS, svyratio))
 
 ?svyboxplot
-svyboxplot(TOTALBTU~CLIMATE_REGION,design = RECS, all.outliers=TRUE)
+opar <- par(las=2, mar=c(5.1, 7.1, 4.1, 2.1))
+svyboxplot(TOTALBTU~CLIMATE_REGION,design = RECS, all.outliers=TRUE, horizontal=TRUE)
+par( mar=c(5.1, 4.1, 4.1, 2.1))
+
 class(RECS)
 methods(class="svyrep.design")
 model.frame(RECS) %>% as_tibble()
@@ -347,7 +746,7 @@ xyplot(`TOTALBTU/TOTSQFT_EN`~TYPEHUQ, groups = STATE_POSTAL, data = TOTALBTU_per
 ?svymean
 ?svytotal
 (TOTALBTU_per_TOTSQFT_EN_by_REGIONC<-svyby(formula = ~TOTALBTU, by=~REGIONC,denominator=~TOTSQFT_EN
-                              , design = RECS, FUN=svyratio))
+                                           , design = RECS, FUN=svyratio))
 
 survey::dotchart(TOTALBTU_per_TOTSQFT_EN_by_REGIONC)
 (NGSPH_CHISQ<-svychisq(~NG_MAINSPACEHEAT+REGIONC,design=RECS,statistic="Chisq"))
