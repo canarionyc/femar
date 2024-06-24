@@ -86,7 +86,7 @@ xyplot(CRF_VALUE~SOVI_SCORE/RESL_VALUE|STATEFIPS, type="r", data = NRI_counties_
 
 ## RISK_SCORE.cty.shingle --------------------------------------------------
 
-(risk_intervals.cty <- NRI_counties_dt[, .(COUNT=.N,MIN_RISK_SCORE=min(RISK_SCORE, na.rm = TRUE), MAX_RISK_SCORE=max(RISK_SCORE, na.rm = TRUE)), keyby=.(RISK_RATNG)])
+(risk_intervals.cty <- NRI_counties_dt[, .(RISK_RATNG_COUNT=.N,MIN_RISK_SCORE=min(RISK_SCORE, na.rm = TRUE), MAX_RISK_SCORE=max(RISK_SCORE, na.rm = TRUE)), keyby=.(RISK_RATNG)])
 (risk_intervals.cty.mat <- as.matrix(na.omit(risk_intervals.cty[, .(MIN_RISK_SCORE, MAX_RISK_SCORE)])))
 library(lattice)
 ?shingle

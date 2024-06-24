@@ -1,8 +1,24 @@
+# site_to_source.df -------------------------------------------------------
+
+site_to_source_detailed <- list("Electricity (Grid Purchase)"= 2.80
+                                ,"Electricity (Onsite Solar or Wind - regardless of REC ownership)"= 1.00
+                                ,"Natural Gas" =1.05
+                                ,"Fuel Oil (No. 1,2,4,5,6, Diesel, Kerosene)"= 1.01
+                                ,"Propane & Liquid Propane"= 1.01
+                                ,"Steam" =1.20
+                                ,"Hot Water" =1.20
+                                ,"Chilled Water" =0.91
+                                ,'Wood'= 1.00
+                                ,"Coal/Coke" =1.00
+                                ,"Other" =1.00)
+site_to_source.lst <- list(BTUEL=2.8, BTUNG       =1.05, BTULP        =1.01, BTUFO        =1.01, BTUWD        =1.00)
+
+
 #' @import forcats
 
 # RECS2020_fst ------------------------------------------------------------
 get_RECS2020 <- function(){
-  RECS2020_fst <- file.path(.EIA_workdir, "RECS2020.FST"); print(file.info(RECS2020_fst))
+  RECS2020_fst <- file.path(.EIA_workdir, "RECS2020.fst"); print(file.info(RECS2020_fst))
   if(file.exists(RECS2020_fst)) {
     print(fst.metadata(RECS2020_fst))
     RECS2020 <- read_fst(RECS2020_fst, as.data.table = TRUE)
@@ -813,16 +829,50 @@ get_RECS2020 <- function(){
                                   EVHOMEAMT = col_double(),
                                   EVCHRGTYPE = col_double()
                                 )) %>% setDT(key = c('DOEID'))
+    RECS2020[, HOUSEHOLD:=1]
+
+    print( RECS2020[, table(BA_CLIMATE, useNA = "ifany")])
+
+
+    RECS2020[, BA_CLIMATE:=factor(BA_CLIMATE, levels = c(
+      "Subarctic" , 'Very Cold','Cold'
+      , 'Marine'
+      ,'Mixed-Humid','Mixed-Dry'
+      ,'Hot-Humid','Hot-Dry'))]
+    print(levels(RECS2020$BA_CLIMATE))
+    RECS2020[, CLIMATE_REGION := fct_collapse(BA_CLIMATE
+                                              , 'Very cold/Cold'=c('Subarctic','Very-Cold','Cold')
+                                              ,'Mixed-dry/Hot-dry'=c('Mixed-Dry','Hot-Dry')
+                                              ,'Mixed-humid/Hot-humid' =c('Mixed-Humid', 'Hot-Humid')
+    )
+    ]
+    print(table(RECS2020$CLIMATE_REGION, useNA = "ifany"))
+
+    RECS2020[,SOURCE_TOTALBTU := 2.8*BTUEL+1.05*BTUNG+1.01*BTULP+1.01*BTUFO+1.00*BTUWD ]
+
     write_fst(RECS2020, path = RECS2020_fst);   print(file.info(RECS2020_fst))
   }; str(RECS2020,give.attr = FALSE)
-  RECS2020[, COUNT:=1]
 
-  RECS2020[, CLIMATE_REGION := fct_collapse(BA_CLIMATE
-                                            , 'Very cold/Cold'=c('Subarctic','Very-Cold','Cold')
-                                            ,'Mixed-dry/Hot-dry'=c('Mixed-Dry','Hot-Dry')
+  return(RECS2020)
+}
+
+
+
+add_source_to_site <- function(dt_long){
+  stopifnot(is.data.table(dt_long))
+  # browser()
+  dt_long[, source_to_site:=fifelse(
+    grepl(pattern = "BTUEL", x = variable), yes=2.80,
+    no=fifelse(grepl(pattern = "BTUNG", x = variable), yes=1.05
+               ,no=fifelse(grepl(pattern = "(BTULP|BTUFO)", x = variable), yes=1.01
+                           , no=fifelse(grepl(pattern = "BTUWD", x = variable), yes=1.00
+                                        , no = fifelse(grepl(pattern = "TOTALBTU", x = variable), yes = NA_real_, no=1.0)
+                                        ,na = NA_real_)
+               )
+    )
   )
   ]
-  print(table(RECS2020$CLIMATE_REGION))
-
-  RECS2020
+  dt_long[, source_value:=source_to_site*site_value ]
+  print(dt_long[, .(variable,site_value, source_to_site, source_value)])
+  return(dt_long)
 }

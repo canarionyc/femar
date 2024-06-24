@@ -2,6 +2,7 @@
 #+ setup -------------------------------------------------------------------
 # rm(list = ls())
 source("~/Spatial/.RProfile")
+options(digits = 2L)
 options(scipen = 999L);getOption("scipen")
 
 library(configr)
@@ -40,8 +41,6 @@ list.files(.EIA_datadir, full.names = TRUE, recursive = TRUE)
 ?strOptions
 op <- options(str=strOptions())
 
-
-
 # https://www.eia.gov/consumption/residential/
 
 # TYPEHUQ
@@ -50,6 +49,21 @@ op <- options(str=strOptions())
 # 3 Single-family house attached to one or more other houses (for example: duplex, row house, or townhome)
 # 4 Apartment in a building with 2 to 4 units
 # 5 Apartment in a building with 5 or more units
+
+
+
+
+
+(site_to_source.df <- data.frame(fuel_type=names(site_to_source.lst), fuel_source_to_site=unlist(site_to_source.lst, use.names = FALSE)))
+
+
+
+# RECS2020 ----------------------------------------------------------------
+
+
+# RECS2020[,TOTALBTU.calc := BTUEL+BTUNG+BTULP+BTUFO+BTUWD ]
+# RECS2020[,SOURCE_TOTALBTU := 2.8*BTUEL+1.05*BTUNG+1.01*BTULP+1.01*BTUFO+1.00*BTUWD ]
+# RECS2020[, .(TOTALBTU, TOTALBTU.calc,SOURCE_TOTALBTU)]
 
 # levels(RECS2020$TYPEHUQ) <- c("MH", "SF.detached", "SF.attached", "APT.2-4u", "APT.5u+")
 levels(RECS2020$TYPEHUQ) <- as.character(1:5)
@@ -76,13 +90,18 @@ str(RECS2020$TYPEHUQ)
 # RECS2020[, .(.N, BTUNG=weighted.mean(BTUNG,NWEIGHT), BTUEL=weighted.mean(BTUEL,NWEIGHT))]
 
 
+RECS2020[, .(STATE_POSTAL, STATE_NAME, CLIMATE_REGION, IECC_CLIMATE_CODE), keyby = 'STATE_FIPS']
 
-#+ Climate -----------------------------------------------------------------
-RECS2020[, .(CLIMATE_REGION, BA_CLIMATE, IECC_CLIMATE_CODE)]
+(climate_dt <- unique(RECS2020[, .(STATE_POSTAL, STATE_NAME, CLIMATE_REGION), keyby = 'STATE_FIPS']))
+setkeyv(climate_dt, c('STATE_FIPS'))
 
-RECS2020[, table(CLIMATE_REGION, useNA = "ifany")]
+climate_dt
+
 RECS2020[, table(BA_CLIMATE, useNA = "ifany")]
+RECS2020[, table(CLIMATE_REGION, useNA = "ifany")]
+
 RECS2020[, table(IECC_CLIMATE_CODE, useNA = "ifany")]
+
 
 
 # FUELHEAT
@@ -96,38 +115,59 @@ RECS2020[, table(IECC_CLIMATE_CODE, useNA = "ifany")]
 
 
 
+# Climate Zones -----------------------------------------------------------
+str(RECS2020$TYPEHUQ)
+RECS2020$HOUSEHOLD
+RECS2020$BA_CLIMATE
+
+
+?svytotal
+svytotal(~HOUSEHOLD, design = RECS)
+
+?svyby
+
+
+
+attach(RECS2020)
+
 
 #+ Natural_Gas ----
 
-# Calculate the frequency and RSE of households that used natural gas as their
+# Calculate the frequency and RSE of hhs that used natural gas as their
 # main space-heating fuel (Table HC6.1)
 
 ## Step 1 ----
 
-# Create a new variable to flag the records of households that used
+# Create a new variable to flag the records of hhs that used
 # natural gas as their main space-heating fuel. This new variable
-# NG_MAINSPACEHEAT is equal to 1 if the household used natural gas as its main
+# NG_MAINSPACEHEAT is equal to 1 if the hh used natural gas as its main
 # space-heating fuel and 0 otherwise.
 
 RECS2020$NG_MAINSPACEHEAT <- ifelse(RECS2020$FUELHEAT == 1, 1, 0)
 
 ## Step 2. ----
 
-# Define the Jackknife replicate weights you will use for estimation:
-(repweights<-select(RECS2020,NWEIGHT1:NWEIGHT60))
 
 ## Step 3. ----
 
-# Number of household that use NG heating in main space
+# Number of hh that use NG heating in main space
 RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT))]%>% as_tibble()
 
 
-# Number of household that use NG heating in main space per property type
+# Number of hh that use NG heating in main space per property type
 RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT),NWEIGHT=sum(NWEIGHT)), keyby = .(TYPEHUQ)]%>% as_tibble()
 
 # Define the survey design with the Jackknife replicate weights to calculate
 # appropriate standard errors uising `svrepdesign`:
 ?svrepdesign
+
+RECS2020_5 <- RECS2020[TYPEHUQ=="5"]
+
+# RECS --------------------------------------------------------------------
+
+# Define the Jackknife replicate weights you will use for estimation:
+(repweights<-select(RECS2020,NWEIGHT1:NWEIGHT60))
+names(RECS2020)
 
 (RECS <- svrepdesign(data = RECS2020,
                      weight = ~NWEIGHT,
@@ -140,27 +180,46 @@ summary(RECS)
 class(RECS); methods(class="svyrep.design")
 dim(RECS)
 
+# RECS5 -------------------------------------------------------------------
+?subset.svyrep.design
+
+RECS5_rds <- file.path(.fema_workdir, "RECS5.rds"); print(file.info(RECS5_rds))
+if(file.exists(  RECS5_rds)) {
+  RECS5 <- readRDS(RECS5_rds)
+} else {
+
+
+
+RECS5 <- subset(RECS, TYPEHUQ=="5")
+# RECS5 <- transform(RECS5, BA_CLIMATE7=fct_collapse(BA_CLIMATE, "Subarctic/Very Cold"=c("Subarctic","Very Cold")))
+attr(RECS5, "path") <- RECS5_rds
+saveRDS(RECS5,   RECS5_rds); print(file.info(RECS5_rds))
+}; str(RECS5)
+
+levels(RECS5$variables$BA_CLIMATE)
+
+nrow(RECS5)
+
 # Structural and geographic characteristics ----
 ## by Housing unit type (HC2.1) ----
 browseURL("https://www.eia.gov/consumption/residential/data/2020/hc/pdf/HC%202.1.pdf")
 browseURL(file.path(.EIA_datadir, "RECS", "HC 2.1.xlsx"))
 
-
-# Total number of households ----
+# Total number of hh ----
 ?svyrepstat
-RECS2020[, .(NWEIGHT=sum(NWEIGHT))]; out <- svytotal(~COUNT, RECS)
-class(out)
+RECS2020[, .(NWEIGHT=sum(NWEIGHT))]; (HC2_1 <- svytotal(~HOUSEHOLD, RECS))
+class(HC2_1)
 methods(class="svrepstat")
 
-RECS.mf <- subset(RECS, TYPEHUQ %in% 4:5)
+RECS.mf <- subset(RECS, TYPEHUQ %in% 5)
 
-svytotal(~COUNT, design = subset(RECS, TYPEHUQ %in% 5))
+svytotal(~HOUSEHOLD, design = subset(RECS, TYPEHUQ %in% 5))
 
-svyby(~COUNT, by=~TYPEHUQ, RECS.mf, FUN = svytotal)
+svyby(~HOUSEHOLD, by=~TYPEHUQ, RECS.mf, FUN = svytotal)
 
 library(weights)
 help(package="weights")
-weights(RECS) %>% colSums() %>% as_tibble()# total number of household
+weights(RECS) %>% colSums() %>% as_tibble()# total number of hh
 
 # Square Footage ----------------------------------------------------------
 
@@ -173,7 +232,7 @@ sqft.col_names <- grep("^[^Z]", names(RECS2020), value = TRUE) %>%
   grep(pattern="INC",  value = TRUE, invert = TRUE) %>%
   grep(pattern="SQFT", x=., value = TRUE, perl = TRUE)
 
-(sqft.fmla <- as.formula(paste("~COUNT+", paste(sqft.col_names,collapse  = "+"), sep =  " ")))
+(sqft.fmla <- as.formula(paste("~HOUSEHOLD+", paste(sqft.col_names,collapse  = "+"), sep =  " ")))
 
 # stri_detect_regex(names(RECS2020), pattern = "^[^Z].*SQ")
 
@@ -189,23 +248,23 @@ if(file.exists(  HC10_1_rda)) {
   load(HC10_1_rda, verbose=TRUE)
 } else {
 
-  HC10_1.svytotal <- svytotal(~COUNT+TOTSQFT_EN+TOTHSQFT+TOTCSQFT, RECS)
+  HC10_1.svytotal <- svytotal(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT, RECS)
   print(HC10_1.svytotal)
 
   ?svybys
   # debugonce(svybys)
-  HC10_1.svyby.svytotal <- svyby(~COUNT+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
-  #                      +YEARMADERANGE
-                        , design = RECS, FUN = svytotal)
+  HC10_1.svyby.svytotal <- svyby(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
+                                 #                      +YEARMADERANGE
+                                 , design = RECS, FUN = svytotal)
   str(HC10_1.svyby.svytotal)
 
-  HC10_1.svybys.svytotal <- svybys(~COUNT+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL, design = RECS, FUN = svytotal)
+  HC10_1.svybys.svytotal <- svybys(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL, design = RECS, FUN = svytotal)
   print(HC10_1.svybys.svytotal)
   save(list = ls(pattern = "HC10_1\\.svy"), file = HC10_1_rda); print(file.info(HC10_1_rda))
 }; str(HC10_1)
 
 HC10_1.svyby.dt <- as.data.table(HC10_1.svyby)
-HC10_1.svyby.dt[, .(sum(COUNT),TOTSQFT_EN=sum(TOTSQFT_EN))]
+HC10_1.svyby.dt[, .(sum(HOUSEHOLD),TOTSQFT_EN=sum(TOTSQFT_EN))]
 
 ## Average square footage of U.S. homes (HC10.9) ---------------------------
 browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.9.pdf")
@@ -213,12 +272,11 @@ list.files(file.path(.EIA_datadir, "RECS"), pattern = "\\.xlsx", full.names = TR
 browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.9.xlsx")
 ?svyratio
 HC10_9.rda <- file.path(.EIA_workdir, "HC10_9.rda"); print(file.info(HC10_9.rda))
-
 if(file.exists(  HC10_9.rda)) {
   load(HC10_9.rda, verbose=TRUE)
 } else {
 
-  HC10_9.out1 <- svyratio(sqft.fmla,~COUNT, RECS)
+  HC10_9.out1 <- svyratio(sqft.fmla,~HOUSEHOLD, RECS)
   print(HC10_9.out1)
 
   (HC10_9 <- readxl::read_xlsx("E:\\Datasets\\EIA\\RECS\\HC 10.9.xlsx", skip=3))
@@ -231,10 +289,10 @@ if(file.exists(  HC10_9.rda)) {
   ## Housing unit type -------------------------------------------------------
 
   # HC10_9.svybys.svyratio <- svybys(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
-  #                                  ,denominator=~COUNT
+  #                                  ,denominator=~HOUSEHOLD
   #                       , RECS, svyratio, keep.var=TRUE)
 
-print(HC10_9.svybys.svyratio)
+  print(HC10_9.svybys.svyratio)
   ?svytable
   ?svyboxplot
   # ?save
@@ -248,19 +306,19 @@ print(HC10_9.svybys.svyratio)
   # West	                    27.72		  1,650
 
 
-(HC10_9.svyby_REGIONC <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~REGIONC
+  (HC10_9.svyby_REGIONC <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~REGIONC
 
-                               ,denominator=~COUNT, RECS, svyratio, keep.var=TRUE))
-(HC10_9.svyby_TYPEHUQ_REGIONC <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+REGIONC
-                               #                       +YEARMADERANGE
-                               ,denominator=~COUNT, RECS, svyratio, keep.var=TRUE))
-?svyratio
+                                 ,denominator=~HOUSEHOLD, RECS, svyratio, keep.var=TRUE))
+  (HC10_9.svyby_TYPEHUQ_REGIONC <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+REGIONC
+                                         #                       +YEARMADERANGE
+                                         ,denominator=~HOUSEHOLD, RECS, svyratio, keep.var=TRUE))
+  ?svyratio
   methods(class="svyratio")
   ?svyby
   HC10_9.svyby_TYPEHUQ_STATE_POSTAL <- svyby(~TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
 
-                       ,denominator=~COUNT, RECS, svyratio, keep.var=TRUE)
-class(HC10_9.svyby_TYPEHUQ_STATE_POSTAL)
+                                             ,denominator=~HOUSEHOLD, RECS, svyratio, keep.var=TRUE)
+  class(HC10_9.svyby_TYPEHUQ_STATE_POSTAL)
   HC10_9.svyby_TYPEHUQ_STATE_POSTAL %>%
     subset(TYPEHUQ %in% 4:5) %>%
     subset(STATE_POSTAL %in% c('CA')) %>%
@@ -282,7 +340,7 @@ coef(HC10_9.svybys.svyratio)
 
 
 
-## sqft per household ----
+## sqft per hh ----
 
 HC10_9.rda <- file.path(.EIA_workdir, "HC10_9.rda"); print(file.info(HC10_9.rda))
 stopifnot(file.exists(HC10_9.rda))
@@ -301,9 +359,9 @@ levels(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt$TYPEHUQ)
 ?fct_reorder
 ?dcast.data.table
 (HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide <- dcast(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt, STATE_POSTAL~TYPEHUQ
-                                     , value.var = c('TOTSQFT_EN_SLASH_COUNT'
-                                                     ,'TOTHSQFT_SLASH_COUNT', 'TOTCSQFT_SLASH_COUNT'
-                                                     ,'SETOTSQFT_EN_SLASH_COUNT')))
+                                                    , value.var = c('TOTSQFT_EN_SLASH_COUNT'
+                                                                    ,'TOTHSQFT_SLASH_COUNT', 'TOTCSQFT_SLASH_COUNT'
+                                                                    ,'SETOTSQFT_EN_SLASH_COUNT')))
 
 HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide[, STATE_POSTAL:=fct_reorder(STATE_POSTAL, TOTSQFT_EN_SLASH_COUNT_4)]
 levels(HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt.wide$STATE_POSTAL)
@@ -345,11 +403,17 @@ CE1_1_rda <- file.path(.EIA_workdir, "CE1_1.rda"); print(file.info(CE1_1_rda))
 if(file.exists(  CE1_1_rda)) {
   load(CE1_1_rda, verbose=TRUE)
 } else {
-  (CE1_1_total<- svytotal(~COUNT+TOTSQFT_EN+TOTALBTU, design = RECS))
+  (CE1_1_total<- svytotal(~HOUSEHOLD+TOTSQFT_EN+TOTALBTU, design = RECS))
   print(CE1_1_total)
 
+  (CE1_1_total<- svytotal(~HOUSEHOLD+TOTSQFT_EN+TOTALBTU, design = RECS))
+  ?svyby
+  (CE1_1_total<- svyby(~TOTSQFT_EN+TOTALBTU,by=~HOUSEHOLD, design = RECS, FUN = svytotal
+                       ,verbose=TRUE,vartype="ci"))
+  methods(class="svyby")
+  ?barplot.svyby
 
-  # (CE1_1_bys <- svybys(~COUNT+TOTSQFT_EN+TOTALBTU
+  # (CE1_1_bys <- svybys(~HOUSEHOLD+TOTSQFT_EN+TOTALBTU
   #                      , by=by.vars.fmla
   #                      , design = RECS, FUN = svytotal
   #                      ,keep.var =FALSE
@@ -397,7 +461,8 @@ btu.fmla <- ~BUEL
 class(btu.fmla)
 ?svytotal
 (btu_by_fuel_type <- svytotal(
-  ~BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
+  ~TOTALBTU
+  +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
   +BTUNG # Total natural gas use, in thousand Btu, 2020
   +BTULP # Total propane use, in thousand Btu, 2020
   +BTUFO # Total fuel oil/kerosene use, in thousand Btu, 2020
@@ -410,11 +475,25 @@ class(btu.fmla)
 print(btu_by_fuel_type)
 class(btu_by_fuel_type)
 methods(class="svrepstat")
+barplot(btu_by_fuel_type)
 
-# btu_fuel_type_per_household_by_household_type_and_state -----------------
-
-(btu_fuel_type_by_household_type_and_state <- svyby(
+svyby(
   ~TOTALBTU
+  +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
+  +BTUNG # Total natural gas use, in thousand Btu, 2020
+  +BTULP # Total propane use, in thousand Btu, 2020
+  +BTUFO # Total fuel oil/kerosene use, in thousand Btu, 2020
+  +BTUWD
+  , by=~HOUSEHOLD
+  , design = RECS
+  , FUN=svytotal)
+
+# btu_fuel_per_hh_by_hh_type_and_state -----------------
+
+(btu_fuel_by_hh_type_and_state <- svyby(
+  ~HOUSEHOLD
+  +TOTSQFT_EN+TOTHSQFT+TOTCSQFT
+  +TOTALBTU
   +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
   +BTUNG # Total natural gas use, in thousand Btu, 2020
   +BTULP # Total propane use, in thousand Btu, 2020
@@ -426,13 +505,17 @@ methods(class="svrepstat")
   # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
   , by=~TYPEHUQ+STATE_POSTAL
   , FUN=svytotal
-  , design = RECS))
+  , design = RECS))  %>% subset(STATE_POSTAL=="CA")
+print(btu_fuel_by_hh_type_and_state %>% subset(STATE_POSTAL=="CA"))
+class(btu_fuel_by_hh_type_and_state)
+# barplot(btu_fuel_by_hh_type_and_state, beside=TRUE, legend=TRUE)
 
-btu_fuel_type_by_household_type_and_state.df<- as.data.frame(btu_fuel_type_by_household_type_and_state)
-sum(btu_fuel_type_by_household_type_and_state.df$TOTALBTU)/1e12 # 9.48 trillion btu
+# btu_fuel_by_hh_type_and_state.df<- as.data.frame(btu_fuel_by_hh_type_and_state)
+# sum(btu_fuel_by_hh_type_and_state.df$TOTALBTU)/1e12 # 9.48 trillion btu
 
-(btu_fuel_type_per_household_by_household_type_and_state <- svyby(
-  ~TOTALBTU
+(btu_fuel_per_hh_by_hh_type_and_state <- svyby(
+  ~TOTSQFT_EN+TOTHSQFT+TOTCSQFT
+  +TOTALBTU
   +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
   +BTUNG # Total natural gas use, in thousand Btu, 2020
   +BTULP # Total propane use, in thousand Btu, 2020
@@ -443,41 +526,80 @@ sum(btu_fuel_type_by_household_type_and_state.df$TOTALBTU)/1e12 # 9.48 trillion 
   # +TOTALBTUOTH # Total usage for 'Other' including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
   # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
   , by=~TYPEHUQ+STATE_POSTAL
-  , FUN=svyratio,denominator=~COUNT
-  , design = RECS))
+  , FUN=svyratio,denominator=~HOUSEHOLD
+  , design = RECS)) %>% subset(STATE_POSTAL=="CA")
 
+btu_fuel_per_hh_by_hh_type_and_state %>% subset(STATE_POSTAL=="CA")
+class(btu_fuel_per_hh_by_hh_type_and_state)
 ?as.data.table
 ?base::as.data.frame
 
-(btu_fuel_type_per_household_by_household_type_and_state.dt <- as.data.table(btu_fuel_type_per_household_by_household_type_and_state) %>% sanitize())
+(btu_fuel_per_hh_by_hh_type_and_state.dt <- as.data.table(btu_fuel_per_hh_by_hh_type_and_state) %>% sanitize())%>% subset(STATE_POSTAL=="CA")
+btu_fuel_per_hh_by_hh_type_and_state.dt[, TOTALBTU_SLASH_COUNT.check:=rowSums(.SD), .SDcols = BTUEL_SLASH_COUNT:BTUWD_SLASH_COUNT]
+btu_fuel_per_hh_by_hh_type_and_state.dt[STATE_POSTAL=="CA",
+                                        #                                        .( TYPEHUQ,STATE_POSTAL,TOTALBTU_SLASH_COUNT,TOTALBTU_SLASH_COUNT.check)
+] %>% print()
 
 site_to_source.df
-str(btu_fuel_type_per_household_by_household_type_and_state.dt)
-btu_fuel_type_per_household_by_household_type_and_state.dt[, SOURCE_BTUEL_SLASH_COUNT:=2.8*BTUEL_SLASH_COUNT]
+str(btu_fuel_per_hh_by_hh_type_and_state.dt)
+# btu_fuel_per_hh_by_hh_type_and_state.dt[, SOURCE_BTUEL_SLASH_COUNT:=2.8*BTUEL_SLASH_COUNT]
 ?melt.data.table
-(btu_fuel_type_per_household_by_household_type_and_state.long <- melt.data.table(btu_fuel_type_per_household_by_household_type_and_state.dt
-                                                                                , id.vars = c('TYPEHUQ', 'STATE_POSTAL')
-                                                                                , value.name = "site_value")
-)
-unique(btu_fuel_type_per_household_by_household_type_and_state.long$variable)
-?stri_startswith
-stri_startswith_fixed(str = "BTUEL/COUNT", "BTUEL")
-btu_fuel_type_per_household_by_household_type_and_state.long[, source_to_site:=fifelse(
-  grepl(pattern = "BTUEL", x = variable), yes=2.80,
-  no=fifelse(grepl(pattern = "BTUNG", x = variable), yes=1.05,
-  no=fifelse(grepl(pattern = "(BTULP|BTUFO)", x = variable), yes=1.01, no=1.0
-  ,na = 1.0)
-  )
-  )]
-btu_fuel_type_per_household_by_household_type_and_state.long[grepl(pattern = "BTUEL", x = variable) & STATE_POSTAL=="CA"]
-btu_fuel_type_per_household_by_household_type_and_state.long[grepl(pattern = "BTUNG", x = variable)& STATE_POSTAL=="CA"]
-btu_fuel_type_per_household_by_household_type_and_state.long[grepl(pattern = "(BTULP|BTUFO)", x = variable)& STATE_POSTAL=="CA"]
-# btu_fuel_type_per_household_by_household_type_and_state.long[, value:=round(value,0)]
+(btu_fuel_per_hh_by_hh_type_and_state_long <- melt.data.table(btu_fuel_per_hh_by_hh_type_and_state.dt
+                                                              , id.vars = c('TYPEHUQ', 'STATE_POSTAL')
+                                                              , value.name = "site_value") %>% add_source_to_site()
+) %>% subset(STATE_POSTAL=="CA")
+unique(btu_fuel_per_hh_by_hh_type_and_state_long$variable)
+
+
+
+
+if(.msg){
+  btu_fuel_per_hh_by_hh_type_and_state_long[grepl(pattern = "BTUEL", x = variable) & STATE_POSTAL=="CA"] %>% print()
+  btu_fuel_per_hh_by_hh_type_and_state_long[grepl(pattern = "BTUNG", x = variable)& STATE_POSTAL=="CA"]%>% print()
+  btu_fuel_per_hh_by_hh_type_and_state_long[grepl(pattern = "(BTULP|BTUFO)", x = variable)& STATE_POSTAL=="CA"]%>% print()
+}
+# btu_fuel_per_hh_by_hh_type_and_state_long[, value:=round(value,0)]
 
 site_to_source.df
 ?as.data.table.data.frame
 (btu_by_fuel_type.dt <- btu_by_fuel_type %>% as.data.table(keep.rownames="fuel_type"))
 
+states_sf <- get_states_sf()
+
+
+# btu_fuel_per_sqft_by_hh_type_and_state ------------------------------------
+
+(btu_fuel_per_sqft_by_hh_type_and_state <- svyby(
+  ~HOUSEHOLD
+  +TOTALBTU
+  +BTUEL # Total electricity use, in thousand Btu, 2020, including self-generation of solar power
+  +BTUNG # Total natural gas use, in thousand Btu, 2020
+  +BTULP # Total propane use, in thousand Btu, 2020
+  +BTUFO # Total fuel oil/kerosene use, in thousand Btu, 2020
+  +BTUWD # Total wood use, in thousand Btu, 2020
+  # +TOTALBTUSPH # Total usage for space heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUWTH # Total usage for water heating including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTUOTH # Total usage for 'Other' including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  # +TOTALBTU # Total usage including electricity, natural gas, propane, and fuel oil, in thousand Btu, 2020
+  , by=~TYPEHUQ+STATE_POSTAL
+  , FUN=svyratio,denominator=~TOTSQFT_EN
+  , design = RECS)) %>% subset(STATE_POSTAL=="CA")
+
+(btu_fuel_per_sqft_by_hh_type_and_state_long <- setDT(btu_fuel_per_sqft_by_hh_type_and_state, key=c('TYPEHUQ', 'STATE_POSTAL'))%>% melt.data.table(
+  , id.vars = c('TYPEHUQ', 'STATE_POSTAL')
+  , value.name = "site_value") %>% add_source_to_site()
+)%>% subset(STATE_POSTAL=="CA")
+
+print(btu_fuel_per_sqft_by_hh_type_and_state %>% subset(STATE_POSTAL=="CA"))
+
+btu_fuel_per_sqft_by_hh_type_and_state
+
+.btu_stats_rda <- file.path(.EIA_workdir, "btu_stats.rda"); print(file.info(.btu_stats_rda))
+if(file.exists(  .btu_stats_rda)) {
+  load(.btu_stats_rda, verbose=TRUE)
+} else {
+  save(list=ls(pattern = "^btu"), file =  .btu_stats_rda); print(file.info(.btu_stats_rda))
+}; str(btu_stats)
 
 # source_energy_consumption -----------------------------------------------
 
@@ -486,27 +608,6 @@ btu_by_fuel_type.dt[site_to_source.df,source_total:=total*fuel_source_to_site,  
 btu_by_fuel_type.dt
 
 btu_by_fuel_type.dt[, sum(total)]/1e12 #  9.82627 trillion BTU
-
-
-# site_to_source.df -------------------------------------------------------
-
-site_to_source_detailed <- list("Electricity (Grid Purchase)"= 2.80
-                                ,"Electricity (Onsite Solar or Wind - regardless of REC ownership)"= 1.00
-                                ,"Natural Gas" =1.05
-                                ,"Fuel Oil (No. 1,2,4,5,6, Diesel, Kerosene)"= 1.01
-                                ,"Propane & Liquid Propane"= 1.01
-                                ,"Steam" =1.20
-                                ,"Hot Water" =1.20
-                                ,"Chilled Water" =0.91
-                                ,'Wood'= 1.00
-                                ,"Coal/Coke" =1.00
-                                ,"Other" =1.00)
-(site_to_source.lst <- list(BTUEL=2.8, BTUNG       =1.05, BTULP        =1.01, BTUFO        =1.01, BTUWD        =1.00))
-unlist(site_to_source.lst) %>%as.data.frame()
-
-?unlist
-
-(site_to_source.df <- data.frame(fuel_type=names(site_to_source.lst), fuel_source_to_site=unlist(site_to_source.lst, use.names = FALSE)))
 
 
 # site_btu_by_usage ------------------------------------------------------------
@@ -520,9 +621,9 @@ unlist(site_to_source.lst) %>%as.data.frame()
 sum(btu_by_usage$total)
 
 sum(coef(btu_by_fuel_type))/1e12
-svyratio(~TOTALBTU,~COUNT, design = RECS);coef(out)['TOTALBTU']/coef(out)['COUNT'] # 76.8 thousand BTU per household
+svyratio(~TOTALBTU,~HOUSEHOLD, design = RECS);coef(out)['TOTALBTU']/coef(out)['HOUSEHOLD'] # 76.8 thousand BTU per hh
 svyratio(~TOTALBTU,~TOTSQFT_EN, RECS);coef(out)['TOTALBTU']/coef(out)['TOTSQFT_EN'] # 42.2 thousand BTU/sqf
-svyratio(~TOTALBTU,~NHSLDMEM, RECS) # 31.4 million BTU per household member
+svyratio(~TOTALBTU,~NHSLDMEM, RECS) # 31.4 million BTU per hh member
 
 
 # consumption -------------------------------------------------------------
@@ -535,7 +636,7 @@ svyratio(~TOTALBTU,~NHSLDMEM, RECS) # 31.4 million BTU per household member
 colSums(consumption.df) %>% as_tibble() # 232.7 billion dollars
 
 ?svyby
-(RECS2020.stats <- svyby(~COUNT+TOTSQFT_EN+TOTALBTU, by=~STATE_POSTAL+TYPEHUQ, design = RECS, FUN = svytotal
+(RECS2020.stats <- svyby(~HOUSEHOLD+TOTSQFT_EN+TOTALBTU, by=~STATE_POSTAL+TYPEHUQ, design = RECS, FUN = svytotal
                          ,keep.var=FALSE))
 class(RECS2020.stats)
 print(RECS2020.stats)
@@ -544,21 +645,21 @@ print(RECS2020.stats)
 
 ## Step 4. ----
 
-# Use `svytotal` to sum the number of households by `NG_MAINSPACEHEAT`, using the survey design defined above.
+# Use `svytotal` to sum the number of hhs by `NG_MAINSPACEHEAT`, using the survey design defined above.
 # debugonce(svytotal)
 ?svytotal
 (NG_MAINSPACEHEAT_Total<-svytotal(~NG_MAINSPACEHEAT,RECS))
 methods(class="svrepstat")
 
 RECS2020[, .(NG_MAINSPACEHEAT=sum(NG_MAINSPACEHEAT*NWEIGHT))]%>% as_tibble()
-# Answer. The estimated total households that used natural gas as their main
-# space-heating fuel is 62,713,449 households. The calculation for the RSE is
+# Answer. The estimated total hhs that used natural gas as their main
+# space-heating fuel is 62,713,449 hhs. The calculation for the RSE is
 # (483,047 / 62,713,449)*100 = 0.77. The sampling error is less than 1% of the
 # estimate, which is relatively small. Alternatively, the RSE can be derived
 # from:
 (NG_MAINSPACEHEAT_Total_RSE<-(SE(NG_MAINSPACEHEAT_Total)/coef(NG_MAINSPACEHEAT_Total))*100)
 
-# percent of household that use NG
+# percent of hh that use NG
 # To obtain the proportion estimate, use the `svymean()` function instead of the
 # `svytotal` in the expression in Step 4. In addition, the confint() function
 # provides the 95% confidence limits.
@@ -573,15 +674,15 @@ svytotal(~TOTALBTU, RECS)
 
 #+ BTU_NG  ----
 # https://www.eia.gov/consumption/residential/data/2020/state/pdf/ce4.1.ng.st.pdf
-# Calculate the sum and average of the total natural gas used for the households
-# in South Carolina (SC) (Table CE4.1.NG.ST Annual household site natural gas
+# Calculate the sum and average of the total natural gas used for the hhs
+# in South Carolina (SC) (Table CE4.1.NG.ST Annual hh site natural gas
 # consumption in the United States by end use – totals and percentages, 2020).
 # To calculate the total consumption estimates in R, use the svytotal()
 # function; and use the `svymean()` function for the average consumption . In
-# addition, use `svyby()` to group households by USENG and state (STATE_POSTAL)
+# addition, use `svyby()` to group hhs by USENG and state (STATE_POSTAL)
 # and the `subset()` function to limit the results to SC only.
 
-# First, create a new variable to flag the households that have positive natural
+# First, create a new variable to flag the hhs that have positive natural
 # gas consumption for any natural gas end use. This new variable NGUSE is equal
 # to 1 if BTUNG is greater than 0 and 0 otherwise. Then, run the survey design
 # for the dataset again before producing estimates using the functions mentioned
@@ -614,7 +715,7 @@ dotplot(STATE_POSTAL ~ BTUNG, BTUNG_TOTAL, subset=NGUSE==1)
 
 
 # The output below shows the result for SC. The total estimated consumption for
-# households that used natural gas in SC is 26.2 trillion British thermal units
+# hhs that used natural gas in SC is 26.2 trillion British thermal units
 # (Btu). The RSE for the total is ( 2509266634/26220994238)*100 = 9.6%.
 
 # calculate the mean:
@@ -628,7 +729,7 @@ dotplot(STATE_POSTAL ~ BTUNG, BTUNG_MEAN, subset=NGUSE==1)
 
 (BTUNG_SCMEAN<-subset(BTUNG_MEAN, STATE_POSTAL=='SC'))
 
-# The average consumption per household is 34.4 million BTU, with RSE=6.3. As
+# The average consumption per hh is 34.4 million BTU, with RSE=6.3. As
 # mentioned in R example 1, the 95% confidence limits with the `conflint()`
 # function. Note that the estimates for NGUSE = 0 reflect consumption for homes
 # that do not use any natural gas.
@@ -735,9 +836,9 @@ xyplot(`TOTALBTU/TOTSQFT_EN`~TYPEHUQ, groups = STATE_POSTAL, data = TOTALBTU_per
 
 #+ R Example 4 ----
 
-#Compare if the proportions and the consumption means for households using
+#Compare if the proportions and the consumption means for hhs using
 #natural gas as their main space-heating fuel are statistically different among
-#the households in different Census regions.
+#the hhs in different Census regions.
 
 #Use the `svychisq()` function to obtain chi-square statistics.
 ?svyby
@@ -756,7 +857,7 @@ methods(class="htest")
 
 
 
-# To compare if the average space-heating consumption estimates for households
+# To compare if the average space-heating consumption estimates for hhs
 # using natural gas as their main space-heating fuel are different among the
 # Census regions, use the svyglm() function to run a regression model and obtain
 # the coefficient, and use the regTermTest() function to obtain the F-statistic.
@@ -772,7 +873,7 @@ svytotal(x = ~TOTALBTUSPH,design = RECS_NGSPH)
 save.image(file = file.path(.NRI_workdir, "run_EIA.RData"))
 
 # Notes to Consider When Using the Microdata File and Replicate Weights
-# 1. Publication standards: We do not publish RECS estimates where the RSE is higher than 50 or the number of households used for the calculation is less than 10 (indicated by a Q in the data tables). We recommend following these guidelines for custom analysis using the public use microdata file.
+# 1. Publication standards: We do not publish RECS estimates where the RSE is higher than 50 or the number of hhs used for the calculation is less than 10 (indicated by a Q in the data tables). We recommend following these guidelines for custom analysis using the public use microdata file.
 # 2. Imputation variables: We imputed most variables for Don’t Know and Refuse responses. The Z variables, also referred to as imputation flags, are in the public use microdata file. The imputation flag indicates whether we based the corresponding non-Z variable was reported data (Z variable = 0) or if we imputed it (Z variable = 1). Variables from the RECS questionnaire that we did not impute, contained no missing data, or were not from the questionnaire have no corresponding Z variables. We recommend using the imputed data, where available, to avoid biased estimation.
 # 3. Standardized coding: Variables that we did not ask all respondents use the response code –2 for Not Applicable. For example, respondents who answered that they did not use any televisions at home (TVCOLOR = 0) were not asked what size television they most use at home, so TVSIZE1 = -2. Use caution when performing calculations on variables that have -2 responses.
 # 4. Indicator variables: The microdata file contains variables to indicate the use of major fuels and specific end uses within each housing unit for 2020. We derived these variables from answers given by each respondent, and they indicate whether the respondent had access to the fuel, used the fuel, and engaged in a specific end use. All indicators are either a 0 or a 1 for each combination of major fuel and end use. For example, respondents who say they heated their homes with electricity in 2020 will have the derived variable ELWARM = 1. If respondents say they have equipment but did not use it, the corresponding indicator is 0. As an example, respondents in a warm climate might have heating equipment but did not use it in 2020. For this case, ELWARM is 0.
@@ -796,8 +897,8 @@ save.image(file = file.path(.NRI_workdir, "run_EIA.RData"))
 # – OTHROOMS (number of other rooms) to 9
 # – NCOMBATH (number of full bathrooms) to 4
 # – NHAFBATH (number of half bathrooms) to 2
-# – HHAGE (age of the householder) to 90
-# – NHSLDMEM (number of household members) to 7
+# – HHAGE (age of the hher) to 90
+# – NHSLDMEM (number of hh members) to 7
 # – NUMCHILD (number of children under 18) to 4
 # • We added random errors to weather and climate (HDD30YR and CDD30YR) values, as well as to the annualized consumption variables for electricity and natural gas.
 # June 2023
