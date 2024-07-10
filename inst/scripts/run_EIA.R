@@ -2,7 +2,7 @@
 #+ setup -------------------------------------------------------------------
 # rm(list = ls())
 source("~/Spatial/.RProfile")
-options(digits = 2L)
+options(digits = 3L)
 options(scipen = 999L);getOption("scipen")
 
 library(configr)
@@ -11,11 +11,11 @@ devtools::load_all("~/fstutils/", export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 print(getOption("tigris_year"))
 # source("~/lattice_setup.R")
-source("~/lattice_setup.R")
+
 
 options(rio.import.class='data.table')
 getOption("rio.import.class")
-?rio::import
+# ?rio::import
 library(survey)
 getOption("survey.multicore")
 
@@ -28,10 +28,12 @@ by.vars <- c('TYPEHUQ'
              ,'YEARMADERANGE')
 (by.vars.fmla <- as.formula(paste("~ ", paste(by.vars, collapse= "+"))))
 
-
+stop()
 
 browseURL("https://r-survey.r-forge.r-project.org/survey/")
-stop()
+
+
+browseURL(system.file("extdata","DOE","EIA","RECS", "RECS_2020_Codebook_for_Public_File_-_v7.xlsx", package="femar"))
 file.choose()
 load( file.path(.NRI_workdir, "run_EIA.RData"))
 
@@ -39,6 +41,8 @@ browseURL(.EIA_workdir)
 list.files(.EIA_datadir, full.names = TRUE, recursive = TRUE)
 #dir.create(.EIA_workdir)
 ?strOptions
+?make.formula
+make.formula
 op <- options(str=strOptions())
 
 # https://www.eia.gov/consumption/residential/
@@ -50,31 +54,34 @@ op <- options(str=strOptions())
 # 4 Apartment in a building with 2 to 4 units
 # 5 Apartment in a building with 5 or more units
 
-
-
-
+# FUELHEAT
+# 1 Natural gas from underground pipes
+# 2 Propane (bottled gas)
+# 3 Fuel oil
+# 5 Electricity
+# 7 Wood or pellets
+# 99 Other
+# -2 Not applicable
 
 (site_to_source.df <- data.frame(fuel_type=names(site_to_source.lst), fuel_source_to_site=unlist(site_to_source.lst, use.names = FALSE)))
 
-
-
 # RECS2020 ----------------------------------------------------------------
-
+RECS2020 <- get_RECS2020()
+str(RECS2020$COUNT)
+setnames(RECS2020, 'COUNT', 'HOUSEHOLD')
 
 # RECS2020[,TOTALBTU.calc := BTUEL+BTUNG+BTULP+BTUFO+BTUWD ]
 # RECS2020[,SOURCE_TOTALBTU := 2.8*BTUEL+1.05*BTUNG+1.01*BTULP+1.01*BTUFO+1.00*BTUWD ]
 # RECS2020[, .(TOTALBTU, TOTALBTU.calc,SOURCE_TOTALBTU)]
 
 # levels(RECS2020$TYPEHUQ) <- c("MH", "SF.detached", "SF.attached", "APT.2-4u", "APT.5u+")
-levels(RECS2020$TYPEHUQ) <- as.character(1:5)
-RECS2020 <- get_RECS2020()
+# levels(RECS2020$TYPEHUQ) <- as.character(1:5)
+
 dim(RECS2020)
 str(RECS2020, give.attr=FALSE, list.len=999L)
 View(RECS2020)
 
-
 ?svytotal
-
 
 str(RECS2020$TYPEHUQ)
 
@@ -90,10 +97,15 @@ str(RECS2020$TYPEHUQ)
 # RECS2020[, .(.N, BTUNG=weighted.mean(BTUNG,NWEIGHT), BTUEL=weighted.mean(BTUEL,NWEIGHT))]
 
 
-RECS2020[, .(STATE_POSTAL, STATE_NAME, CLIMATE_REGION, IECC_CLIMATE_CODE), keyby = 'STATE_FIPS']
+# Climate Zones in RECS2020 -----------------------------------------------
 
-(climate_dt <- unique(RECS2020[, .(STATE_POSTAL, STATE_NAME, CLIMATE_REGION), keyby = 'STATE_FIPS']))
-setkeyv(climate_dt, c('STATE_FIPS'))
+
+(climate_dt <- RECS2020[, unique(.SD), .SDcols=c('STATE_POSTAL', 'STATE_NAME', 'CLIMATE_REGION', 'IECC_CLIMATE_CODE')
+                        , keyby = 'STATE_FIPS'])
+key(climate_dt)
+
+
+
 
 climate_dt
 
@@ -104,31 +116,10 @@ RECS2020[, table(IECC_CLIMATE_CODE, useNA = "ifany")]
 
 
 
-# FUELHEAT
-# 5 Electricity
-# 1 Natural gas from underground pipes
-# 2 Propane (bottled gas)
-# 3 Fuel oil
-# 7 Wood or pellets
-# 99 Other
-# -2 Not applicable
-
-
-
-# Climate Zones -----------------------------------------------------------
 str(RECS2020$TYPEHUQ)
 RECS2020$HOUSEHOLD
 RECS2020$BA_CLIMATE
 
-
-?svytotal
-svytotal(~HOUSEHOLD, design = RECS)
-
-?svyby
-
-
-
-attach(RECS2020)
 
 
 #+ Natural_Gas ----
@@ -180,6 +171,18 @@ summary(RECS)
 class(RECS); methods(class="svyrep.design")
 dim(RECS)
 
+
+?svytotal
+(HOUSEHOLD.total <- svytotal(~HOUSEHOLD, design = RECS))
+confint(HOUSEHOLD.total)
+
+?svyby
+
+
+
+# attach(RECS2020)
+
+
 # RECS5 -------------------------------------------------------------------
 ?subset.svyrep.design
 
@@ -188,12 +191,10 @@ if(file.exists(  RECS5_rds)) {
   RECS5 <- readRDS(RECS5_rds)
 } else {
 
-
-
-RECS5 <- subset(RECS, TYPEHUQ=="5")
-# RECS5 <- transform(RECS5, BA_CLIMATE7=fct_collapse(BA_CLIMATE, "Subarctic/Very Cold"=c("Subarctic","Very Cold")))
-attr(RECS5, "path") <- RECS5_rds
-saveRDS(RECS5,   RECS5_rds); print(file.info(RECS5_rds))
+  RECS5 <- subset(RECS, TYPEHUQ=="5")
+  # RECS5 <- transform(RECS5, BA_CLIMATE7=fct_collapse(BA_CLIMATE, "Subarctic/Very Cold"=c("Subarctic","Very Cold")))
+  attr(RECS5, "path") <- RECS5_rds
+  saveRDS(RECS5,   RECS5_rds); print(file.info(RECS5_rds))
 }; str(RECS5)
 
 levels(RECS5$variables$BA_CLIMATE)
@@ -211,11 +212,9 @@ RECS2020[, .(NWEIGHT=sum(NWEIGHT))]; (HC2_1 <- svytotal(~HOUSEHOLD, RECS))
 class(HC2_1)
 methods(class="svrepstat")
 
-RECS.mf <- subset(RECS, TYPEHUQ %in% 5)
 
-svytotal(~HOUSEHOLD, design = subset(RECS, TYPEHUQ %in% 5))
+# svytotal(~HOUSEHOLD, design = subset(RECS, TYPEHUQ %in% 5))
 
-svyby(~HOUSEHOLD, by=~TYPEHUQ, RECS.mf, FUN = svytotal)
 
 library(weights)
 help(package="weights")
@@ -225,18 +224,17 @@ weights(RECS) %>% colSums() %>% as_tibble()# total number of hh
 
 ## Total square footage of U.S. homes (HC10.1) ----
 # https://www.eia.gov/consumption/residential/data/2020/hc/pdf/HC%2010.1.pdf
-browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.1.pdf")
 
-sqft.col_names <- grep("^[^Z]", names(RECS2020), value = TRUE) %>%
-  grep(pattern="RANGE",  value = TRUE, invert = TRUE) %>%
-  grep(pattern="INC",  value = TRUE, invert = TRUE) %>%
-  grep(pattern="SQFT", x=., value = TRUE, perl = TRUE)
-
-(sqft.fmla <- as.formula(paste("~HOUSEHOLD+", paste(sqft.col_names,collapse  = "+"), sep =  " ")))
+# sqft.col_names <- grep("^[^Z]", names(RECS2020), value = TRUE) %>%
+#   grep(pattern="RANGE",  value = TRUE, invert = TRUE) %>%
+#   grep(pattern="INC",  value = TRUE, invert = TRUE) %>%
+#   grep(pattern="SQFT", x=., value = TRUE, perl = TRUE)
+#
+# (sqft.fmla <- as.formula(paste("~HOUSEHOLD+", paste(sqft.col_names,collapse  = "+"), sep =  " ")))
 
 # stri_detect_regex(names(RECS2020), pattern = "^[^Z].*SQ")
 
-RECS2020$ZSQFTRANGE
+
 browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.1.pdf")
 browseURL("E:\\Datasets\\EIA\\RECS\\HC 10.1.xlsx")
 # Number of housing units (million)	Total square footage (billion square feet)
@@ -249,17 +247,26 @@ if(file.exists(  HC10_1_rda)) {
 } else {
 
   HC10_1.svytotal <- svytotal(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT, RECS)
+
   print(HC10_1.svytotal)
+  confint(HC10_1.svytotal)
 
   ?svybys
+  # marginals ----
   # debugonce(svybys)
-  HC10_1.svyby.svytotal <- svyby(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL
+  HC10_1.svybys.svytotal <- svybys(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT
+                                   ,by=~TYPEHUQ+STATE_POSTAL, design = RECS, FUN = svytotal)
+  print(HC10_1.svybys.svytotal)
+
+  # full breakdown
+  HC10_1.svyby.svytotal <- svyby(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT
+                                 ,by=~TYPEHUQ+STATE_POSTAL
                                  #                      +YEARMADERANGE
                                  , design = RECS, FUN = svytotal)
-  str(HC10_1.svyby.svytotal)
+  print(HC10_1.svyby.svytotal)
+  # str(HC10_1.svyby.svytotal)
 
-  HC10_1.svybys.svytotal <- svybys(~HOUSEHOLD+TOTSQFT_EN+TOTHSQFT+TOTCSQFT,by=~TYPEHUQ+STATE_POSTAL, design = RECS, FUN = svytotal)
-  print(HC10_1.svybys.svytotal)
+
   save(list = ls(pattern = "HC10_1\\.svy"), file = HC10_1_rda); print(file.info(HC10_1_rda))
 }; str(HC10_1)
 
@@ -385,8 +392,6 @@ HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt[TOTHSQFT_SLASH_COUNT<500] # Hawai
 bwplot( TYPEHUQ ~TOTCSQFT_SLASH_COUNT, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
 
 bwplot( TYPEHUQ ~TOTSQFT_EN_SLASH_COUNT, data = HC10_9.svyby_TYPEHUQ_STATE_POSTAL.dt)
-
-
 
 # Consumption and Expenditures (Site Energy) ----
 # https://www.eia.gov/consumption/residential/data/2020/index.php?view=consumption

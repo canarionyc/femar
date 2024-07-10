@@ -833,15 +833,14 @@ get_RECS2020 <- function(){
 
     print( RECS2020[, table(BA_CLIMATE, useNA = "ifany")])
 
-
     RECS2020[, BA_CLIMATE:=factor(BA_CLIMATE, levels = c(
-      "Subarctic" , 'Very Cold','Cold'
+      "Subarctic", 'Very Cold','Cold'
       , 'Marine'
       ,'Mixed-Humid','Mixed-Dry'
       ,'Hot-Humid','Hot-Dry'))]
     print(levels(RECS2020$BA_CLIMATE))
     RECS2020[, CLIMATE_REGION := fct_collapse(BA_CLIMATE
-                                              , 'Very cold/Cold'=c('Subarctic','Very-Cold','Cold')
+                                              , 'Very cold/Cold'=c('Subarctic','Very Cold','Cold')
                                               ,'Mixed-dry/Hot-dry'=c('Mixed-Dry','Hot-Dry')
                                               ,'Mixed-humid/Hot-humid' =c('Mixed-Humid', 'Hot-Humid')
     )
@@ -849,7 +848,7 @@ get_RECS2020 <- function(){
     print(table(RECS2020$CLIMATE_REGION, useNA = "ifany"))
 
     RECS2020[,SOURCE_TOTALBTU := 2.8*BTUEL+1.05*BTUNG+1.01*BTULP+1.01*BTUFO+1.00*BTUWD ]
-
+str(RECS2020$SOURCE_TOTALBTU)
     write_fst(RECS2020, path = RECS2020_fst);   print(file.info(RECS2020_fst))
   }; str(RECS2020,give.attr = FALSE)
 

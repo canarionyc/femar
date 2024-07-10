@@ -51,3 +51,4 @@ rsconnect/
 man/*.Rd
 
 /inst/scripts/ClimateZones_files
+inst/extdata/FHFA/NMDB/~$SFCensusTractFNM2022.xlsx

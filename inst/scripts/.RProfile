@@ -1,0 +1,62 @@
+# tigris ----
+readRenviron("~/.Renviron")
+# file.show("~/.Renviron")
+cat("HOME:", Sys.getenv("HOME"), "\n")
+cat("TIGRIS_CACHE_DIR:",Sys.getenv("TIGRIS_CACHE_DIR"), "\n")
+if(! dir.exists(Sys.getenv('TIGRIS_CACHE_DIR')))
+  dir.create(Sys.getenv('TIGRIS_CACHE_DIR'), recursive = TRUE)
+# list.files(Sys.getenv("TIGRIS_CACHE_DIR"))
+# Sys.setenv(TIGRIS_CACHE_DIR=file.path(Sys.getenv("R_WORK_DIR"), "tigris_cache"))
+
+# tigris_cache_dir(Sys.getenv('TIGRIS_CACHE_DIR'))
+# readRenviron('~/.Renviron')
+
+
+
+
+# browseURL("https://www2.census.gov/geo/tiger/GENZ2022/shp/")
+
+library(tigris) #; utils::help(package="tigris")
+options(tigris_use_cache = TRUE); getOption("tigris_use_cache")
+
+options(tigris_year=2021L); getOption("tigris_year")
+# ?tigris_cache_dir
+# debugonce(tigris_cache_dir)
+# tigris_cache_dir(Sys.getenv('TIGRIS_CACHE_DIR'))
+# readRenviron('~/.Renviron')
+
+options(tigris_class = "sf");getOption("tigris_class")
+
+# preamble -------------------------------------------------------------------
+us_territories <-  c('AS', 'MP','GU','PR', 'VI' )
+states_noconus <- c('AK' , 'HI', us_territories)
+# 'AS', 'MP','GU','AK' , 'HI'
+# browseURL( "https://www2.census.gov/geo/tiger/GENZ2022/shp")
+# browseURL(census_dir)
+# browseURL(Sys.getenv("TIGRIS_CACHE_DIR"))
+
+get_tigris_cache <- function(){
+  tigris_cache_df <- data.frame(file_path=list.files(Sys.getenv("TIGRIS_CACHE_DIR"), full.names = TRUE))
+
+  tigris_cache_df$mtime <- file.mtime(tigris_cache_df$file_path)
+  tigris_cache_df[order(tigris_cache_df$mtime,decreasing = TRUE),]
+}
+
+
+# conus_counties_sf -------------------------------------------------------
+
+get_counties_conus_sf <- function(){
+  conus_counties_sf_rds <- file.path(census_dir, sprintf("conus_counties_%d_sf.rds", getOption("tigris_year"))); print(file.info(conus_counties_sf_rds))
+  if(file.exists(  conus_counties_sf_rds)) {
+    conus_counties_sf <- readRDS(conus_counties_sf_rds)
+  } else {
+    debugonce(counties)
+    counties_sf <- counties( cb = TRUE, resolution = "500k", keep_zipped_shapefile = TRUE)
+    conus_counties_sf <- subset(counties_sf, ! STUSPS  %in% extra_continental_states)
+    saveRDS(conus_counties_sf,   conus_counties_sf_rds); print(file.info(conus_counties_sf_rds))
+  }; str(conus_counties_sf)
+  return(conus_counties_sf)
+}
+
+
+source("~/Spatial/.RProfile")
