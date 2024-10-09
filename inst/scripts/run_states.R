@@ -2,7 +2,7 @@ devtools::load_all("~/Spatial/FEMA/femar/")
 
 # states_sf ---------------------------------------------------------------
 
-(states_sf <- get_states_sf())
+devtools::load_all("~/Spatial/FEMA/femar/"); (states_sf <- get_states_sf())
 
 library(tmap)
 tmap_mode("view")
@@ -11,7 +11,7 @@ states_sf %>% subset(STATEFP=='06') %>% qtm()
 # us states ----
 ?states
 
-(states_sf <- tigris::states(cb=TRUE))
+# (states_sf <- tigris::states(cb=TRUE))
 st_crs(states_sf)
 
 # verify area -------------------------------------------------------------

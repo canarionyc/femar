@@ -7,8 +7,6 @@ source("~/Spatial/.RProfile")
 library(configr)
 configr::read.config()
 
-
-
 data(state, package="datasets")
 help(state, package="datasets")
 
@@ -24,7 +22,6 @@ stop()
 list.files(.NRI_datadir, full.names = TRUE, recursive = TRUE)
 
 browseURL(.NRI_workdir)
-
 
 # stormevents -------------------------------------------------------------
 browseURL("https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/")

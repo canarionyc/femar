@@ -66,6 +66,8 @@ print(summary(tmp_df))
   }; counties_sf
 }
 
+#' @import terra
+get_counties_vec <- purrr::compose(terra::vect, get_counties_sf)
 
 
 #' @import sf

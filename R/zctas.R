@@ -22,7 +22,7 @@ get_zctas_sf <-  function(year=getOption("tigris_year", 2020)){
 # state_zcta3_sf ----
 
 
-#' @import terra
+
 get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 2000 and 2010.
 
   debugonce(zctas)

@@ -93,8 +93,8 @@ get_fips_code <- function (state, county = NULL){
 
 get_states_sf <- function(year=getOption("tigris_year",2020L)){
   # states_dsn <- file.path(.census_workdir, sprintf("states_%d.shp", year)); print(file.info(states_dsn))
-  states_gpkg <- file.path(.census_workdir, sprintf("states_%d.gpkg", year)); print(file.info(states_gpkg))
-  states_sf_rds <- file.path(.census_workdir, sprintf("states_%d.rds", year)); print(file.info(states_sf_rds))
+  states_gpkg <- file.path(.census_workdir, sprintf("states_%d.gpkg", year)); print(file.info(states_gpkg)['size'])
+  states_sf_rds <- file.path(.census_workdir, sprintf("states_%d.rds", year)); print(file.info(states_sf_rds)['size'])
   if(file.exists(states_sf_rds)) {
     states_sf <- readRDS(states_sf_rds)
   } else if(file.exists(states_gpkg)) {
@@ -132,6 +132,8 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
 
     (states_sf <- cbind(states_sf, tmp_df))
 
+    states_sf <- st_transform(states_sf, st_crs(4269)) #
+    states_sf
     # show(states_sf)
     # ?which
     #
@@ -144,14 +146,18 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
     # st_write(states_sf, dsn=states_dsn, append = FALSE)
     st_write(states_sf, dsn=states_gpkg, append = FALSE)
     saveRDS(states_sf, states_sf_rds);print(file.info(states_sf_rds))
-  }; states_sf
+
+  }# ; str(states_sf)
+  return(states_sf)
 }
+
+#' @import terra
+get_states_vec <- purrr::compose(terra::vect, get_states_sf)
 
 NRI_states_info <- function() {
   NRI_states_fst <- file.path(.NRI_workdir, "NRI_states.fst"); print(file.info(NRI_states_fst))
   dput(names(fst(NRI_states_fst)))
   print(fst.metadata(NRI_states_fst))
-
 }
 
 #' Get NRI Hazards table by State

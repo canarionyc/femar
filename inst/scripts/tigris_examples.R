@@ -35,11 +35,15 @@ browseURL(.census_workdir)
 #
 # library(terra)
 # terra::plot(st_geometry(conus_sf))
-#
-# conus_v <- terra::vect(conus_sf)
-# class(conus_v)
-# ?terra::plot
-# plot(conus_v); terra::text(conus_v, labels= conus_v$NAME, cex=0.65)
+
+library(terra)
+conus_sf <- get_states_sf() %>% subset(STATEFP!="02" & STATEFP !="15" & STATEFP<60)
+str(conus_sf)
+conus_v <- terra::vect(conus_sf)
+class(conus_v)
+?terra::plot
+dev.new()
+plot(conus_v); terra::text(conus_v, labels= conus_v$NAME, cex=0.65)
 # ?terra::text
 
 

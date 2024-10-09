@@ -3,11 +3,17 @@ lcc <- "+proj=lcc +lat_1=60 +lat_2=30 +lon_0=-60"
 
 # get_cbsa_sf --------------------------------------------------------------------
 #' @export
-get_cbsa_sf <- function(){
-  cbsa_sf <- tigris::core_based_statistical_areas(cb=TRUE, keep_zipped_shapefile=TRUE)
+get_cbsa_sf <- function(year = getOption("tigris_year",2020L)){
+  # ?core_based_statistical_areas
+  #  tigris::core_based_statistical_areas is not currently available for years prior to 2010.
+  cbsa_sf <- tigris::core_based_statistical_areas(cb=TRUE, year=year, keep_zipped_shapefile=TRUE)
   # (cbsa_lcc_sf <- cbsa_sf %>% st_transform(st_crs(lcc)))
+  # cbsa_sf%>% subset(CBSA=="37700")
   return(cbsa_sf)
 }
+
+#' @import terra
+get_cbsa_vec <- purrr::compose(terra::vect, get_cbsa_sf)
 
 # cbsa_names --------------------------------------------------------------
 #' @export
