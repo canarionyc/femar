@@ -14,6 +14,7 @@ states_sf %>% subset(STATEFP=='06') %>% qtm()
 # (states_sf <- tigris::states(cb=TRUE))
 st_crs(states_sf)
 
+
 # verify area -------------------------------------------------------------
 
 (states_dt <- states_sf%>% st_drop_geometry() %>% setDT(key='STATEFP'))
@@ -55,3 +56,8 @@ print(cor.dt[j!=i], n=999L)
 str(arr.ind)
 arr.ind[,]
 X.cor[arr.ind]
+
+
+# states_vec --------------------------------------------------------------
+
+states_vec <- get_states_vec()

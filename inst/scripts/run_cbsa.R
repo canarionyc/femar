@@ -1,5 +1,6 @@
-devtools::load_all("~/Spatial/FEMA/femar/")
 library(sf)
+devtools::load_all("~/Spatial/FEMA/femar/")
+
 # cbsa_sf --------------------------------------------------------------------
 
 cbsa_sf <- get_cbsa_sf()
@@ -9,14 +10,16 @@ cbsa_sf%>%subset(CBSAFP == 26420)
 
 (cbsa_lcc_sf <- cbsa_sf %>% st_transform(st_crs(lcc)))
 
-
-
 cbsa_sf <- cbsa_sf %>% subset( stri_extract_last_regex(NAME, pattern = "[A-Z]{2}(-[A-Z]{2})*") %in% c('LA','MS'))
 cbsa_sf
 
 ?plot.sf
 cbsa_sf %>% subset(select='NAME') %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
 str(cbsa_sf)
+
+
+# cbsa_vec ----------------------------------------------------------------
+
 library(terra)
 cbsa_vec <- terra::vect(cbsa_sf )
 labels <-paste(cbsa_vec$NAME, LA_cbsa_vec$CBSAFP, sep = " ")
@@ -26,8 +29,9 @@ plot(cbsa_vec, y='ALAND'
 #     , col=map.pal("viridis", 100)
      ); terra::text(cbsa_vec, labels= labels, cex=0.65)
 
-# LA_cbsa_sf --------------------------------------------------------------
+cbsa_vec <- get_cbsa_vec()
 
+# LA_cbsa_sf --------------------------------------------------------------
 
 LA_cbsa_sf <- cbsa_sf %>% subset( stri_extract_last_regex(NAME, pattern = "[A-Z]{2}(-[A-Z]{2})*")=='LA')
 LA_cbsa_sf

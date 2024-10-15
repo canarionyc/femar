@@ -19,7 +19,7 @@ devtools::load_all("~/Spatial/FEMA/femar/");
 Helene_kml <- file.path(Sys.getenv("DATADIR"), "ArcGIS", "al092024.kml")
 
 (Helene_vec <- read_sf(Helene_kml) %>% terra::vect() %>% set.crs("EPSG:4269") ) # NAD83
-
+rm(Helene_kml)
 print(st_crs(Helene_vec))
 
 # debugonce(set.crs)
@@ -61,8 +61,6 @@ cbsa_vec <- get_cbsa_vec(year = 2020L)
 
 Helene120km <- Helene_vec%>% as.lines() %>% buffer(width=120e3)
 
-
-
 # plot with terra --------------------------------------------------------------
 #help(package="terra")
 # ?terra::plot
@@ -75,10 +73,9 @@ plot(cbsa_vec
 lines(states_vec, col="black", lwd=1, alpha=1)
 points(Helene_vec,col="blue")
 lines(Helene_vec,col="blue",lwd=1)
-polys(Helene120km, col="cyan", alpha=0.2)
-
-
-
+polys(Helene120km, col="cyan", alpha=0.2, border=NA)
+# states_vec
+terra::text(states_vec, 'STUSPS', cex=0.65)
 # # Helene_png ----
 #
 # Helene_png <- file.path(Sys.getenv("R_WORK_DIR"), format(Sys.time(),"Helene_%Y%m%d_%H%M.png")); print(file.info(Helene_png))
