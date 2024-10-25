@@ -21,7 +21,11 @@ str(cbsa_sf)
 # cbsa_vec ----------------------------------------------------------------
 
 library(terra)
-cbsa_vec <- terra::vect(cbsa_sf )
+cbsa_vec <- get_cbsa_vec()
+# cbsa_vec <- terra::vect(cbsa_sf )
+
+table(cbsa_vec$LSAD, useNA = "ifany")
+
 labels <-paste(cbsa_vec$NAME, LA_cbsa_vec$CBSAFP, sep = " ")
 ?`plot,SpatVector,character-method`
 options(terra.pal=terrain.colors(10))
@@ -29,7 +33,7 @@ plot(cbsa_vec, y='ALAND'
 #     , col=map.pal("viridis", 100)
      ); terra::text(cbsa_vec, labels= labels, cex=0.65)
 
-cbsa_vec <- get_cbsa_vec()
+
 
 # LA_cbsa_sf --------------------------------------------------------------
 

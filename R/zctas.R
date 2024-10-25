@@ -18,10 +18,12 @@ get_zctas_sf <-  function(year=getOption("tigris_year", 2020)){
   return(zctas_sf)
 }
 
+#' @import terra
+?purrr::compose
+get_zctas_vect <- purrr::compose(terra::vect, tigris::zctas)
+
 
 # state_zcta3_sf ----
-
-
 
 get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 2000 and 2010.
 
@@ -43,7 +45,7 @@ get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 
     print(state_zcta_sf['ZCTA3CE10'])
     # ?st_union
     #    (tmp_sf <- state_zcta_sf[c(   'ALAND10', 'AWATER10'  ,'ZCTA3CE10')][1:3,])
-    state_zcta3_sf <- aggregate(state_zcta_sf[,c('ALAND10', 'AWATER10')], by=list(ZCTA3CE10=state_zcta_sf$ZCTA3CE10), FUN=sum )
+    state_zcta3_sf <- aggregate(state_zcta_sf[,c('ALAND10', 'AWATER10')], by=list(ZCTA3CE10=state_zcta_sf$ZCTA3CE10), FUN=base::sum )
     # names(state_zcta3_sf)[1] <- 'ZCTA3CE10'
 
     # plot(st_geometry(state_zcta3_sf))
@@ -60,3 +62,36 @@ get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 
   }
   state_zcta3_sf
 }
+
+
+# zip_code_short_vect -----------------------------------------------------
+
+get_zip_code_short_vect <- function() {
+
+  zip_code_short_vect_gpkg <- file.path(.fema_workdir, "zip_code_short_vect.gpkg")
+  if(file.exists(zip_code_short_vect_gpkg)) {
+    return(terra::vect(zip_code_short_vect_gpkg))
+  }
+  # ?aggregate
+
+  # ?sum
+  # myfun <- function(..., na.rm=FALSE) {
+  # #  browser()
+  #   str(list(...))
+  #   base::sum(..., na.rm = na.rm)
+  #   }
+  #
+  # debugonce(myfun)
+
+
+  zip_code_short_vect <- terra::aggregate(zctas_vect[, c('ZCTA3CE20', 'ALAND20', 'AWATER20')]
+                                          , by='ZCTA3CE20', fun=myfun )
+
+  zip_code_short_vect
+  class(zip_code_short_vect)
+
+  writeVector(zip_code_short_vect,zip_code_short_vect_gpkg)
+  return(zip_code_short_vect)
+}
+
+

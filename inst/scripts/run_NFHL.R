@@ -42,8 +42,34 @@ NFHL_12_20241010_gdb <- file.path(.fema_datadir, "MSC","NFHL_12_20241010.gdb")
 
 ?terra::vect
 
+
+# S_Fld_Haz_Ar ------------------------------------------------------------
+
+
 (S_Fld_Haz_Ar <- terra::vect(NFHL_12_20241010_gdb, "S_FLD_HAZ_AR", proxy=TRUE))
 names(S_Fld_Haz_Ar)
+class(S_Fld_Haz_Ar)
+methods(class="SpatVectorProxy")
+?terra::`query,SpatVectorProxy-method`
+sv <- query(S_Fld_Haz_Ar
+#            , n=10L
+            , filter=GA_vec)
+methods(class = "SpatVector")
+summary(sv)
+
+plot(sv, main="Georgia Flood Hazard")
+lines(GA_vec, col="grey")
+
+plot(GA_vec, border="grey",main="Georgia Flood Hazard")
+lines(sv)
+
+
+states_vec <- get_states_vec()
+crs(states_vec)
+
+(GA_vec <- states_vec %>% subset(states_vec$NAME=="Georgia"))
+
+
 
 (S_Fld_Haz_Ln  <- terra::vect(NFHL_12_20241010_gdb, "S_FLD_HAZ_LN", proxy=TRUE))
 names(S_Fld_Haz_Ln )

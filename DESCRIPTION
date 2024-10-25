@@ -18,8 +18,9 @@ Imports:
   , readxl, dplyr
   ,magrittr,purrr
   ,stringi
-  ,sf,tigris,rgeoda,terra
-  ,RCurl,censusapi
+  ,sf,rgeoda,terra
+  ,RCurl
+  ,tigris,censusapi
   ,httr
 Suggests:
   Cairo,clipr,devtools

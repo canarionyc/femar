@@ -22,9 +22,9 @@ get_counties_sf <- function(year=getOption("tigris_year", 2020L)){
 
     # ?counties
     (counties_sf <- tigris::counties(cb=TRUE
-                                 , year=year
-                                 , class="sf"
-                                 , keep_zipped_shapefile =TRUE, progress_bar = FALSE))
+                                     , year=year
+                                     , class="sf"
+                                     , keep_zipped_shapefile =TRUE, progress_bar = FALSE))
     # str(counties_sf)
     # counties_sf$INTPTLAT <- as.numeric(counties_sf$INTPTLAT)
     # counties_sf$INTPTLON <- as.numeric(counties_sf$INTPTLON)
@@ -48,7 +48,7 @@ get_counties_sf <- function(year=getOption("tigris_year", 2020L)){
     coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
 
     tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=counties_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()
-print(summary(tmp_df))
+    print(summary(tmp_df))
     (counties_sf <- cbind(counties_sf, tmp_df))
 
     # show(counties_sf)
@@ -67,17 +67,23 @@ print(summary(tmp_df))
 }
 
 #' @import terra
-get_counties_vec <- purrr::compose(terra::vect, get_counties_sf)
+?purrr::compose
+get_counties_vect <- purrr::compose(terra::vect, tigris::counties)
 
 
 #' @import sf
 #' @import stats
-get_counties_within_cbsas <- function() {
+get_counties_within_cbsas <- function(year=2021) {
   counties_sf <- counties(cb = FALSE, year=2021)
+  print(counties_sf)
   print(nrow(counties_sf))
+
   print(counties_sf %>% subset(CBSAFP == 26420)) # Houston, TX greater metropolitan area
 
-  cbsa_sf <- aggregate(counties_sf[, c('ALAND', 'AWATER')], list(CBSAFP=counties_sf$CBSAFP), FUN=sum)
+
+  cbsa_sf <- tigris::core_based_statistical_areas(cb = FALSE, year=2021)
+
+  # cbsa_sf <- aggregate(counties_sf[, c('ALAND', 'AWATER')], list(CBSAFP=counties_sf$CBSAFP), FUN=sum)
   print(cbsa_sf)
 
   counties_sf %>% subset(CBSAFP == 26420, select='NAMELSAD')  %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
@@ -125,8 +131,8 @@ get_NRI_counties_dt <- function() {
   } else {
     # list.files(.NRI_datadir)
     NRI_counties_dt <- fread(file.path(.NRI_datadir, "NRI_Table_Counties.csv")
-                         , na.strings = c("Data Unavailable","Insufficient Data","Not Applicable")
-                         , colClasses = list(character='STATEFIPS','STCOFIPS'))
+                             , na.strings = c("Data Unavailable","Insufficient Data","Not Applicable")
+                             , colClasses = list(character='STATEFIPS','STCOFIPS'))
     str(NRI_counties_dt)
     NRI_counties_dt[, OID_:=NULL]
     # NRI_counties_dt[, STATEFIPS:=sprintf("%02d", STATEFIPS)]
@@ -145,12 +151,12 @@ get_NRI_counties_dt <- function() {
     # ?fct_relevel
 
     NRI_counties_dt[, RISK_RATNG:=factor(RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                            # ,"Insufficient Data"
+                                                                # ,"Insufficient Data"
     ))]
     print(table(NRI_counties_dt$RISK_RATNG, useNA = "ifany"))
 
     NRI_counties_dt[, SOVI_RATNG:=factor(SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                             #    ,"Data Unavailable"
+                                                                 #    ,"Data Unavailable"
     ))]
     print(levels(NRI_counties_dt$SOVI_RATNG))
     print(table(NRI_counties_dt$SOVI_RATNG, useNA = "ifany"))
@@ -187,38 +193,38 @@ get_NRI_counties_sf <- function(state) {
 
     if(missing(state)) {
       NRI_counties_sf <- sf::st_read(dsn = NRI_GDB_counties_gdb
-                                 , layer = "NRI_Counties"
-                                 ,quiet=TRUE)
+                                     , layer = "NRI_Counties"
+                                     ,quiet=TRUE)
     } else{
       statefips <- get_fips_code(state)
       str(tigris::fips_codes)
       NRI_counties_sf <- sf::st_read(dsn = NRI_GDB_counties_gdb
-                                 , layer = "NRI_Counties"
-                                 , query = sprintf("SELECT * FROM NRI_Counties where STATEFIPS  = '%d'", statefips))
+                                     , layer = "NRI_Counties"
+                                     , query = sprintf("SELECT * FROM NRI_Counties where STATEFIPS  = '%d'", statefips))
 
     }
 
     NRI_counties_sf$RISK_RATNG<- factor(NRI_counties_sf$RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                                       # ,"Insufficient Data"
-                                                                       ))
+                                                                               # ,"Insufficient Data"
+    ))
     # NRI_counties_sf$RISK_RATNG <- fct_na_level_to_value(NRI_counties_sf$RISK_RATNG,extra_levels  = "Insufficient Data" )
 
     print(table(NRI_counties_sf$RISK_RATNG, useNA = "ifany"))
 
     NRI_counties_sf$SOVI_RATNG <- factor(NRI_counties_sf$SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                                   #      ,"Data Unavailable"
-                                                                         ))
+                                                                                 #      ,"Data Unavailable"
+    ))
     print(levels(NRI_counties_sf$SOVI_RATNG))
     # NRI_counties_sf$SOVI_RATNG <- fct_na_level_to_value(NRI_counties_sf$SOVI_RATNG,extra_levels  = "Data Unavailable" )
 
     print(table(NRI_counties_sf$SOVI_RATNG, useNA = "ifany"))
     NRI_counties_sf$RISK_RATNG2 <- forcats::fct_collapse(NRI_counties_sf$RISK_RATNG
-, 'High'=c('Very High','Relatively High')
-, 'Moderate'="Relatively Moderate"
-, "Low"=c("Relatively Low","Very Low"))
+                                                         , 'High'=c('Very High','Relatively High')
+                                                         , 'Moderate'="Relatively Moderate"
+                                                         , "Low"=c("Relatively Low","Very Low"))
 
 
-# add coastline ----------------------------------------------------------
+    # add coastline ----------------------------------------------------------
     (coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857))) # %>% subset(NAME!="Arctic")
     coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
 
@@ -261,16 +267,15 @@ get_cty_cbsa_NRI_sf <- function(){
   return(cty_cbsa_NRI_sf)
 }
 
-
 # not used: function to obtain US county shape
-get_US_county_2010_shape <- function() {
-  dir <- Sys.getenv("TIGRIS_CACHE_DIR")
-  url <- "http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_us_050_00_20m.zip"
-  destfile <- file.path(dir, basename(url))
-  download.file(url, destfile = destfile)
-  exdir <- fs::path_ext_remove(destfile)
-  unzip(destfile, exdir = exdir)
-  US <- read_sf(exdir)
-  levels(US$NAME) <- iconv(levels(US$NAME), from = "latin1", to = "utf8")
-  US
-}
+# get_US_county_2010_shape <- function() {
+#   dir <- Sys.getenv("TIGRIS_CACHE_DIR")
+#   url <- "http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_us_050_00_20m.zip"
+#   destfile <- file.path(dir, basename(url))
+#   download.file(url, destfile = destfile)
+#   exdir <- fs::path_ext_remove(destfile)
+#   unzip(destfile, exdir = exdir)
+#   US <- read_sf(exdir)
+#   levels(US$NAME) <- iconv(levels(US$NAME), from = "latin1", to = "utf8")
+#   US
+# }

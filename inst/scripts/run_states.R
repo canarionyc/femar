@@ -1,3 +1,7 @@
+
+# setup -------------------------------------------------------------------
+
+
 devtools::load_all("~/Spatial/FEMA/femar/")
 
 # states_sf ---------------------------------------------------------------
@@ -14,6 +18,21 @@ states_sf %>% subset(STATEFP=='06') %>% qtm()
 # (states_sf <- tigris::states(cb=TRUE))
 st_crs(states_sf)
 
+# states_vect --------------------------------------------------------------
+
+devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); (states_vect <- get_states_vect())
+
+conus_vect <- states_vect %>% dplyr::filter(! STATEFP %in% c('02','15') & as.integer(STATEFP)<60)
+plot(conus_vect)
+
+?terra::rasterize
+as.lines(conus_vect)
+(r <- rast(conus_vect, res=1))
+(conus.SpatRast <- terra::rasterizeGeom(as.lines(conus_vect),  r, fun="length", "m"))
+plot(conus.SpatRast)
+
+terra::flip(conus.SpatRast, direction="vertical") %>% plot()
+terra::flip(conus.SpatRast, direction="horizontal") %>% plot()
 
 # verify area -------------------------------------------------------------
 
@@ -58,6 +77,4 @@ arr.ind[,]
 X.cor[arr.ind]
 
 
-# states_vec --------------------------------------------------------------
 
-states_vec <- get_states_vec()

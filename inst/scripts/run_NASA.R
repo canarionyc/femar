@@ -1,7 +1,6 @@
 
 # setup -------------------------------------------------------------------
 
-
 library(units)
 help(package="units")
 
@@ -19,34 +18,143 @@ Sys.getenv()
 DISC_DATADIR <- file.path(Sys.getenv("DATADIR"), "GOV", "NASA", "GSFC", "DISC"); stopifnot(dir.exists(DISC_DATADIR))
 setwd(DISC_DATADIR)
 getwd()
+
+
+
+
+# wget --------------------------------------------------------------------
 library(RCurl)
 help(package="RCurl")
-
 ?download.file
 
-(url.list <- readLines("subset_GPM_3GPROFGPMGMI_07_20241011_041342_.txt"))
+getwd()
+
+subset_txt <- file.path(DISC_DATADIR, "subset_GPM_3IMERGHHL_07_20241025_162247_.txt"); stopifnot(file.exists(subset_txt))
+
+(url.list <- readLines(subset_txt, warn = FALSE))
 
 Sys.which("wget")
 
+?download.file
 download.file(url.list[1], destfile = basename(url.list[1]), method = "wget")
 
 # download files ----------------------------------------------------------
 
-setwd()
+setwd(DISC_DATADIR); getwd()
+url.list[-c(1:2)]
+download.file
+debugonce(download.file)
 
-library("rhdf5")
-help(package="rhdf5")
+# my.download.file<-function (url, destfile, method, quiet = FALSE, mode = "w", cacheOK = TRUE,
+#                             extra = getOption("download.file.extra"), headers = NULL,
+#                             ...)
+# {
+#
+#   destfile
+#   if (missing(method))
+#     method <- getOption("download.file.method", default = "auto")
+#   method <- match.arg(method, c("auto", "internal", "wininet",
+#                                 "libcurl", "wget", "curl", "lynx"))
+#   if (missing(mode) && length(grep("\\.(gz|bz2|xz|tgz|zip|jar|rd[as]|RData)$",
+#                                    URLdecode(url))))
+#     mode <- "wb"
+#   if (method == "auto") {
+#     if (length(url) != 1L || typeof(url) != "character")
+#       stop("'url' must be a length-one character vector")
+#     method <- if (startsWith(url, "file:"))
+#       "wininet"
+#     else "libcurl"
+#   }
+#   nh <- names(headers)
+#   if (length(nh) != length(headers) || any(nh == "") || anyNA(headers) ||
+#       anyNA(nh))
+#     stop("'headers' must have names and must not be NA")
+#   switch(method, internal = , wininet = {
+#     headers <- if (length(headers)) paste0(nh, ": ", headers,
+#                                            "\r\n", collapse = "")
+#     status <- .External(C_download, url, destfile, quiet,
+#                         mode, cacheOK, headers, method == "wininet")
+#   }, libcurl = {
+#     headers <- if (length(headers)) paste0(nh, ": ", headers)
+#     status <- .Internal(curlDownload(url, destfile, quiet,
+#                                      mode, cacheOK, headers))
+#   }, wget = {
+#     if (length(url) != 1L || typeof(url) != "character") stop("'url' must be a length-one character vector")
+#     if (length(destfile) != 1L || typeof(destfile) != "character") stop("'destfile' must be a length-one character vector")
+#     if (quiet) extra <- c(extra, "--quiet")
+#     if (!cacheOK) extra <- c(extra, "--cache=off")
+#     browser()
+#     cmd <- paste("wget", paste(extra, collapse = " "),
+#                  shQuote(url), "-O", shQuote(path.expand(destfile)))
+#     cat(cmd)
+#     status <- system(cmd)
+#     if (status) warning("'wget' call had nonzero exit status")
+#   }, curl = {
+#     if (length(url) != 1L || typeof(url) != "character") stop("'url' must be a length-one character vector")
+#     if (length(destfile) != 1L || typeof(url) != "character") stop("'destfile' must be a length-one character vector")
+#     if (quiet) extra <- c(extra, "-s -S")
+#     if (!cacheOK) extra <- c(extra, paste("-H", shQuote("Pragma: no-cache")))
+#     status <- system(paste("curl", paste(extra, collapse = " "),
+#                            shQuote(url), " -o", shQuote(path.expand(destfile))))
+#     if (status) stop("'curl' call had nonzero exit status")
+#   }, lynx = stop("method 'lynx' is defunct", domain = NA),
+#   stop("invalid method: ", method))
+#   if (status > 0L)
+#     warning("download had nonzero exit status")
+#   invisible(status)
+# }
+
+lapply(url.list[-c(1:2)], function(x) {
+  destfile <- basename(x)
+  if(! (file.exists(destfile) && file.size(destfile)>0 )){
+    download.file(x, destfile = destfile
+                     , method = "wget"
+                     , mode = "wb"
+                     , extra = "--load-cookies C:/users/admin/.urs_cookies --save-cookies C:/users/admin/.urs_cookies --keep-session-cookies --user=canarionyc --password=fd@2KzRrQ7bXbN7 -nc -nv"
+    )}
+}
+)
+
+
+# hdf5 files --------------------------------------------------------------
+
+
+
 # https://gpm.nasa.gov/data/directory
 
-(hdf5_files.list <- list.files(DISC_DATADIR, pattern = "\\.HDF5$", full.names = TRUE))
+(hdf5_files.list <- list.files(DISC_DATADIR, pattern = "3B-HHR-L\\.MS\\.MRG\\.3IMERG\\.202407.*\\.HDF5$", full.names = TRUE))
 
-(file_hdf5 <- hdf5_files.list[6])
 
-stopifnot(H5Fis_hdf5(file_hdf5))
+# rhdf5 -------------------------------------------------------------------
+library("rhdf5")
+help(package="rhdf5")
+
+(file_hdf5 <- hdf5_files.list[1]); stopifnot(H5Fis_hdf5(file_hdf5))
+
 
 h5ls(file_hdf5)
 
 h5dump(file_hdf5,load=FALSE)
+
+?h5read
+debugonce(h5read)
+precipitation.ary <- h5read(file_hdf5, name = "Grid/precipitation", read.attributes = TRUE)
+dim(precipitation.ary)
+str(precipitation.ary)
+attributes(precipitation.ary)
+attr(precipitation.ary, '_FillValue')
+
+
+# precipitation.ary2 <- aperm(precipitation.ary,c(2,1,3))
+# dim(precipitation.ary2)
+#range(precipitation.ary2)
+
+dim(precipitation.ary3)
+range(precipitation.ary3, na.rm = TRUE)
+# image(tmp[,,1])
+
+# geometry -------------------------------------------------------------------------
+
 
 # latitude
 (1:360)/2-90-0.25
@@ -69,11 +177,6 @@ seq(1,72*5, 0.5)-180-0.25
 # EastBoundingCoordinate=180;
 # WestBoundingCoordinate=-180;
 # Origin=SOUTHWEST;
-
-
-
-
-
 
 Grids_G1_rds <- file.path(Sys.getenv("R_WORK_DIR"), "Grids_G1.rds"); print(file.info(Grids_G1_rds)['size'])
 if(file.exists(  Grids_G1_rds)) {
@@ -119,43 +222,43 @@ H5Dclose()
 (0:1440)*0.25- 180 + 0.125 # longitude
 (0.0:720.0) * 0.25 - 90 + 0.125 # latitude
 
-# -------------------------------------------------------------------------
+# py -------------------------------------------------------------------------
 
 lon = np.arange(0.0, 1440.0) * 0.25 - 180 + 0.125
 lat = np.arange(0.0, 720.0) * 0.25 - 90 + 0.125
 
-
-# IMERG nc4 ---------------------------------------------------------------------
-
+# file_nc4.list ---------------------------------------------------------------------
 
 library(ncdf4)
 help(package="ncdf4")
 
-(file_nc4.list <- list.files(DISC_DATADIR, pattern = "\\.nc", full.names = TRUE))
-
-(file_nc4.list <- list.files("E:/Geo", pattern = "\\.nc", full.names = TRUE))
+(file_nc4.list <- list.files(DISC_DATADIR, pattern = "3B-DAY-L\\.MS\\.MRG\\.3IMERG\\.\\d{8}.*\\.nc", full.names = TRUE))
 
 ?nc_open
-nc4 <- nc_open(file_nc4.list[[1]], verbose = TRUE)
+nc <- nc_open(file_nc4.list[[1]], verbose = TRUE)
 methods(class = "ncdf4")
-?slotNames
-slotNames( "ncdf4")
-print(nc4)
+print(nc)
 
 
 # precipitation.RasterLayer -----------------------------------------------
 
-
 library(raster)
 help(package = "raster")
 help("raster", package = "raster")
-(precipitation.RasterLayer <- raster::raster(file_nc4.list[[1]], varname="GPM_3IMERGDL_07_precipitation"))
+(precipitation.RasterLayer <- raster::raster(file_nc4.list[[1]]
+                                             , varname='precipitation' #   "GPM_3IMERGDL_07_precipitation"
+))
 #precipitation.RasterLayer <- raster::raster(precipitation)
-methods(class="raster")
-
+methods(class="RasterLayer")
+dim(precipitation.RasterLayer)
+isLonLat(precipitation.RasterLayer)
+plot(precipitation.RasterLayer) # it is transposed? rotated?
+?raster::flip
+precipitation.RasterLayer %>% plot()
+raster::flip(precipitation.RasterLayer,direction='x') %>% plot(main="flip(direction='x')")
+raster::flip(precipitation.RasterLayer,direction='y') %>% plot(main="flip(direction='y')")
 
 # precipitation_grd -------------------------------------------------------
-
 
 dir.exists(file.path(Sys.getenv("R_WORK_DIR"), "Spatial"))
 precipitation_grd <- file.path(Sys.getenv("R_WORK_DIR"), "Spatial", "precipitation.grd"); print(file.info(precipitation_grd))
@@ -184,7 +287,7 @@ levelplot(precipitation.RasterLayer)
 #varid <- "MWprecipitation"
 varid <- "GPM_3IMERGDL_07_precipitation"
 ?ncvar_get
-precipitation <- ncvar_get(nc4, varid = varid, verbose=TRUE)
+precipitation <- ncvar_get(nc, varid = varid, verbose=TRUE)
 class(precipitation)
 dim(precipitation)
 str(precipitation)
@@ -193,12 +296,12 @@ precipitation.aperm <- aperm(precipitation, c(2,1))
 dim(precipitation.aperm)
 all.equal(precipitation.aperm, t(precipitation))
 
-lat <- ncvar_get(nc4, varid = "lat", verbose=FALSE)
+lat <- ncvar_get(nc, varid = "lat", verbose=FALSE)
 length(lat); range(lat)
-# (lat_bnds <- ncvar_get(nc4, varid = "lat_bnds", verbose=FALSE))
+# (lat_bnds <- ncvar_get(nc, varid = "lat_bnds", verbose=FALSE))
 
 ??raster
-lon <- ncvar_get(nc4, varid = "lon", verbose=FALSE)
+lon <- ncvar_get(nc, varid = "lon", verbose=FALSE)
 # str(lon)
 length(lon); range(lon)
 
@@ -219,8 +322,24 @@ contour(x=lon, y=lat,precipitation)
 # grDevices::contourLines(x=lon, y=lat,precipitation)
 ?rasterize
 ?terra::rast
-terra::rast()
-(precipitation_rast <- terra::rast(t(precipitation)[ncol(precipitation):1,]
+str(precipitation)
+precipitation.mat <- precipitation.ary[,,1]
+dim(precipitation.mat)
+precipitation.mat[precipitation.mat<0] <- NA_real_
+anyNA(precipitation.mat)
+range(precipitation.mat, na.rm = TRUE)
+
+
+precipitation.mat <- precipitation.mat[precipitation.mat>0]
+
+(precipitation_rast <- terra::rast(precipitation.mat
+                                   #                                   , crs= "+proj=longlat"
+                                   #                                  , extent= c(range(lon), range(lat)))
+)
+) %>% plot()
+
+
+(precipitation_rast <- terra::rast(t(precipitation.mat)[ncol(precipitation.mat):1,]
                                    #                                   , crs= "+proj=longlat"
                                    #                                  , extent= c(range(lon), range(lat)))
 )
@@ -292,9 +411,9 @@ raster::plot(precipitation.RasterLayer
              , col= colorRampPalette(c("white","yellow", "red"))(2^8-1)
              , interpolate = TRUE
              , main="2024-09-27"
-            #  , asp=1, xpd=NA
-            # , ext=c(-100,-70,20,40)
-             )
+             #  , asp=1, xpd=NA
+             # , ext=c(-100,-70,20,40)
+)
 
 # ?rasterVis::`gplot,Raster-method`
 # library(ggplot2)
@@ -319,10 +438,10 @@ my.theme <- plasmaTheme()
 
 
 (precipitation.trellis <- rasterVis::levelplot(precipitation.RasterLayer%>% raster::disaggregate(fact=c(2,2))
-                     , par.settings=my.theme
-, main='Precipitation 2024-09-27'
-, xlab=NA, ylab=NA
-                     ,margin=FALSE)) + layer(lpolygon(states_vec))
+                                               , par.settings=my.theme
+                                               , main='Precipitation 2024-09-27'
+                                               , xlab=NA, ylab=NA
+                                               ,margin=FALSE)) + layer(lpolygon(states_vec))
 
 
 
@@ -388,7 +507,7 @@ length(lat)
 ?`contour,SpatRaster-method`
 contour(x=lon, y=lat, z =  precipitation)
 dim(precipitation); c(length(lon), length(lat))
-nc4 <- file.path(DISC_DATADIR, "3B-DAY-E.MS.MRG.3IMERG.20240927-S000000-E235959.V07B.nc4")
+nc <- file.path(DISC_DATADIR, "3B-DAY-E.MS.MRG.3IMERG.20240927-S000000-E235959.V07B.nc")
 
 
 

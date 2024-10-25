@@ -16,9 +16,13 @@ devtools::load_all("~/Spatial/FEMA/femar/");
 
 # Helene_vec --------------------------------------------------------------
 
-Helene_kml <- file.path(Sys.getenv("DATADIR"), "ArcGIS", "al092024.kml")
+Helene_kml <- file.path(Sys.getenv("DATADIR"), "ArcGIS", "al092024.kml"); print(file.info(Helene_kml))
+Helene_vec <- terra::vect(Helene_kml) %>% set.crs("EPSG:4269")
+Helene_vec
 
-(Helene_vec <- read_sf(Helene_kml) %>% terra::vect() %>% set.crs("EPSG:4269") ) # NAD83
+(Helene_vec %>% as.lines() ) %>% lines()
+
+# (Helene_vec <- read_sf(Helene_kml) %>% terra::vect() %>% set.crs("EPSG:4269") ) # NAD83
 rm(Helene_kml)
 print(st_crs(Helene_vec))
 
@@ -30,7 +34,7 @@ print(st_crs(Helene_vec))
 # Helene_vec %>% as.lines() %>% plot()
 
 
- states_vec <- get_states_vec()
+states_vec <- get_states_vec()
 print(st_crs(states_vec))
 
 # devtools::load_all("~/Spatial/FEMA/femar/");
