@@ -153,7 +153,7 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
 
 #' @import terra
 #' @export
-get_states_vect <- purrr::compose(terra::vect, tigris::states)
+states_vect <- purrr::compose(terra::vect, tigris::states)
 
 NRI_states_info <- function() {
   NRI_states_fst <- file.path(.NRI_workdir, "NRI_states.fst"); print(file.info(NRI_states_fst))

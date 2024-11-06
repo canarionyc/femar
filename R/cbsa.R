@@ -13,7 +13,8 @@ get_cbsa_sf <- function(year = getOption("tigris_year",2020L)){
 }
 
 #' @import terra
-get_cbsa_vec <- purrr::compose(terra::vect, get_cbsa_sf)
+#' @export
+core_based_statistical_areas_vect <- purrr::compose(terra::vect, tigris::core_based_statistical_areas)
 
 # cbsa_names --------------------------------------------------------------
 #' @export
@@ -42,6 +43,16 @@ get_cbsa_names <- function(){
 # sort(cbsa_names$NAMELSAD) %>% clipr::write_clip()
 
 # print(cbsa_names$NAMELSAD)
+
+# MSA to County -----------------------------------------------------------
+
+#' @importFrom readxl read_xlsx
+get_cbsa_to_county <- function() {
+# devtools::load_all("~/fstutils/",export_all = TRUE);
+  list1_2023 <- readxl::read_xlsx(file.path(CENSUS_DATADIR, "list1_2023.xlsx")) %>% setDT() %>% sanitize()
+  str(list1_2023)
+  return(list1_2023)
+  }
 
 
 

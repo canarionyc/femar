@@ -37,6 +37,10 @@ get_tracts_sf <- function(year=getOption("tigris_year", 2020L)){
   tracts_sf
 }
 
+#' @import terra
+#' @export
+tracts_vect <- purrr::compose(terra::vect, tigris::tracts)
+
 #' NRI Hazard Info by Census Tabulation Block
 #'
 #' @param state character

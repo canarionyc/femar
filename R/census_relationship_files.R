@@ -12,7 +12,7 @@ get_tab20_zcta520_county20_natl <- function(){
     tab20_zcta520_county20_natl <- read_fst(tab20_zcta520_county20_natl_fst, as.data.table = TRUE)
   } else {
 
-    tab20_zcta520_county20_natl_txt <- file.path(.census_datadir, "rel2020", "zcta520","tab20_zcta520_county20_natl.txt")
+    tab20_zcta520_county20_natl_txt <- file.path(CENSUS_DATADIR, "rel2020", "zcta520","tab20_zcta520_county20_natl.txt")
     # ?fread
     (tab20_zcta520_county20_natl <- fread(tab20_zcta520_county20_natl_txt
                                           ,na.strings=c("NA","")

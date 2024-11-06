@@ -20,9 +20,11 @@ st_crs(states_sf)
 
 # states_vect --------------------------------------------------------------
 
-devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); (states_vect <- get_states_vect())
+devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); (states_vect <- states_vect(cb = TRUE))
 
-conus_vect <- states_vect %>% dplyr::filter(! STATEFP %in% c('02','15') & as.integer(STATEFP)<60)
+?filter
+?subset
+conus_vect <- states_vect %>% subset(! states_vect$STATEFP %in% c('02','15') & as.integer(states_vect$STATEFP)<60)
 plot(conus_vect)
 
 ?terra::rasterize

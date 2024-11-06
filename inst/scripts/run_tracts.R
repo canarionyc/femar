@@ -2,6 +2,7 @@
 # rm(list = ls())
 source("~/Spatial/.RProfile")
 library(configr)
+library(tigris)
 configr::read.config()
 devtools::load_all("~/fstutils/", export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
@@ -37,6 +38,15 @@ names(tract_sf)
 table(dupes <- duplicated(tract_sf, by=c( 'TRACTCE')))  # => tract code is unique nationwide
 
 
+# tracts_vect -------------------------------------------------------------
+
+
+?tracts
+
+
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); tracts_vect <- get_tracts_vect(cb=TRUE,state='22',keep_zipped_shapefile =TRUE)
+
+tracts_vect %>% terra::plot(main="Louisiana tracts", border="grey")
 
 # NRI_tracts_sf -----------------------------------------------------------
 

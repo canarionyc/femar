@@ -9,15 +9,19 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 print(getOption("tigris_year"))
 # source("~/lattice_setup.R")
 
-
 # counties_sf -------------------------------------------------------------
-
-
 
 counties_sf <- get_counties_sf()
 counties_sf
 
 counties_dt <- st_drop_geometry(counties_sf) %>% setDT(key='GEOID')
+
+
+# counties_vect ------------------------------------------------------------
+
+(LA.counties_vect <- counties_vect(state = '22', cb = TRUE))
+
+LA.counties_vect %>% plot()
 
 # verify area -------------------------------------------------------------
 
@@ -36,8 +40,6 @@ tmap_mode("view")
 debugonce(tmap_mode)
 counties_sf %>% subset(STATEFP=='06') %>% qtm()
 # qtm(counties_sf)
-
-
 
 (counties_lcc_sf <- counties_sf %>% st_transform(st_crs(lcc)))
 

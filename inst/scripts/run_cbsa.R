@@ -1,4 +1,5 @@
 library(sf)
+devtools::load_all("~/fstutils/",export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar/")
 
 # cbsa_sf --------------------------------------------------------------------
@@ -18,21 +19,27 @@ cbsa_sf %>% subset(select='NAME') %>% plot(axes=TRUE, graticule=TRUE, reset=FALS
 str(cbsa_sf)
 
 
-# cbsa_vec ----------------------------------------------------------------
+# cbsa_vect ----------------------------------------------------------------
 
 library(terra)
-cbsa_vec <- get_cbsa_vec()
-# cbsa_vec <- terra::vect(cbsa_sf )
+devtools::load_all("~/Spatial/FEMA/femar/"); (cbsa_vect <- get_cbsa_vec(cb = TRUE,keep_zipped_shapefile = TRUE))
+# cbsa_vect <- terra::vect(cbsa_sf )
 
-table(cbsa_vec$LSAD, useNA = "ifany")
+table(cbsa_vect$LSAD, useNA = "ifany")
 
-labels <-paste(cbsa_vec$NAME, LA_cbsa_vec$CBSAFP, sep = " ")
+?terra::subset
+devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); LA.state_vect <- states_vect(cb=TRUE) %>% terra::subset(STATEFP=='22', NSE=TRUE)
+LA.state_vect
+labels <-paste(cbsa_vect$NAME, LA_cbsa_vec$CBSAFP, sep = " ")
 ?`plot,SpatVector,character-method`
 options(terra.pal=terrain.colors(10))
-plot(cbsa_vec, y='ALAND'
+terra::plot(cbsa_vect
+     ,ext=ext(LA.state_vect)
+     ,border="grey"
 #     , col=map.pal("viridis", 100)
-     ); terra::text(cbsa_vec, labels= labels, cex=0.65)
-
+     )
+polys(LA.state_vect)
+terra::text(cbsa_vect, labels= cbsa_vect$NAME, cex=0.65)
 
 
 # LA_cbsa_sf --------------------------------------------------------------

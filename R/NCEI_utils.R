@@ -28,7 +28,7 @@ get_best_tracks_dt <- function(){
     # print(basename(url))
     # browseURL( fs::path_dir(url))
 
-    best_tracks_csv <- file.path(.noaa_datadir,"NCEI",  basename(url)); print(file.info(best_tracks_csv))
+    best_tracks_csv <- file.path(NOAA_DATADIR,"NCEI",  basename(url)); print(file.info(best_tracks_csv))
     # cat(R.utils::countLines(best_tracks_csv), "ines read from", best_tracks_csv)
     print(readLines(best_tracks_csv, n=3L))
 
@@ -90,13 +90,13 @@ get_best_points_sf <- function(){
   if(file.exists(best_points_rds)) {
     IBTrACS.ALL.points_sf <- readRDS(best_points_rds)
   } else {
-    # browseURL( file.path(.noaa_datadir,"NCEI"))
-    best_points_zip <- file.path(.noaa_datadir,"NCEI", basename(best_points_url)); print(file.info(best_points_zip))
+    # browseURL( file.path(NOAA_DATADIR,"NCEI"))
+    best_points_zip <- file.path(NOAA_DATADIR,"NCEI", basename(best_points_url)); print(file.info(best_points_zip))
     # download.file(best_points_url, destfile = best_points_zip)
     (best_points_dsn <- tools::file_path_sans_ext(best_points_zip))
     # unzip(best_points_zip, exdir = tools::file_path_sans_ext(best_points_zip))
     # list.files(best_points_dsn)
-    # browseURL( file.path(.noaa_datadir,"NCEI"))
+    # browseURL( file.path(NOAA_DATADIR,"NCEI"))
     st_layers(best_points_dsn)
     IBTrACS.ALL.points_sf <- st_read(best_points_dsn
 #                                     , query = "select * from \"IBTrACS.ALL.list.v04r00.points\" where BASIN='NA' and WMO_AGENCY='hurdat_atl' and  USA_WIND>34 and USA_SSHS>0 and USA_RMW is not null"
@@ -130,7 +130,7 @@ get_best_tracks_sf <- function(){
     print(st_layers(best_tracks_dsn))
     # unzip(best_tracks_zip, exdir = tools::file_path_sans_ext(best_tracks_zip))
     print(list.files(best_tracks_dsn))
-    # browseURL( file.path(.noaa_datadir,"NCEI"))
+    # browseURL( file.path(NOAA_DATADIR,"NCEI"))
 
     best_tracks_sf <- st_read(best_tracks_dsn
 #                              , query = "select * from \"IBTrACS.ALL.list.v04r00.lines\" where BASIN='NA' and WMO_AGENCY='hurdat_atl' and  USA_WIND>34 and USA_SSHS>0 and USA_RMW is not null"

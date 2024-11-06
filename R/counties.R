@@ -37,7 +37,6 @@ get_counties_sf <- function(year=getOption("tigris_year", 2020L)){
 
     print(dim(counties_sf))
 
-
     ## projected CRS: WGS 84 / Pseudo-Mercator ---------------------------------
 
     counties_sf <- st_transform(counties_sf, st_crs(3857))
@@ -67,9 +66,8 @@ get_counties_sf <- function(year=getOption("tigris_year", 2020L)){
 }
 
 #' @import terra
-?purrr::compose
-get_counties_vect <- purrr::compose(terra::vect, tigris::counties)
-
+#' @export
+counties_vect <- purrr::compose(terra::vect, tigris::counties)
 
 #' @import sf
 #' @import stats

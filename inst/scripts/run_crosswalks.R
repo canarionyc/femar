@@ -1,9 +1,51 @@
 
-configr::read.config()
-list.files(file.path(.census_datadir, "rel2020", "zcta520"), full.names = TRUE, recursive = TRUE)
+cfg <- configr::read.config()
+attach(cfg$default)
 
+list.files(file.path(CENSUS_DATADIR, "rel2020", "zcta520"), full.names = TRUE, recursive = TRUE)
+
+
+# zcta_tract_rel_10_fst ----
+zcta_tract_rel_10_fst <- file.path(CENSUS_WORKDIR, "zcta_tract_rel_10.fst"); print(file.info(zcta_tract_rel_10_fst)['size'])
+if(file.exists(zcta_tract_rel_10_fst)) {
+  print(fst.metadata(zcta_tract_rel_10_fst))
+  zcta_tract_rel_10 <- read_fst(zcta_tract_rel_10_fst, as.data.table=TRUE)
+} else {
+  ?fread
+  zcta_tract_rel_10 <- fread("https://www2.census.gov/geo/docs/maps-data/data/rel/zcta_tract_rel_10.txt"
+                             ,colClasses = list("character"=c("ZCTA5","STATE","COUNTY","TRACT","GEOID"))
+                             ,key=c("ZCTA5","STATE","COUNTY","TRACT"))
+
+  write_fst(zcta_tract_rel_10,zcta_tract_rel_10_fst); print(file.info(zcta_tract_rel_10_fst)['size'])
+}; str(zcta_tract_rel_10)
+zcta_tract_rel_10
+
+zcta_tract_rel_10[ZCTA5=="10010"]
+
+zcta_tract_rel_10[, ZCTA3:=substr(ZCTA5,1,3)]
+
+(zcta3_tract_rel_10 <- zcta_tract_rel_10[, lapply(.SD, sum), .SDcols=c('POPPT',  'HUPT', 'AREAPT', 'AREALANDPT'), by=c('ZCTA3','STATE','TRACT')])
+(zcta3_10 <- zcta_tract_rel_10[, lapply(.SD, sum), .SDcols=c('POPPT',  'HUPT', 'AREAPT', 'AREALANDPT'), by=c('ZCTA3','STATE')])
+
+zcta3_10
+(zcta3_tract_rel_10_x <-  merge(zcta3_tract_rel_10,zcta3_10, by=c('ZCTA3','STATE'), suffix=c("",".ZIP3")))
+zcta3_tract_rel_10_x[, POPPCT:=100*POPPT/POPPT.ZIP3 ]
+
+zcta3_tract_rel_10_x[ZCTA3=="100", sum(POPPCT)]
+
+# tidycensus --------------------------------------------------------------
+
+browseURL("https://api.census.gov/data.html")
+library(tidycensus)
+tidycensus::load_variables("2020",cache = TRUE)
+help(package="tidycensus")
+get_decennial("zcta")
+?tidycensus::get_decennial
+# https://www2.census.gov/geo/docs/maps-data/data/rel/zcta_county_rel_10.txt
 
 # how many counties contain a zip5? -------------------------------------------------------------------------
+
+
 
 tab20_zcta520_county20_natl <-  get_tab20_zcta520_county20_natl()
 tab20_zcta520_county20_natl[, .(GEOID_COUNTY_20_COUNT=uniqueN(GEOID_COUNTY_20)), by = 'GEOID_ZCTA5_20'][, .N, keyby='GEOID_COUNTY_20_COUNT']
@@ -167,8 +209,6 @@ NRI_zcta520_x_dt[, .(sum(AREALAND_COUNTY_20+AREAWATER_COUNTY_20), sum(AREA))]
 
 ## EALB --------------------------------------------------------------------
 
-
-
 (NRI_zcta520_EALB.stats <- NRI_zcta520_x_dt[, lapply(.SD, function(x) round(sum(x* AREALAND_ZCTA5_20_CONTRIB_AREALAND_COUNTY_20_RATIO, na.rm = TRUE),0L))
                                             ,.SDcols =  EALB.cols
                                             # , keyby = .(GEOID_ZCTA5_20)
@@ -179,10 +219,6 @@ sum(NRI_zcta520_EALB.stats[, -1], na.rm = TRUE)
 
 NRI_counties_dt[, .(CWAV_EALB=sum(CWAV_EALB, na.rm = TRUE))]; NRI_zcta520_x_dt[, .(sum(CWAV_EALB* AREALAND_PART/AREALAND_COUNTY_20, na.rm = TRUE))]
 
-
-
-
-
 NRI_counties_dt[, .(sum(EAL_VALT))]; NRI_zcta520_dt[, .(sum(EAL_VALT ))]
 NRI_counties_dt[, .(sum(POPULATION))]; NRI_zcta520_dt[, .(sum(POPULATION_ZCTA5_20 ))]
 
@@ -190,3 +226,12 @@ NRI_zcta520_x_dt[, .(sum(AREALAND_PART/AREALAND_ZCTA5_20)), keyby = .(GEOID_ZCTA
 
 NRI_zcta520_x_dt[, .(sum(AREALAND_ZCTA5_20_CONTRIB_AREALAND_COUNTY_20_RATIO)), keyby = .(GEOID_COUNTY_20)] # should be 1
 
+
+
+
+
+# cleanup -----------------------------------------------------------------
+
+
+rm(list=ls(pattern = "(DATA|WORK)DIR$"))
+detach(cfg$default)

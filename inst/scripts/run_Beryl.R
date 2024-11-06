@@ -6,9 +6,11 @@ library(fs)
 library(ncdf4)
 help(package="ncdf4")
 
-library(raster)
-help(package="raster")
-rasterOptions()
+# library(raster)
+# help(package="raster")
+# rasterOptions()
+
+browseURL("https://disc.gsfc.nasa.gov/")
 
 # https://disc.gsfc.nasa.gov/information/data-in-action?title=Precipitation%20impacts%20from%20Hurricane%20Beryl
 

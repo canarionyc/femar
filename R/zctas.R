@@ -19,8 +19,8 @@ get_zctas_sf <-  function(year=getOption("tigris_year", 2020)){
 }
 
 #' @import terra
-?purrr::compose
-get_zctas_vect <- purrr::compose(terra::vect, tigris::zctas)
+#' @export
+zctas_vect <- purrr::compose(terra::vect, tigris::zctas)
 
 
 # state_zcta3_sf ----

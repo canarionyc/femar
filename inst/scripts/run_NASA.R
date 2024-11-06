@@ -6,7 +6,7 @@ help(package="units")
 
 library(terra)
 
-library(rasterVis)
+# library(rasterVis)
 # help(package="rasterVis")
 
 # BiocManager::install("rhdf5")
@@ -16,8 +16,8 @@ library(rasterVis)
 Sys.getenv()
 
 DISC_DATADIR <- file.path(Sys.getenv("DATADIR"), "GOV", "NASA", "GSFC", "DISC"); stopifnot(dir.exists(DISC_DATADIR))
-setwd(DISC_DATADIR)
-getwd()
+
+setwd(DISC_DATADIR); getwd()
 
 
 
@@ -122,14 +122,14 @@ lapply(url.list[-c(1:2)], function(x) {
 
 # https://gpm.nasa.gov/data/directory
 
-(hdf5_files.list <- list.files(DISC_DATADIR, pattern = "3B-HHR-L\\.MS\\.MRG\\.3IMERG\\.202407.*\\.HDF5$", full.names = TRUE))
+(hdf5_files.list <- list.files(DISC_DATADIR, pattern = "3B-HHR-L\\.MS\\.MRG\\.3IMERG\\.200508.*\\.HDF5$", full.names = TRUE))
 
 
 # rhdf5 -------------------------------------------------------------------
 library("rhdf5")
 help(package="rhdf5")
 
-(file_hdf5 <- hdf5_files.list[1]); stopifnot(H5Fis_hdf5(file_hdf5))
+(file_hdf5 <- hdf5_files.list[[23]]); stopifnot(H5Fis_hdf5(file_hdf5))
 
 
 h5ls(file_hdf5)
@@ -144,14 +144,14 @@ str(precipitation.ary)
 attributes(precipitation.ary)
 attr(precipitation.ary, '_FillValue')
 
+precipitation.ary[precipitation.ary<0] <- NA_real_
+range(precipitation.ary, na.rm = TRUE)
 
 # precipitation.ary2 <- aperm(precipitation.ary,c(2,1,3))
 # dim(precipitation.ary2)
 #range(precipitation.ary2)
 
-dim(precipitation.ary3)
-range(precipitation.ary3, na.rm = TRUE)
-# image(tmp[,,1])
+#image(precipitation.ary[,,1], main=basename(file_hdf5))
 
 # geometry -------------------------------------------------------------------------
 
@@ -242,45 +242,70 @@ print(nc)
 
 # precipitation.RasterLayer -----------------------------------------------
 
-library(raster)
-help(package = "raster")
-help("raster", package = "raster")
-(precipitation.RasterLayer <- raster::raster(file_nc4.list[[1]]
-                                             , varname='precipitation' #   "GPM_3IMERGDL_07_precipitation"
-))
-#precipitation.RasterLayer <- raster::raster(precipitation)
-methods(class="RasterLayer")
+# library(raster)
+# help(package = "raster")
+# help("raster", package = "raster")
+# help("brick", package = "raster")
+
+(nc <- nc_open(file_hdf5))
+
+# raster(file_hdf5, layer=7, resolution=0.1)
+
+?terra::rast
+(precipitation.SpatRaster <- terra::rast(file_hdf5, lyrs="precipitation" ))
+methods(class="SpatRaster")
+precipitation.SpatRastert <- t(precipitation.SpatRaster)
+st_crs(precipitation.SpatRaster)
+?set.crs
+set.crs(precipitation.SpatRastert,"EPSG:4269")
+
+?`plot,SpatRaster,missing-method`
+precipitation.SpatRastert %>% plot()
+
+# (hdf5.RasterBrick  <- raster::brick(file_hdf5
+# #                                             , varname='precipitation' #   "GPM_3IMERGDL_07_precipitation"
+# ))
+# (precipitation.RasterLayer <- raster(hdf5.RasterBrick, layer=7))
+# precipitation.RasterLayer
+# # res(precipitation.RasterLayer) <- c(0.1,0.1)
+# ?cellStats
+# cellStats(precipitation.RasterLayer, stat = 'min')
+# cellStats(precipitation.RasterLayer, stat = 'max')
+# #precipitation.RasterLayer <- raster::raster(precipitation)
+# methods(class="RasterLayer")
 dim(precipitation.RasterLayer)
 isLonLat(precipitation.RasterLayer)
+dev.off()
 plot(precipitation.RasterLayer) # it is transposed? rotated?
-?raster::flip
-precipitation.RasterLayer %>% plot()
-raster::flip(precipitation.RasterLayer,direction='x') %>% plot(main="flip(direction='x')")
-raster::flip(precipitation.RasterLayer,direction='y') %>% plot(main="flip(direction='y')")
+
+# ?raster::flip
+# precipitation.RasterLayer %>% plot()
+# raster::flip(precipitation.RasterLayer,direction='x') %>% plot(main="flip(direction='x')")
+# raster::flip(precipitation.RasterLayer,direction='y') %>% plot(main="flip(direction='y')")
 
 # precipitation_grd -------------------------------------------------------
 
-dir.exists(file.path(Sys.getenv("R_WORK_DIR"), "Spatial"))
-precipitation_grd <- file.path(Sys.getenv("R_WORK_DIR"), "Spatial", "precipitation.grd"); print(file.info(precipitation_grd))
-raster::writeRaster(precipitation.RasterLayer, filename = precipitation_grd)
-
-?slotNames
-slotNames("raster")
-
-as(precipitation.RasterLayer, "SpatRaster") %>% terra::plot()
-
-
-rasterTheme()
-
-?hsv
-debugonce(hsv)
-?magma
-?magmaTheme
-debugonce(rasterTheme)
-contourplot(precipitation.RasterLayer)
-
-?`levelplot,Raster,missing-method`
-levelplot(precipitation.RasterLayer)
+# dir.exists(file.path(Sys.getenv("R_WORK_DIR"), "Spatial"))
+# precipitation_grd <- file.path(Sys.getenv("R_WORK_DIR"), "Spatial", "precipitation.grd"); print(file.info(precipitation_grd))
+# raster::writeRaster(precipitation.RasterLayer, filename = precipitation_grd)
+#
+# ?slotNames
+# slotNames("raster")
+#
+# as(precipitation.RasterLayer, "SpatRaster") %>% terra::plot()
+#
+#
+# rasterTheme()
+#
+# ?hsv
+# debugonce(hsv)
+# ?magma
+# ?magmaTheme
+# debugonce(rasterTheme)
+# contourplot(precipitation.RasterLayer)
+#
+# ?`levelplot,Raster,missing-method`
+# levelplot(precipitation.RasterLayer)
 
 # precipitation matrix -----------------------------------------------------------
 
@@ -300,7 +325,7 @@ lat <- ncvar_get(nc, varid = "lat", verbose=FALSE)
 length(lat); range(lat)
 # (lat_bnds <- ncvar_get(nc, varid = "lat_bnds", verbose=FALSE))
 
-??raster
+
 lon <- ncvar_get(nc, varid = "lon", verbose=FALSE)
 # str(lon)
 length(lon); range(lon)
@@ -386,22 +411,22 @@ ext(cbsa_vec)
 
 # fig-precipitation.RasterLayer -------------------------------------------
 
-?par
-(usr <- par(usr=c(-100,  -70,   20,40)))
-par("usr")
-clip(-100,  -70,   20,40)
-precipitation.RasterLayer %>% ext %>% {do.call("clip",list(xmin(.), xmax(.), ymin(.), ymax(.)))}
-
-par(xaxs="i")
-?raster::plot
-?axis
-undebug(axis)
-?par
-debugonce(raster::plot)
-library(gstat)
-debugonce(gstat)
-?raster::disaggregate
-precipitation.RasterLayer %>% raster::disaggregate(fact=c(2,2)) %>% plot()
+# ?par
+# (usr <- par(usr=c(-100,  -70,   20,40)))
+# par("usr")
+# clip(-100,  -70,   20,40)
+# precipitation.RasterLayer %>% ext %>% {do.call("clip",list(xmin(.), xmax(.), ymin(.), ymax(.)))}
+#
+# par(xaxs="i")
+# ?raster::plot
+# ?axis
+# undebug(axis)
+# ?par
+# debugonce(raster::plot)
+# library(gstat)
+# debugonce(gstat)
+# ?raster::disaggregate
+# precipitation.RasterLayer %>% raster::disaggregate(fact=c(2,2)) %>% plot()
 
 
 debugonce(raster::disaggregate)
@@ -424,46 +449,46 @@ raster::plot(precipitation.RasterLayer
 
 
 dev.new()
-?rasterVis::levelplot
-?xscale.raster
-library(latticeExtra)
-?llines.SpatVector
-
-my.theme <- rasterTheme()
-my.theme <- viridisTheme()
-my.theme <- infernoTheme()
-my.theme <- plasmaTheme()
-
-(my.theme$regions$col <- colorRampPalette(c("white","yellow", "red"))(100L))
-
-
-(precipitation.trellis <- rasterVis::levelplot(precipitation.RasterLayer%>% raster::disaggregate(fact=c(2,2))
-                                               , par.settings=my.theme
-                                               , main='Precipitation 2024-09-27'
-                                               , xlab=NA, ylab=NA
-                                               ,margin=FALSE)) + layer(lpolygon(states_vec))
-
-
-
-
-methods(class="SpatExtent")
-?as.matrix
-clip.mat <- ext(precipitation.RasterLayer)%>% as.matrix()
-c(clip.mat)
-?clip
+# ?rasterVis::levelplot
+#
+# library(latticeExtra)
+# ?llines.SpatVector
+#
+# my.theme <- rasterTheme()
+# my.theme <- viridisTheme()
+# my.theme <- infernoTheme()
+# my.theme <- plasmaTheme()
+#
+# (my.theme$regions$col <- colorRampPalette(c("white","yellow", "red"))(100L))
+#
+#
+# (precipitation.trellis <- rasterVis::levelplot(precipitation.RasterLayer%>% raster::disaggregate(fact=c(2,2))
+#                                                , par.settings=my.theme
+#                                                , main='Precipitation 2024-09-27'
+#                                                , xlab=NA, ylab=NA
+#                                                ,margin=FALSE)) + layer(lpolygon(states_vec))
+#
+#
+#
+#
+# methods(class="SpatExtent")
+# ?as.matrix
+# clip.mat <- ext(precipitation.RasterLayer)%>% as.matrix()
+# c(clip.mat)
+# ?clip
 
 # fig-precipitation.SpatRaster --------------------------------------------
 # rasterVis::xyplot(as(precipitation.RasterLayer, "SpatRaster"))
 ?terra::plot
 debugonce(clip)
-terra::plot(as(precipitation.RasterLayer, "SpatRaster")
-            , col= colorRampPalette(c("white","yellow", "red"))(2^8-1)
-            #           ,ext=c( -100, -70, 20, 40 )
-            , main="2024-09-27"
-            , reset = FALSE
-            , clip = TRUE
-)
-lines(states_vec, lwd=1)
+# terra::plot(as(precipitation.RasterLayer, "SpatRaster")
+#             , col= colorRampPalette(c("white","yellow", "red"))(2^8-1)
+#             #           ,ext=c( -100, -70, 20, 40 )
+#             , main="2024-09-27"
+#             , reset = FALSE
+#             , clip = TRUE
+# )
+# lines(states_vec, lwd=1)
 #lines(cbsa_vec)
 #precipitation_df <- as.data.frame(pmypal()#precipitation_df <- as.data.frame(precipitation)
 
@@ -528,4 +553,4 @@ str(MWprecipitation)
 # cleanup -----------------------------------------------------------------
 
 h5closeAll()
-
+nc_close(nc)
