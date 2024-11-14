@@ -11,11 +11,11 @@ stop()
 
 list.files(.NRI_datadir, full.names = TRUE)
 
-browseURL(.NRI_workdir)
+browseURL(NRI_WORKDIR)
 
 # time-series of costs unnormalized cpi-adjusted -------------------------------------------------------------
 # https://www.ncei.noaa.gov/access/billions/time-series/NECR/cost
-time_series_fst <- file.path(.noaa_workdir, "time_series.fst"); print(file.info(time_series_fst))
+time_series_fst <- file.path(NOAA_WORKDIR, "time_series.fst"); print(file.info(time_series_fst))
 if(file.exists(time_series_fst)) {
   print(fst.metadata(time_series_fst))
   time_series <- read_fst(time_series_fst, as.data.table = TRUE)

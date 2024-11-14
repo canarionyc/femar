@@ -17,7 +17,7 @@
 #
 # source("~/Spatial/Tigris/.RProfile")
 # stop()
-# browseURL(.census_workdir)
+# browseURL(CENSUS_WORKDIR)
 # browseURL(Sys.getenv('TIGRIS_CACHE_DIR'))
 # tx_blocks ------------------------------------------------------------------
 
@@ -30,7 +30,7 @@
 get_tabblock <- function(){
   # configr::read.config(); ls(all.names = TRUE)
 
-  tabblock_fst <- file.path(.census_workdir, "tl_2023_ZZ_tabblock20.fst"); print(file.info(tabblock_fst))
+  tabblock_fst <- file.path(CENSUS_WORKDIR, "tl_2023_ZZ_tabblock20.fst"); print(file.info(tabblock_fst))
   if(file.exists(tabblock_fst)) {
     print(fst.metadata(tabblock_fst))
     tabblock <- read_fst(tabblock_fst,columns = c("STATEFP20", "COUNTYFP20", "TRACTCE20", "BLOCKCE20", "GEOID20",
@@ -65,12 +65,12 @@ get_tabblock <- function(){
       print(tabblock_sf)
       tabblock_dt <- st_drop_geometry(tabblock_sf) %>% setDT(key='GEOID20')
       rm(tabblock_sf)
-      tabblock_fst <- file.path(.census_workdir, basename(dsn)) %>% fs::path_ext_set("fst")
+      tabblock_fst <- file.path(CENSUS_WORKDIR, basename(dsn)) %>% fs::path_ext_set("fst")
       write_fst(tabblock_dt, tabblock_fst); print(file.info(tabblock_fst))
       return(tabblock_dt)
     }) %>% rbindlist(fill=TRUE)
 
-    (tabblock_fst.vec <- list.files(.census_workdir, pattern = "tl_2023_\\d{2}_tabblock20\\.fst", full.names = TRUE))
+    (tabblock_fst.vec <- list.files(CENSUS_WORKDIR, pattern = "tl_2023_\\d{2}_tabblock20\\.fst", full.names = TRUE))
 
     tabblock[, UR20:=as.factor(UR20)]
     print(tabblock[, table(UR20, useNA = "ifany")])

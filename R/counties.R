@@ -11,9 +11,9 @@
 #'
 #'
 get_counties_sf <- function(year=getOption("tigris_year", 2020L)){
-  # counties_dsn <- file.path(.census_workdir, sprintf("counties_%d.shp", getOption("tigris_year"))); print(file.info(counties_dsn))
-  counties_gpkg <- file.path(.census_workdir, sprintf("counties_%d.gpkg", year)); print(file.info(counties_gpkg))
-  counties_sf_rds <- file.path(.census_workdir, sprintf("counties_%d.rds", year)); print(file.info(counties_sf_rds))
+  # counties_dsn <- file.path(CENSUS_WORKDIR, sprintf("counties_%d.shp", getOption("tigris_year"))); print(file.info(counties_dsn))
+  counties_gpkg <- file.path(CENSUS_WORKDIR, sprintf("counties_%d.gpkg", year)); print(file.info(counties_gpkg))
+  counties_sf_rds <- file.path(CENSUS_WORKDIR, sprintf("counties_%d.rds", year)); print(file.info(counties_sf_rds))
   if(file.exists(counties_sf_rds)) {
     counties_sf <- readRDS(counties_sf_rds)
   } else if(file.exists(counties_gpkg)) {
@@ -118,8 +118,8 @@ get_NRI_counties_dt <- function() {
   # browser()
   .datatable.aware <- TRUE
 
-  NRI_counties_rds <- file.path(.NRI_workdir, "NRI_counties.rds"); print(file.info(NRI_counties_rds))
-  NRI_counties_fst <- file.path(.NRI_workdir, "NRI_counties.fst"); print(file.info(NRI_counties_fst))
+  NRI_counties_rds <- file.path(NRI_WORKDIR, "NRI_counties.rds"); print(file.info(NRI_counties_rds))
+  NRI_counties_fst <- file.path(NRI_WORKDIR, "NRI_counties.fst"); print(file.info(NRI_counties_fst))
   if(file.exists(NRI_counties_rds)) {
 
     NRI_counties_dt <- readRDS(NRI_counties_rds)
@@ -177,7 +177,7 @@ get_NRI_counties_dt <- function() {
 get_NRI_counties_sf <- function(state) {
   # browser()
   # browseURL(.NRI_datadir)
-  NRI_counties_sf_Rds <- file.path(.NRI_workdir, "NRI_counties_sf.Rds"); print(file.info(NRI_counties_sf_Rds))
+  NRI_counties_sf_Rds <- file.path(NRI_WORKDIR, "NRI_counties_sf.Rds"); print(file.info(NRI_counties_sf_Rds))
 
   if(file.exists(NRI_counties_sf_Rds)) {
     NRI_counties_sf <- readRDS(NRI_counties_sf_Rds)

@@ -61,7 +61,7 @@ tracts_vect %>% terra::plot(main="Louisiana tracts", border="grey")
 
 # tx_NRI_tracts_alr_valb_png ----
 
-tx_NRI_tracts_alr_valb_png <- file.path(.census_workdir, format(Sys.time(),"tx_NRI_tracts_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_NRI_tracts_alr_valb_png))
+tx_NRI_tracts_alr_valb_png <- file.path(CENSUS_WORKDIR, format(Sys.time(),"tx_NRI_tracts_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_NRI_tracts_alr_valb_png))
 library(Cairo)
 Cairo::CairoPNG(filename = tx_NRI_tracts_alr_valb_png, width = 10.0, height = 6.0, dpi=300, units="in")
 ?terra::plot

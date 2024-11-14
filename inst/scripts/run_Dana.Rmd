@@ -1,0 +1,13 @@
+Data sources:
+
+1.  Flood Data: Copernicus Emergency Management Service
+    <https://rapidmapping.emergency.copernicus.eu/EMSR773/reporting>
+
+2.  Land Cover:
+    [CLC+Backbone](https://www.eea.europa.eu/en/datahub/datahubitem-view/d62ade7a-9c9c-405e-b88e-6ce0410d6a4f)
+
+3.  Shapes of Spanish municipios:
+    <https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2021-01m.gdb.zip>
+
+4.  Spain population statistics by municipios:
+    <https://www.ine.es/pob_xls/pobmun.zip>

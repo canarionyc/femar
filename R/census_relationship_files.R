@@ -6,7 +6,7 @@
 
 get_tab20_zcta520_county20_natl <- function(){
 
-  tab20_zcta520_county20_natl_fst <- file.path(.census_workdir, "tab20_zcta520_county20_natl.fst"); print(file.info(tab20_zcta520_county20_natl_fst))
+  tab20_zcta520_county20_natl_fst <- file.path(CENSUS_WORKDIR, "tab20_zcta520_county20_natl.fst"); print(file.info(tab20_zcta520_county20_natl_fst))
   if(file.exists(tab20_zcta520_county20_natl_fst)) {
     print(fst.metadata(tab20_zcta520_county20_natl_fst))
     tab20_zcta520_county20_natl <- read_fst(tab20_zcta520_county20_natl_fst, as.data.table = TRUE)

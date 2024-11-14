@@ -3,7 +3,7 @@
 # getOption("tigris_use_cache")
 
 get_zctas_sf <-  function(year=getOption("tigris_year", 2020)){
-  zctas_sf_rds <- file.path(.census_workdir, sprintf("zctas_%d.rds", year)); print(file.info(zctas_sf_rds))
+  zctas_sf_rds <- file.path(CENSUS_WORKDIR, sprintf("zctas_%d.rds", year)); print(file.info(zctas_sf_rds))
   if(file.exists(  zctas_sf_rds)) {
     zctas_sf <- readRDS(zctas_sf_rds)
   } else {
@@ -29,9 +29,9 @@ get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 
 
   debugonce(zctas)
 
-  state_zcta_rds <- file.path(.census_workdir, sprintf("%s_zcta_%d_sf.rds",state, year)); print(file.info(state_zcta_rds))
-  state_zcta3_rds <- file.path(.census_workdir, sprintf("%s_zcta3_%d_sf.rds",state, year)); print(file.info(state_zcta3_rds))
- state_zcta3_gpkg <- file.path(.census_workdir, sprintf("%s_zcta3_%d_sf.gpkg",state, year)); print(file.info(state_zcta3_gpkg))
+  state_zcta_rds <- file.path(CENSUS_WORKDIR, sprintf("%s_zcta_%d_sf.rds",state, year)); print(file.info(state_zcta_rds))
+  state_zcta3_rds <- file.path(CENSUS_WORKDIR, sprintf("%s_zcta3_%d_sf.rds",state, year)); print(file.info(state_zcta3_rds))
+ state_zcta3_gpkg <- file.path(CENSUS_WORKDIR, sprintf("%s_zcta3_%d_sf.gpkg",state, year)); print(file.info(state_zcta3_gpkg))
   if(!file.exists(state_zcta3_gpkg)) {
     state_zcta_sf <- zctas(cb=FALSE,
                                                     year=year,

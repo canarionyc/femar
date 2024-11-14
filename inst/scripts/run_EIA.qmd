@@ -273,7 +273,7 @@ svytotal(x = ~TOTALBTUSPH,design = RECS_NGSPH)
 
 ```{r cleanup}
 
-save.image(file = file.path(.NRI_workdir, "run_EIA.RData"))
+save.image(file = file.path(NRI_WORKDIR, "run_EIA.RData"))
 
 # Notes to Consider When Using the Microdata File and Replicate Weights
 # 1. Publication standards: We do not publish RECS estimates where the RSE is higher than 50 or the number of households used for the calculation is less than 10 (indicated by a Q in the data tables). We recommend following these guidelines for custom analysis using the public use microdata file.

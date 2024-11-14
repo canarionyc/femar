@@ -8,7 +8,7 @@
 #' @export
 get_tracts_sf <- function(year=getOption("tigris_year", 2020L)){
   message(paste("Retrieving census tracts for year", year))
-  tracts_sf_rds <- file.path(.census_workdir, sprintf("tracts_%d.rds", year)); print(file.info(tracts_sf_rds))
+  tracts_sf_rds <- file.path(CENSUS_WORKDIR, sprintf("tracts_%d.rds", year)); print(file.info(tracts_sf_rds))
   if(file.exists(  tracts_sf_rds)) {
     tracts_sf <- readRDS(tracts_sf_rds)
   } else {
@@ -53,7 +53,7 @@ get_NRI_tracts_sf <- function(state) {
 
   # browseURL(.NRI_datadir)
   if(missing(state)) {
-    NRI_tracts_sf_Rds <- file.path(.NRI_workdir, "NRI_tracts_sf.Rds"); print(file.info(NRI_tracts_sf_Rds))
+    NRI_tracts_sf_Rds <- file.path(NRI_WORKDIR, "NRI_tracts_sf.Rds"); print(file.info(NRI_tracts_sf_Rds))
 
     if(file.exists(NRI_tracts_sf_Rds)) {
       NRI_tracts_sf<- readRDS(NRI_tracts_sf_Rds)
@@ -131,8 +131,8 @@ get_NRI_tracts_sf <- function(state) {
 #'
 get_NRI_tracts_dt <- function() {
   # browser()
-  NRI_tracts_dt_rds <- file.path(.NRI_workdir, "NRI_tracts_dt.rds"); print(file.info(NRI_tracts_dt_rds))
-  NRI_tracts_fst <- file.path(.NRI_workdir, "NRI_tracts.fst"); print(file.info(NRI_tracts_fst))
+  NRI_tracts_dt_rds <- file.path(NRI_WORKDIR, "NRI_tracts_dt.rds"); print(file.info(NRI_tracts_dt_rds))
+  NRI_tracts_fst <- file.path(NRI_WORKDIR, "NRI_tracts.fst"); print(file.info(NRI_tracts_fst))
   if(file.exists(NRI_tracts_dt_rds)) {
 
     NRI_tracts_dt <- readRDS(NRI_tracts_dt_rds)

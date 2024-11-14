@@ -28,4 +28,5 @@ LMI_tract_vect <- terra::vect("E:\\Datasets\\HUD\\Low_to_Moderate_Income_Populat
 
 LA.LMI_tract_vect <- LMI_tract_vect %>% terra::query(where="STATE='22'")
 
-terra::plot(LA.LMI_tract_vect,'LOWMODPCT', col=rev(heat.colors(5)), main="Lousiana, Low to Moderate Income Population Share by Tract")
+terra::plot(LA.LMI_tract_vect,'LOWMODPCT'
+            , col=rev(heat.colors(5)), main="Lousiana, Low to Moderate Income Population Share by Tract")

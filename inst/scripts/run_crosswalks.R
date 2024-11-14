@@ -92,7 +92,7 @@ NRI_counties_dt[, .(STCOFIPS,BUILDVALUE, EAL_VALB, EAL_VALB/BUILDVALUE, ALR_VALB
 
 get_NRI_zcta520_dt <- function(){
 
-  NRI_zcta520_dt_fst <- file.path(.census_workdir, "NRI_zcta520_dt.fst"); print(file.info(NRI_zcta520_dt_fst))
+  NRI_zcta520_dt_fst <- file.path(CENSUS_WORKDIR, "NRI_zcta520_dt.fst"); print(file.info(NRI_zcta520_dt_fst))
   if(file.exists(NRI_zcta520_dt_fst)) {
     print(fst.metadata(NRI_zcta520_dt_fst))
     NRI_zcta520_dt <- read_fst(NRI_zcta520_dt_fst, as.data.table = TRUE)
