@@ -21,7 +21,7 @@ source("~/Spatial/FEMA/femar/R/string_utils.R")
 stop()
 list.files(.NRI_datadir, full.names = TRUE, recursive = TRUE)
 
-browseURL(NRI_WORKDIR)
+browseURL(the$NRI_WORKDIR)
 
 # stormevents -------------------------------------------------------------
 browseURL("https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/")
@@ -284,7 +284,7 @@ library(grid)
 
 plot(NRI_states_conus_sf['EAL_SCORE'])
 
-NRI_conus_png <- file.path(NRI_WORKDIR, format(Sys.time(),"NRI_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_conus_png))
+NRI_conus_png <- file.path(the$NRI_WORKDIR, format(Sys.time(),"NRI_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_conus_png))
 library(Cairo)
 Cairo::CairoPNG(filename = NRI_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
 plot(NRI_states_conus_sf['EAL_SCORE'])
@@ -314,7 +314,7 @@ NRI_counties_hrcn <- NRI_counties[, ..sel]
 
 # NRI_counties_conus_png ----
 NRI_counties_conus_sf <- subset(NRI_counties_sf, ! STATEABBRV %in% states_noconus)
-NRI_counties_conus_png <- file.path(NRI_WORKDIR, format(Sys.time(),"NRI_counties_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_counties_conus_png))
+NRI_counties_conus_png <- file.path(the$NRI_WORKDIR, format(Sys.time(),"NRI_counties_conus_%Y%m%d_%H%M.png")); print(file.info(NRI_counties_conus_png))
 library(Cairo)
 Cairo::CairoPNG(filename = NRI_counties_conus_png, width = 10.0, height = 6.0, dpi=300, units="in")
 plot(NRI_counties_conus_sf['EAL_SCORE'])

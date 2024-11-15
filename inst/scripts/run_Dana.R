@@ -64,7 +64,7 @@ polys(lau_es)
 
 # Valencia_20241026_3035_png ----
 
-Valencia_20241026_3035_png <- file.path(FEMA_WORKDIR, format(Sys.time(),"Valencia_20241026_3035_%Y%m%d_%H%M.png")); print(file.info(Valencia_20241026_3035_png))
+Valencia_20241026_3035_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"Valencia_20241026_3035_%Y%m%d_%H%M.png")); print(file.info(Valencia_20241026_3035_png))
 library(Cairo)
 dev.copy(device=Cairo::CairoPNG,filename = Valencia_20241026_3035_png, width = 10.0, height = 6.0, dpi=300, units="in")
 dev.off()
@@ -279,7 +279,7 @@ run_AOI <- function(i=1L, lau_es) {
                 , alpha = 0.5
                 ,legend=FALSE)
     if(FALSE){
-      emsr773_png <- file.path(FEMA_WORKDIR, format(Sys.time(),"emsr773_%Y%m%d_%H%M.png")); print(file.info(emsr773_png))
+      emsr773_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"emsr773_%Y%m%d_%H%M.png")); print(file.info(emsr773_png))
       library(Cairo)
       dev.copy(device=Cairo::CairoPNG,filename = emsr773_png, width = 10.0, height = 6.0, dpi=300, units="in")
       dev.off()
@@ -335,7 +335,7 @@ run_AOI <- function(i=1L, lau_es) {
 
   # observedEventA_png ----
 
-  observedEventA_png <- file.path(FEMA_WORKDIR, format(Sys.time(),"observedEventA_%Y%m%d_%H%M.png")); print(file.info(observedEventA_png))
+  observedEventA_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"observedEventA_%Y%m%d_%H%M.png")); print(file.info(observedEventA_png))
   library(Cairo)
   dev.copy(device=Cairo::CairoPNG,filename = observedEventA_png, width = 10.0, height = 6.0, dpi=300, units="in")
   dev.off()
@@ -355,7 +355,7 @@ aoi4.lst <- run_AOI(4L, lau_es)
 # dana_out -----------------------------------------------------------------
 
 
-dana_out_gpkg <- file.path(FEMA_WORKDIR, "dana_out.gpkg"); print(file.info(dana_out_gpkg))
+dana_out_gpkg <- file.path(the$FEMA_WORKDIR, "dana_out.gpkg"); print(file.info(dana_out_gpkg))
 
 if(file.exists(dana_out_gpkg)){
   dana_out <- terra::vect(dana_out_gpkg)
@@ -416,7 +416,7 @@ lau_es_crp[muni_is_related,] %>% terra::text("LAU_NAME", cex=0.5, col="darkgrey"
 
 # dana_out_png ----
 
-dana_out_png <- file.path(FEMA_WORKDIR, format(Sys.time(),"dana_out_%Y%m%d_%H%M.png")); print(file.info(dana_out_png))
+dana_out_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"dana_out_%Y%m%d_%H%M.png")); print(file.info(dana_out_png))
 library(Cairo)
 dev.copy(device=Cairo::CairoPNG,filename = dana_out_png, width = 10.0, height = 6.0, dpi=300, units="in")
 dev.off()

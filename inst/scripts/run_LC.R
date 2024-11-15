@@ -149,7 +149,7 @@ mtext("Data source: https://land.copernicus.eu/", side = 1, line=2, outer = FALS
 # gadm3_3035 %>% polys(border="grey")
 # gadm3_3035 %>% {terra::text(., .$NAME_3, cex=0.5, col="grey")}
 
-lc_png <- file.path(FEMA_WORKDIR, format(Sys.time(),"lc_%Y%m%d_%H%M.png")); print(file.info(lc_png))
+lc_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"lc_%Y%m%d_%H%M.png")); print(file.info(lc_png))
 library(Cairo)
 dev.copy(device=Cairo::CairoPNG,filename = lc_png, width = 10.0, height = 6.0, dpi=300, units="in")
 dev.off()
@@ -165,7 +165,7 @@ coltab(CLMS_CLCplus)
 (CLMS_CLCplus_stk <- terra::segregate(CLMS_CLCplus, classes=c(1L
 #                                                               , 10L,  253L, 254L
                                                               )
-, filename=file.path(FEMA_WORKDIR, "CLMS_CLCplus_stk.tif")))
+, filename=file.path(the$FEMA_WORKDIR, "CLMS_CLCplus_stk.tif")))
 
 
 coltab(CLMS_CLCplus_stk) <- NULL

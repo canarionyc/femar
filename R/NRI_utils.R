@@ -7,7 +7,7 @@
 
 get_NRI_HazardInfo <- function(){
 
-  NRI_HazardInfo_fst <- file.path(NRI_WORKDIR , "NRI_HazardInfo.fst"); print(file.info(NRI_HazardInfo_fst))
+  NRI_HazardInfo_fst <- file.path(the$NRI_WORKDIR , "NRI_HazardInfo.fst"); print(file.info(NRI_HazardInfo_fst))
   if(file.exists(NRI_HazardInfo_fst)) {
     print(fst.metadata(NRI_HazardInfo_fst))
     NRI_HazardInfo  <- read_fst(NRI_HazardInfo_fst, as.data.table = TRUE)
@@ -28,7 +28,7 @@ get_NRI_HazardInfo <- function(){
 
 get_hrcn_cat_dt <- function(){
 
-  hrcn_cat_rds <- file.path(NRI_WORKDIR, "hrcn_cat.rds"); print(file.info(hrcn_cat_rds))
+  hrcn_cat_rds <- file.path(the$NRI_WORKDIR, "hrcn_cat.rds"); print(file.info(hrcn_cat_rds))
   if(file.exists(  hrcn_cat_rds)) {
     hrcn_cat <- readRDS(hrcn_cat_rds)
   } else {

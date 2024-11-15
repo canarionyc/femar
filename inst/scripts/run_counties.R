@@ -165,7 +165,7 @@ dev.off()
 
 # tx_alr_valb_png ----
 
-tx_alr_valb_png <- file.path(CENSUS_WORKDIR, format(Sys.time(),"tx_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_alr_valb_png))
+tx_alr_valb_png <- file.path(the$CENSUS_WORKDIR, format(Sys.time(),"tx_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_alr_valb_png))
 library(Cairo)
 Cairo::CairoPNG(filename = tx_alr_valb_png, width = 10.0, height = 6.0, dpi=300, units="in")
 terra::plot(tx_vect, 'ALR_VALB', main="Annualized Loss in Building Value $ Amt per $1M", alpha=0.5)

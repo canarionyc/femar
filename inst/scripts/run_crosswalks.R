@@ -6,7 +6,7 @@ list.files(file.path(CENSUS_DATADIR, "rel2020", "zcta520"), full.names = TRUE, r
 
 
 # zcta_tract_rel_10_fst ----
-zcta_tract_rel_10_fst <- file.path(CENSUS_WORKDIR, "zcta_tract_rel_10.fst"); print(file.info(zcta_tract_rel_10_fst)['size'])
+zcta_tract_rel_10_fst <- file.path(the$CENSUS_WORKDIR, "zcta_tract_rel_10.fst"); print(file.info(zcta_tract_rel_10_fst)['size'])
 if(file.exists(zcta_tract_rel_10_fst)) {
   print(fst.metadata(zcta_tract_rel_10_fst))
   zcta_tract_rel_10 <- read_fst(zcta_tract_rel_10_fst, as.data.table=TRUE)
@@ -92,7 +92,7 @@ NRI_counties_dt[, .(STCOFIPS,BUILDVALUE, EAL_VALB, EAL_VALB/BUILDVALUE, ALR_VALB
 
 get_NRI_zcta520_dt <- function(){
 
-  NRI_zcta520_dt_fst <- file.path(CENSUS_WORKDIR, "NRI_zcta520_dt.fst"); print(file.info(NRI_zcta520_dt_fst))
+  NRI_zcta520_dt_fst <- file.path(the$CENSUS_WORKDIR, "NRI_zcta520_dt.fst"); print(file.info(NRI_zcta520_dt_fst))
   if(file.exists(NRI_zcta520_dt_fst)) {
     print(fst.metadata(NRI_zcta520_dt_fst))
     NRI_zcta520_dt <- read_fst(NRI_zcta520_dt_fst, as.data.table = TRUE)

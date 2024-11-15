@@ -9,19 +9,18 @@ Maintainer: Tomas Gonzalez <structuredguy@gmail.com>
 Description: Routines.
 License: file LICENSE
 Encoding: UTF-8
-Depends:
-   data.table
 Imports:
-  configr,utils
-  , lubridate,fst,fs,fstutils,units
+  yaml, utils
+  , data.table,fst,fs,fstutils,units
   , forcats
   , readxl, dplyr
   ,magrittr,purrr
   ,stringi
-  ,sf,rgeoda,terra
+  ,sf,terra
   ,RCurl
-  ,tigris,censusapi
+  ,tigris
   ,httr
+  ,readr
 Suggests:
   Cairo,clipr,devtools
 RoxygenNote: 7.3.2

@@ -10,7 +10,7 @@ file.choose()
 
 # lau ---------------------------------------------------------------------
 
-lau_es_gpkg <- file.path(FEMA_WORKDIR, "lau_es.gpkg"); print(file.info(lau_es_gpkg))
+lau_es_gpkg <- file.path(the$FEMA_WORKDIR, "lau_es.gpkg"); print(file.info(lau_es_gpkg))
 if(file.exists(lau_es_gpkg)) {
   lau_es <- terra::vect(lau_es_gpkg)
 
@@ -73,7 +73,7 @@ terra::polys(EMSR773_AOI01_DEL_PRODUCT_areaOfInterestA_v1)
 
 # valencia_pop_dens_2021_png ----
 
-valencia_pop_dens_2021_png <- file.path(FEMA_WORKDIR, format(Sys.time(),"valencia_pop_dens_2023_%Y%m%d_%H%M.png")); print(file.info(valencia_pop_dens_2021_png))
+valencia_pop_dens_2021_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"valencia_pop_dens_2023_%Y%m%d_%H%M.png")); print(file.info(valencia_pop_dens_2021_png))
 library(Cairo)
 dev.copy(device=Cairo::CairoPNG,filename = valencia_pop_dens_2021_png, width = 10.0, height = 6.0, dpi=300, units="in")
 dev.off()
@@ -96,7 +96,7 @@ lau_es %>%
 
 # lau_es_crp_gpkg ---------------------------------------------------------
 
-lau_es_crp_gpkg <- file.path(FEMA_WORKDIR, "lau_es_crp.gpkg"); print(file.info(lau_es_crp_gpkg))
+lau_es_crp_gpkg <- file.path(the$FEMA_WORKDIR, "lau_es_crp.gpkg"); print(file.info(lau_es_crp_gpkg))
 if(file.exists(lau_es_crp_gpkg)) {
   lau_es_crp <- terra::vect(lau_es_crp_gpkg)
 } else {

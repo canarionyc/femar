@@ -16,7 +16,7 @@
 get_best_tracks_dt <- function(){
   # utils::browseURL()
   # browser()
-  best_tracks_rds <- file.path(NOAA_WORKDIR, "best.rds"); print(file.info(best_tracks_rds))
+  best_tracks_rds <- file.path(the$NOAA_WORKDIR, "best.rds"); print(file.info(best_tracks_rds))
   if(file.exists(best_tracks_rds)) {
     best_tracks <- readRDS(best_tracks_rds)
     print(nrow(best_tracks))
@@ -86,7 +86,7 @@ lcc <- "+proj=lcc +lat_1=60 +lat_2=30 +lon_0=-60"
 #'
 get_best_points_sf <- function(){
   best_points_url <- "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/best_points/IBTrACS.ALL.list.v04r00.points.zip"
-  best_points_rds <- file.path(NOAA_WORKDIR, basename(best_points_url) %>% fs::path_ext_set("Rds")); print(file.info(best_points_rds))
+  best_points_rds <- file.path(the$NOAA_WORKDIR, basename(best_points_url) %>% fs::path_ext_set("Rds")); print(file.info(best_points_rds))
   if(file.exists(best_points_rds)) {
     IBTrACS.ALL.points_sf <- readRDS(best_points_rds)
   } else {
@@ -118,7 +118,7 @@ get_best_points_sf <- function(){
 get_best_tracks_sf <- function(){
   best_tracks_url <- "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/shapefile/IBTrACS.ALL.list.v04r00.lines.zip"
 
-  best_tracks_rds <- file.path(NOAA_WORKDIR,basename(best_tracks_url)%>% fs::path_ext_set("Rds")); print(file.info(best_tracks_rds))
+  best_tracks_rds <- file.path(the$NOAA_WORKDIR,basename(best_tracks_url)%>% fs::path_ext_set("Rds")); print(file.info(best_tracks_rds))
   if(file.exists(  best_tracks_rds)) {
     best_tracks_sf <- readRDS(best_tracks_rds)
   } else {
@@ -153,7 +153,7 @@ get_best_tracks_sf <- function(){
 #' @importFrom dplyr left_join
 #' @export
 get_best_points_cnty_sf <- function() {
-  best_points_cnty_dsn <- file.path(NOAA_WORKDIR, "best_points_cnty.gpkg"); print(file.info(best_points_cnty_dsn))
+  best_points_cnty_dsn <- file.path(the$NOAA_WORKDIR, "best_points_cnty.gpkg"); print(file.info(best_points_cnty_dsn))
   if(file.exists(best_points_cnty_dsn)) {
     best_points_cnty_sf <- st_read(best_points_cnty_dsn)
   } else {
@@ -167,7 +167,7 @@ get_best_points_cnty_sf <- function() {
 
     # ?st_write
     st_write(best_points_cnty_sf,best_points_cnty_dsn)
-    # browseURL(NOAA_WORKDIR)
+    # browseURL(the$NOAA_WORKDIR)
   }; print(best_points_cnty_sf)
   print(sum(table(best_points_cnty_sf$COUNTYFP)))
   return(best_points_cnty_sf)

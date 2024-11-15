@@ -16,7 +16,7 @@ options("yaml.eval.expr"=TRUE)
 
   msgs <- c( sprintf("Running .onAttach(%s)", pkgname)
              ,
-             paste("NRI_WORKDIR",  NRI_WORKDIR, sep=": " )
+             paste("the$NRI_WORKDIR",  the$NRI_WORKDIR, sep=": " )
              ,
     sprintf("TMPDIR=%s", Sys.getenv("TMPDIR", unset = NA))
     ,

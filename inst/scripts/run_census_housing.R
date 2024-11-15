@@ -1,6 +1,6 @@
 # https://www.census.gov/topics/housing.html
 
-rhfs_fst <- file.path(CENSUS_WORKDIR, "rhfspuf2021_v1_1.fst"); print(file.info(rhfs_fst))
+rhfs_fst <- file.path(the$CENSUS_WORKDIR, "rhfspuf2021_v1_1.fst"); print(file.info(rhfs_fst))
 if(file.exists(rhfs_fst)) {
   print(fst.metadata(rhfs_fst))
   rhfs <- read_fst(rhfs_fst, as.data.table = TRUE)

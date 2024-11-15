@@ -20,7 +20,7 @@ core_based_statistical_areas_vect <- purrr::compose(terra::vect, tigris::core_ba
 #' @export
 get_cbsa_names <- function(){
 
-  cbsa_names_fst <- file.path(CENSUS_WORKDIR, "cbsa_names.fst"); print(file.info(cbsa_names_fst))
+  cbsa_names_fst <- file.path(the$CENSUS_WORKDIR, "cbsa_names.fst"); print(file.info(cbsa_names_fst))
 
   if(file.exists(cbsa_names_fst)) {
     print(fst.metadata(cbsa_names_fst))

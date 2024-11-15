@@ -1,7 +1,7 @@
 library(terra)
 
-HUD_DATADIR <- configr::eval.config('HUD_DATADIR')
-HUD_WORKDIR <- configr::eval.config('HUD_WORKDIR')# ; dir.create(HUD_WORKDIR)
+# HUD_DATADIR <- configr::eval.config('HUD_DATADIR')
+# HUD_WORKDIR <- configr::eval.config('HUD_WORKDIR')# ; dir.create(HUD_WORKDIR)
 
 # ?terra::vect
 LMI_tract_vect <- terra::vect("E:\\Datasets\\HUD\\Low_to_Moderate_Income_Population_by_Tract.gdb",proxy=TRUE)

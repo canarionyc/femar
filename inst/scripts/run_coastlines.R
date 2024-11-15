@@ -20,7 +20,7 @@ cat("TIGRIS_CACHE_DIR:", Sys.getenv('TIGRIS_CACHE_DIR'))
 
 source("~/Spatial/Tigris/.RProfile")
 
-# browseURL(CENSUS_WORKDIR)
+# browseURL(the$CENSUS_WORKDIR)
 
 # Lamberts Conical Projection ---------------------------------------------
 

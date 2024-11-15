@@ -35,7 +35,7 @@ browseURL("https://r-survey.r-forge.r-project.org/survey/")
 
 browseURL(system.file("extdata","DOE","EIA","RECS", "RECS_2020_Codebook_for_Public_File_-_v7.xlsx", package="femar"))
 file.choose()
-load( file.path(NRI_WORKDIR, "run_EIA.RData"))
+load( file.path(the$NRI_WORKDIR, "run_EIA.RData"))
 
 browseURL(.EIA_workdir)
 list.files(.EIA_datadir, full.names = TRUE, recursive = TRUE)
@@ -875,7 +875,7 @@ svytotal(x = ~TOTALBTUSPH,design = RECS_NGSPH)
 
 #+ cleanup -----------------------------------------------------------------
 
-save.image(file = file.path(NRI_WORKDIR, "run_EIA.RData"))
+save.image(file = file.path(the$NRI_WORKDIR, "run_EIA.RData"))
 
 # Notes to Consider When Using the Microdata File and Replicate Weights
 # 1. Publication standards: We do not publish RECS estimates where the RSE is higher than 50 or the number of hhs used for the calculation is less than 10 (indicated by a Q in the data tables). We recommend following these guidelines for custom analysis using the public use microdata file.

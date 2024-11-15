@@ -14,6 +14,7 @@ site_to_source_detailed <- list("Electricity (Grid Purchase)"= 2.80
 site_to_source.lst <- list(BTUEL=2.8, BTUNG       =1.05, BTULP        =1.01, BTUFO        =1.01, BTUWD        =1.00)
 
 
+#' @import readr
 #' @import forcats
 
 # RECS2020_fst ------------------------------------------------------------

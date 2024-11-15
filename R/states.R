@@ -92,9 +92,9 @@ get_fips_code <- function (state, county = NULL){
 #'
 
 get_states_sf <- function(year=getOption("tigris_year",2020L)){
-  # states_dsn <- file.path(CENSUS_WORKDIR, sprintf("states_%d.shp", year)); print(file.info(states_dsn))
-  states_gpkg <- file.path(CENSUS_WORKDIR, sprintf("states_%d.gpkg", year)); print(file.info(states_gpkg)['size'])
-  states_sf_rds <- file.path(CENSUS_WORKDIR, sprintf("states_%d.rds", year)); print(file.info(states_sf_rds)['size'])
+  # states_dsn <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.shp", year)); print(file.info(states_dsn))
+  states_gpkg <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.gpkg", year)); print(file.info(states_gpkg)['size'])
+  states_sf_rds <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.rds", year)); print(file.info(states_sf_rds)['size'])
   if(file.exists(states_sf_rds)) {
     states_sf <- readRDS(states_sf_rds)
   } else if(file.exists(states_gpkg)) {
@@ -156,7 +156,7 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
 states_vect <- purrr::compose(terra::vect, tigris::states)
 
 NRI_states_info <- function() {
-  NRI_states_fst <- file.path(NRI_WORKDIR, "NRI_states.fst"); print(file.info(NRI_states_fst))
+  NRI_states_fst <- file.path(the$NRI_WORKDIR, "NRI_states.fst"); print(file.info(NRI_states_fst))
   dput(names(fst(NRI_states_fst)))
   print(fst.metadata(NRI_states_fst))
 }
@@ -168,8 +168,8 @@ NRI_states_info <- function() {
 #'
 get_NRI_states_dt <- function() {
   # browser()
-  NRI_states_dt_rds <- file.path(NRI_WORKDIR, "NRI_states_dt.rds"); print(file.info(NRI_states_dt_rds))
-  NRI_states_fst <- file.path(NRI_WORKDIR, "NRI_states.fst"); print(file.info(NRI_states_fst))
+  NRI_states_dt_rds <- file.path(the$NRI_WORKDIR, "NRI_states_dt.rds"); print(file.info(NRI_states_dt_rds))
+  NRI_states_fst <- file.path(the$NRI_WORKDIR, "NRI_states.fst"); print(file.info(NRI_states_fst))
   if(file.exists(NRI_states_dt_rds)) {
 
     NRI_states_dt <- readRDS(NRI_states_dt_rds)
@@ -202,7 +202,7 @@ area_cols <- grep("AREA$", names(NRI_states_dt ), value=TRUE) # in sq miles
 
 # NRI_states_sf ------------------------------------------------------------------
 get_NRI_states_sf <- function(){
-  NRI_states_sf_rds <- file.path(NRI_WORKDIR, "NRI_states_sf.rds"); print(file.info(NRI_states_sf_rds))
+  NRI_states_sf_rds <- file.path(the$NRI_WORKDIR, "NRI_states_sf.rds"); print(file.info(NRI_states_sf_rds))
   if(file.exists(NRI_states_sf_rds)) {
     NRI_states_sf <- readRDS(NRI_states_sf_rds)
   } else {

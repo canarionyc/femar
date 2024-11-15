@@ -1,41 +1,51 @@
-#' @export
-NRI_WORKDIR <- NULL
-#' @export
-NOAA_WORKDIR <- NULL
-#' @export
-CENSUS_WORKDIR <- NULL
+#' #' @export
+#' the$NRI_WORKDIR <- NULL
+#' #' @export
+#' the$NOAA_WORKDIR <- NULL
+#' #' @export
+#' the$CENSUS_WORKDIR <- NULL
 
-cfg <- NULL
-#' @import configr
+
 #' @rawNamespace import(stats, except = filter)
-options(yaml.eval.expr=TRUE)
+# options(yaml.eval.expr=TRUE)
+
+# help("attach")
 
 .onLoad  <- function(libname, pkgname) {
+  # browser()
   # print(stringr::str_glue("About to load {libname}/{pkgname}"))
 
+  # str(.cfg$default)
+  # ?list2env
+  # localpaths.env <- list2env(.cfg$default
+  #                            # , envir = new.env()
+  #                            )
+  #print(ls(localpaths.env ))
+  #str(as.list( localpaths.env ))
+  #print(ls.str(localpaths.env))
+  list2env(.cfg$default, envir = the)
+  # print(ls(the))
 
   # options(scipen=999L)
   suppressWarnings({
-    (cfg <<- configr::read.config(eval.expr=TRUE)); stopifnot(is.list(cfg))
-    cfg.env <- list2env(cfg$default)
-    # attach(cfg$default)
-    # str(cfg)
-# browser()
- #   NRI_WORKDIR <- cfg$default$NRI_WORKDIR
-    NRI_WORKDIR <<- configr::eval.config("NRI_WORKDIR",eval.expr=TRUE)
-    fs::dir_create(NRI_WORKDIR, recurse = TRUE)
 
-    NOAA_WORKDIR <<- configr::eval.config("NOAA_WORKDIR",eval.expr=TRUE)
-    fs::dir_create(NOAA_WORKDIR, recurse = TRUE)
-
-    CENSUS_WORKDIR <<- configr::eval.config("CENSUS_WORKDIR",eval.expr=TRUE)
+#     # attach(cfg$default)
+#     # str(cfg)
+# # browser()
+#  #   the$NRI_WORKDIR <- cfg$default$the$NRI_WORKDIR
+#     the$NRI_WORKDIR <<- configr::eval.config("the$NRI_WORKDIR",eval.expr=TRUE)
+#     fs::dir_create(the$NRI_WORKDIR, recurse = TRUE)
+#
+#     the$NOAA_WORKDIR <<- configr::eval.config("the$NOAA_WORKDIR",eval.expr=TRUE)
+#     fs::dir_create(the$NOAA_WORKDIR, recurse = TRUE)
+#
+#     the$CENSUS_WORKDIR <<- configr::eval.config("the$CENSUS_WORKDIR",eval.expr=TRUE)
     })
 
 
 }
 
-# onUnLoad ----------------------------------------------------------------
 
 .onUnload <- function(libpath) {
-  # detach(cfg$default)
+
 }
