@@ -3,7 +3,12 @@
 
 rm(list = ls())
 source("~/.RProfile", echo=TRUE)
+(dllinfo.list <- getLoadedDLLs())
+str(dllinfo.list)
+names(dllinfo.list)
 
+"terra" %in% names(dllinfo.list)
+dyn.unload()
 # library(fs)
 
 # ?configr::read.config
@@ -28,7 +33,7 @@ source("~/.RProfile", echo=TRUE)
 #   # standardGeneric("not.na")
 # } )
 
-if(!isNamespaceLoaded("terra")) devtools::load_all("~/Spatial/terra-master/")
+#if(!isNamespaceLoaded("terra")) devtools::load_all("~/Spatial/terra-master/")
 print(getLoadedDLLs())
 
 ns <- getNamespace("terra")
@@ -39,10 +44,6 @@ ls(ns)
 # https://disc.gsfc.nasa.gov/information/data-in-action?title=Precipitation%20impacts%20from%20Hurricane%20Beryl
 
 my_ext <- ext(3.4e6,3.45e6,1.83e6,1.88e6)
-
-
-
-
 
 # Valencia_VHR2021 --------------------------------------------------------
 list.files(COPERNICUS_DATADIR, full.names = TRUE)

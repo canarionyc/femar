@@ -1,21 +1,18 @@
-#' #' @export
-#' the$NRI_WORKDIR <- NULL
-#' #' @export
-#' the$NOAA_WORKDIR <- NULL
-#' #' @export
-#' the$CENSUS_WORKDIR <- NULL
+
 
 
 #' @rawNamespace import(stats, except = filter)
 # options(yaml.eval.expr=TRUE)
 
 # help("attach")
+#' @import yaml
+# ?yaml.load
 
 .onLoad  <- function(libname, pkgname) {
   # browser()
   # print(stringr::str_glue("About to load {libname}/{pkgname}"))
-
-  # str(.cfg$default)
+  .cfg <- yaml::yaml.load_file(Sys.getenv("R_CONFIGFILE_ACTIVE"), eval.expr = TRUE)
+  #str(.cfg$default)
   # ?list2env
   # localpaths.env <- list2env(.cfg$default
   #                            # , envir = new.env()
