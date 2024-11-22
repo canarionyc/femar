@@ -5,6 +5,8 @@ library(sf)
 readRenviron("~/.Renviron")
 cat("OPENTOPO_KEY=",Sys.getenv("OPENTOPO_KEY"))
 
+gdal(drivers=TRUE) %>% subset(can=="read/write")
+
 # devtools::load_all("~/Spatial/terra-master/")
 ?library
 library(terra, verbose = TRUE)
@@ -12,10 +14,6 @@ devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE)
 ls.str(the)
 # library(sf)
 # library(stars)
-
-
-
-
 
 # findMethods("thinGeom")
 #
@@ -228,19 +226,37 @@ terra::points(builtUpP_msk11, cex=0.1)
 # elevation ---------------------------------------------------------------
 
 library(elevatr)
-sf::st_bbox(areaOfInterestA)
 ?get_aws_terrain
+terra::ext(areaOfInterestA)
+
 sf::st_crs(3035)
 
 
 areaOfInterestA_DEM_tif <- file.path(the$FEMA_WORKDIR, "areaOfInterestA_DEM.tif"); print(file.info(areaOfInterestA_DEM_tif))
 if(file.exists(areaOfInterestA_DEM_tif)){
+  ?terra::rast
   areaOfInterestA_DEM.SpatRaster <- terra::rast(areaOfInterestA_DEM_tif)
 } else {
-  areaOfInterestA_DEM.SpatRaster <- get_aws_terrain(sf::st_bbox(areaOfInterestA),prj=3035,z=14
+  areaOfInterestA_DEM.SpatRaster <- get_aws_terrain(terra::ext(areaOfInterestA),prj=3035,z=14
                                                     , tmp_dir = the$FEMA_WORKDIR)
   names(areaOfInterestA_DEM.SpatRaster) <- "elevation"
-  writeRaster(areaOfInterestA_DEM.SpatRaster, filename = areaOfInterestA_DEM_tif)
+  mem_info(areaOfInterestA_DEM.SpatRaster)
+  elev_crop <- areaOfInterestA_DEM.SpatRaster+0
+  object.size(elev_crop)
+  inMemory(elev_crop)
+  (slopedeg <- terrain(elev_crop,
+                       v="slope",
+                       unit="degrees"))
+  (aspect <- terrain(elev_crop, v="aspect", unit="radians"))
+
+  (elev_all <- c(elev_crop, slopedeg, aspect))
+  names(elev_all) <- c("elev_crop", "slopedeg", "aspect")
+  names(elev_all)
+  terra::sources(elev_all)
+  ?terra::varnames
+  varnames(elev_all) <- c("elev_crop", "slopedeg", "aspect")
+  ?terra::writeRaster
+  writeRaster(elev_all, filename = areaOfInterestA_DEM_tif, overwrite=TRUE); print(file.info(areaOfInterestA_DEM_tif))
 }; print(areaOfInterestA_DEM.SpatRaster)
 
 help("contour",package="terra")
@@ -249,6 +265,42 @@ help("contour",package="terra")
 
 builtUpP_msk
 
+terra::plot(areaOfInterestA_DEM.SpatRaster)
+
+
+
+terra::plot(elev_crop
+                        ,col=terrain.colors(100L)
+#            ,col=colorRampPalette(c("darkorange", "white"))(10L)
+            ,plg=list(title="Elevation (m)")
+)
+
+
+terra::plot(slopedeg
+#                        ,col=terrain.colors(100L)
+            ,col=colorRampPalette(c("black", "white"))(100L)
+            ,plg=list(title="Slope (degrees)")
+)
+
+
+aspect
+nsaspect <- cos(aspect)
+
+terra::plot(nsaspect
+            #            ,col=terrain.colors(10)
+            ,col=colorRampPalette(c("black", "white"))(100L)
+            ,plg=list(title="Aspect (N-S index)")
+)
+
+ewaspect <- sin(aspect)
+terra::plot(ewaspect
+            #            ,col=terrain.colors(10)
+            ,col=colorRampPalette(c("black", "white"))(10L)
+            ,plg=list(title="Aspect (E-W index)")
+)
+
+
+?terra::viewshed
 
 dev.new()
 terra::contour(areaOfInterestA_DEM.SpatRaster, main="elevation", col="grey")
