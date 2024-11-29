@@ -2,6 +2,7 @@
 readRenviron("~/.Renviron")
 Sys.getenv("GISCO_CACHE_DIR")
 library(giscoR)
+
 help(package="giscoR")
 ?gisco_detect_cache_dir
 stopifnot(dir.exists(gisco_detect_cache_dir()))

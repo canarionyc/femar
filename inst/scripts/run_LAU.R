@@ -11,12 +11,12 @@ unloadNamespace("tidyterra")
 unloadNamespace("terra")
 devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE)
 # devtools::load_all("~/Spatial/terra-master/")
-# lau ---------------------------------------------------------------------
+# lau_es ---------------------------------------------------------------------
 
 
 lau_es <- get_lau_es()
 
-crs(lau_es)
+writeLines(crs(lau_es))
 
 terra::plot(lau_es)
 

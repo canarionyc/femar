@@ -1,19 +1,15 @@
 
 # setup -------------------------------------------------------------------
 # library(purrr)
-library(sf)
-readRenviron("~/.Renviron")
-cat("OPENTOPO_KEY=",Sys.getenv("OPENTOPO_KEY"))
-
-gdal(drivers=TRUE) %>% subset(can=="read/write")
-
-# devtools::load_all("~/Spatial/terra-master/")
-?library
-library(terra, verbose = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE)
 ls.str(the)
 # library(sf)
 # library(stars)
+
+# devtools::load_all("~/Spatial/terra-master/")
+
+xtabs_obj_type <- purrr::compose(~xtabs(~ obj_type , .x), terra::as.data.frame)
+xtabs_obj_type_info <- purrr::compose(~xtabs(~ obj_type + info , .x), terra::as.data.frame)
 
 # findMethods("thinGeom")
 #
@@ -67,13 +63,12 @@ print(vectors)
 # methods(class="SpatVectorCollection")
 # names(svc3)
 
-# svc3 ----
-# devtools::load_all("~/Spatial/FEMA/femar/", export_all = FALSE);
-svc3 <- get_svc(EMSR773_AOI03_BLP.dir,vectors)
+# svc3_rds ----
+devtools::load_all("~/Spatial/FEMA/femar/", export_all = FALSE); svc3 <- get_svc(EMSR773_AOI03_BLP.dir,vectors)
 
 # terra::plot(svc3, pch=".")
 lapply(svc3, names)
-
+fsummary_vect <- purrr::compose(fstutils::fsummary, terra::as.data.frame)
 
 svc3_summary.list <- lapply(as.list(svc3), terra::as.data.frame)
 svc3_summary.list
@@ -96,7 +91,7 @@ writexl::write_xlsx(svc3_summary.list, path = svc3_summary_xlsx)
 # area of interest --------------------------------------------------------
 
 areaOfInterestA <- svc3[["areaOfInterestA"]]
-cat(terra::crs(areaOfInterestA))
+writeLines(terra::crs(areaOfInterestA))
 # ?terra::project
 # areaOfInterestA %>%  terra::project( "EPSG:3035")
 # terra::project(areaOfInterestA, "EPSG:3035")
@@ -108,28 +103,27 @@ fstutils::fsummary(as.data.frame(builtUpA))
 
 builtUpA %>% terra::subset(builtUpA$obj_type=="11-Residential Buildings")
 
-# builtUpA_msk <- terra::mask(builtUpA %>% terra::subset(builtUpA$obj_type=="11-Residential Buildings"), areaOfInterestA)
-terra::plot( builtUpA
+builtUpA_msk <- terra::mask(builtUpA %>% terra::subset(builtUpA$obj_type=="11-Residential Buildings"), areaOfInterestA)
+?terra::plot
+terra::plot( builtUpA_msk
              , border="grey"
              #            , legend=TRUE
              , alpha=0.5
-             , main="EMSR773_AOI03 built-up"
-             , add=TRUE
+             , main="EMSR773_AOI03 built-up area Residential Buildings"
 )
 
 # built-up points -----------------------------------------------------------
 
-
 (builtUpP <- svc3[['builtUpP']])
-builtUpP_msk <- terra::mask(builtUpP, areaOfInterestA)
-
-fstutils::fsummary(as.data.frame(builtUpP_msk))
+fstutils::fsummary(as.data.frame(builtUpP))
 names(builtUpP)
-
 builtUpP$simplified <- factor(builtUpP$simplified)
 str(builtUpP$simplified)
 
-(builtUpP_msk11 <- builtUpP_msk %>% terra::subset(builtUpP_msk$obj_type=="11-Residential Buildings")) %>% xtabs_obj_type_info()
+builtUpP %>% terra::subset(builtUpP$obj_type=="11-Residential Buildings") %>% xtabs_obj_type_info()
+
+builtUpP_msk <- terra::mask(builtUpP %>% terra::subset(builtUpP$obj_type=="11-Residential Buildings"), areaOfInterestA)
+
 
 
 # ?fct_collapse
@@ -141,7 +135,7 @@ str(builtUpP$simplified)
 #   fct_relevel("Residential","Commercial","Services","Other")
 # table(builtUpP$simplified2)
 
-
+terra::plot(builtUpP_msk, pch=20, cex=0.5)
 
 # EMSR773_AOI03_BLP_PRODUCT_png ----
 
@@ -200,126 +194,24 @@ terra::polys(areaOfInterestA <- svc3[["areaOfInterestA"]])
 
 par(opar)
 
-
-# hydrographyL ------------------------------------------------------------
-
-(hydrographyL <- svc3[["hydrographyL"]])
-terra::plot(hydrographyL, add=TRUE)
 # physiographyL -----------------------------------------------------------
 
 (physiographyL <- svc3[["physiographyL"]])
-# physiographyL$elev <- as.integer(physiographyL$elev)
-range(physiographyL$elev)
+
+physiographyPoly <- terra::as.polygons(physiographyL)
+physiographyL$elev <- as.integer(physiographyL$elev)
+
 physiographyL_msk <- terra::mask(physiographyL, areaOfInterestA)
 
 
 ?terra::plot
-terra::plot(physiographyL, "elev"
-
-            , sort=as.character(seq.int(0,240,by=20))
+terra::plot(physiographyL_msk, "elev"
+            #            , type= "continuous"
             ,plg=list(title="Elevation (m)")
             #            , add=TRUE
 )
-terra::points(builtUpP_msk11, cex=0.1)
-# ?terra::cont
 
-# elevation ---------------------------------------------------------------
-
-library(elevatr)
-?get_aws_terrain
-terra::ext(areaOfInterestA)
-
-sf::st_crs(3035)
-
-
-areaOfInterestA_DEM_tif <- file.path(the$FEMA_WORKDIR, "areaOfInterestA_DEM.tif"); print(file.info(areaOfInterestA_DEM_tif))
-if(file.exists(areaOfInterestA_DEM_tif)){
-  ?terra::rast
-  areaOfInterestA_DEM.SpatRaster <- terra::rast(areaOfInterestA_DEM_tif)
-} else {
-  areaOfInterestA_DEM.SpatRaster <- get_aws_terrain(terra::ext(areaOfInterestA),prj=3035,z=14
-                                                    , tmp_dir = the$FEMA_WORKDIR)
-  names(areaOfInterestA_DEM.SpatRaster) <- "elevation"
-  mem_info(areaOfInterestA_DEM.SpatRaster)
-  elev_crop <- areaOfInterestA_DEM.SpatRaster+0
-  object.size(elev_crop)
-  inMemory(elev_crop)
-  (slopedeg <- terrain(elev_crop,
-                       v="slope",
-                       unit="degrees"))
-  (aspect <- terrain(elev_crop, v="aspect", unit="radians"))
-
-  (elev_all <- c(elev_crop, slopedeg, aspect))
-  names(elev_all) <- c("elev_crop", "slopedeg", "aspect")
-  names(elev_all)
-  terra::sources(elev_all)
-  ?terra::varnames
-  varnames(elev_all) <- c("elev_crop", "slopedeg", "aspect")
-  ?terra::writeRaster
-  writeRaster(elev_all, filename = areaOfInterestA_DEM_tif, overwrite=TRUE); print(file.info(areaOfInterestA_DEM_tif))
-}; print(areaOfInterestA_DEM.SpatRaster)
-
-help("contour",package="terra")
-??contour
-#               , color.palette = function(n) hcl.colors(n, "terrain")
-
-builtUpP_msk
-
-terra::plot(areaOfInterestA_DEM.SpatRaster)
-
-
-
-terra::plot(elev_crop
-                        ,col=terrain.colors(100L)
-#            ,col=colorRampPalette(c("darkorange", "white"))(10L)
-            ,plg=list(title="Elevation (m)")
-)
-
-
-terra::plot(slopedeg
-#                        ,col=terrain.colors(100L)
-            ,col=colorRampPalette(c("black", "white"))(100L)
-            ,plg=list(title="Slope (degrees)")
-)
-
-
-aspect
-nsaspect <- cos(aspect)
-
-terra::plot(nsaspect
-            #            ,col=terrain.colors(10)
-            ,col=colorRampPalette(c("black", "white"))(100L)
-            ,plg=list(title="Aspect (N-S index)")
-)
-
-ewaspect <- sin(aspect)
-terra::plot(ewaspect
-            #            ,col=terrain.colors(10)
-            ,col=colorRampPalette(c("black", "white"))(10L)
-            ,plg=list(title="Aspect (E-W index)")
-)
-
-
-?terra::viewshed
-
-dev.new()
-terra::contour(areaOfInterestA_DEM.SpatRaster, main="elevation", col="grey")
-
-dev.new()
-terra::plot(builtUpP_msk11, cex=0.5)
-terra::polys(areaOfInterestA)
-terra::contour(areaOfInterestA_DEM.SpatRaster, col="grey", filled=FALSE, add=TRUE)
-
-
-?terra::terrain
-
-(areaOfInterestA_DEM.slope<- terrain(areaOfInterestA_DEM.SpatRaster,v="slope", filename=file.path(the$FEMA_WORKDIR, "areaOfInterestA_DEM_slope.tif")))
-terra::plot(areaOfInterestA_DEM.slope, main="slope")
-
-
-(flowdir<- terrain(areaOfInterestA_DEM.SpatRaster,v="flowdir"))
-terra::plot(flowdir, main="flowdir")
-
+?terra::cont
 
 # hidro_png ----
 

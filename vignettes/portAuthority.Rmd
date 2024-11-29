@@ -1,0 +1,6 @@
+Dana floods (Oct 29 to Nov 16, 2004) caused 229 deaths and ~3.5 billion euros loss in Valencia, Spain. 
+The disruption in trade in the port of Valencia can be seen with a new tool created by the IMF, https://portwatch.imf.org/,
+that also allows to simulate climate scenarios and spillover effects of a port close (does not account for rerouting).
+In the chart of monthly averages of import/export, the main downward trend is caused by Ukraine war. Imports after Dana were prioritized over exports to avoid upstream disruptions to supply chains. Only exports reach a five year low. The average for the month of November is still subject to change. 
+
+#climaterisk
