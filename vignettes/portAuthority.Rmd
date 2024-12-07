@@ -3,4 +3,15 @@ The disruption in trade in the port of Valencia can be seen with a new tool crea
 that also allows to simulate climate scenarios and spillover effects of a port close (does not account for rerouting).
 In the chart of monthly averages of import/export, the main downward trend is caused by Ukraine war. Imports after Dana were prioritized over exports to avoid upstream disruptions to supply chains. Only exports reach a five year low. The average for the month of November is still subject to change. 
 
+
+Panama Canal transit was restricted due to draught in Lake Gatun (https://pancanal.com/en/panama-canal-to-increase-daily-transits-to-24-starting-in-january/). 
+Currently the situation has improved due to abundand rain.
+See image of Dec 17, 2023 image of the Gulf of Panama with ships waiting (Credit: European Union, Copernicus Sentinel-2 imagery)
+
+The middle chart (blue) is Lake Gatun level in feet (https://evtms-rpts.pancanal.com/eng/h2o/index.html).
+
+The bottom chart (green) is the Southern Oscillation Index (https://www.cpc.ncep.noaa.gov/data/indices/soi) where El Nino is present when the index is negative (sea level pressure lower in Tahiti than in Darwin)
+
+The level of water had already briefly dropped below 80 feet in June 2019 but without impact. The drop in May 2023 to Jan 2024, under El Nino,  severely impacted traffic.
+
 #climaterisk
