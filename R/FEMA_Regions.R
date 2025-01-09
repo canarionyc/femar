@@ -1,6 +1,6 @@
 get_FEMA_Regions_dt <- function(.msg=interactive()){
 
-  FEMA_Regions_dt_rds <- file.path(.fema_workdir, "FEMA_Regions_dt.rds") ; if(.msg) print(file.info(FEMA_Regions_dt_rds))
+  FEMA_Regions_dt_rds <- file.path(the$FEMA_WORKDIR, "FEMA_Regions_dt.rds") ; if(.msg) print(file.info(FEMA_Regions_dt_rds))
   if(file.exists(  FEMA_Regions_dt_rds)) {
     FEMA_Regions_dt <- readRDS(FEMA_Regions_dt_rds)
   } else {
@@ -18,7 +18,7 @@ get_FEMA_Regions_dt <- function(.msg=interactive()){
 }
 
 get_FEMA_Regions_sf <- function(){
-  FEMA_Regions_sf_rds <- file.path(.fema_workdir, "FEMA_Regions_sf.rds")# ; print(file.info(FEMA_Regions_sf_rds))
+  FEMA_Regions_sf_rds <- file.path(the$FEMA_WORKDIR, "FEMA_Regions_sf.rds")# ; print(file.info(FEMA_Regions_sf_rds))
   if(file.exists(  FEMA_Regions_sf_rds)) {
     FEMA_Regions_sf <- readRDS(FEMA_Regions_sf_rds)
   } else {

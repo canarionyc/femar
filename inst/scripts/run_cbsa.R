@@ -1,3 +1,7 @@
+
+# setup -------------------------------------------------------------------
+
+
 library(sf)
 devtools::load_all("~/fstutils/",export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar/")
@@ -22,10 +26,28 @@ str(cbsa_sf)
 # cbsa_vect ----------------------------------------------------------------
 
 library(terra)
-devtools::load_all("~/Spatial/FEMA/femar/"); (cbsa_vect <- get_cbsa_vec(cb = TRUE,keep_zipped_shapefile = TRUE))
+devtools::load_all("~/Spatial/FEMA/femar/"); (cbsa_vect <- core_based_statistical_areas_vect(cb = TRUE,keep_zipped_shapefile = TRUE))
 # cbsa_vect <- terra::vect(cbsa_sf )
 
 table(cbsa_vect$LSAD, useNA = "ifany")
+
+
+
+# New Jersey --------------------------------------------------------------
+
+NJ.state_vect <- states_vect(cb=TRUE) %>% subset(STUSPS=='NJ', NSE=TRUE)
+terra::plot(cbsa_vect
+            ,ext=ext(NJ.state_vect)
+            ,border="grey"
+            #     , col=map.pal("viridis", 100)
+)
+polys(NJ.state_vect)
+terra::text(cbsa_vect, labels= cbsa_vect$NAME, cex=0.65, xpd=TRUE)
+
+
+cbsa_vect %>% subset(grepl("NJ", cbsa_vect$NAME))
+# Louisiana ---------------------------------------------------------------
+
 
 ?terra::subset
 devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); LA.state_vect <- states_vect(cb=TRUE) %>% terra::subset(STATEFP=='22', NSE=TRUE)

@@ -88,7 +88,7 @@ counties_DR_vect[]
 cbsa_m1_related_vect
 
 gdal(drivers=TRUE)
-Helene2024_msa_vect_gpkg <- file.path(.fema_workdir, "Helene2024_msa_vect.gpkg"); print(file.info(Helene2024_msa_vect_gpkg))
+Helene2024_msa_vect_gpkg <- file.path(the$FEMA_WORKDIR, "Helene2024_msa_vect.gpkg"); print(file.info(Helene2024_msa_vect_gpkg))
 writeVector(cbsa_m1_related_vect, filename = Helene2024_msa_vect_gpkg)
 
 ?terra::intersect
@@ -225,7 +225,7 @@ zip_code_short_vect %>%
 
 # DR4827_png ----
 
-DR4827_png <- file.path(.fema_workdir, format(Sys.time(),"DR4827_%Y%m%d_%H%M.png")); print(file.info(DR4827_png))
+DR4827_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"DR4827_%Y%m%d_%H%M.png")); print(file.info(DR4827_png))
 library(Cairo)
 dev.copy(device=Cairo::CairoPNG,filename = DR4827_png, width = 10.0, height = 6.0, dpi=300, units="in")
 dev.off()

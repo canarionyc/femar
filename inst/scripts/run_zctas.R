@@ -17,7 +17,7 @@ zctas_sf <- zctas(cb=FALSE, keep_zipped_shapefile =TRUE)
 zctas_sf
 
 # devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);zctas_sf <- get_zctas_sf()
-devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);(zctas_vect <- get_zctas_vect())
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);(zctas_vect <- zctas_vect())
 names(zctas_vect)
 class(zctas_vect)
 
@@ -52,3 +52,8 @@ tab20_zcta520_county20_natl[, .(county_count=uniqueN(GEOID_COUNTY_20)
 ?substr
 (zip3_county_stats <- tab20_zcta520_county20_natl[, .(county_count=uniqueN(GEOID_COUNTY_20))
                                                   , by=substr(GEOID_ZCTA5_20,1,3)])[order(county_count, decreasing = TRUE)]
+
+
+# zip_code_short ----------------------------------------------------------
+
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); zip_code_short_vect <- get_zip_code_short_vect()

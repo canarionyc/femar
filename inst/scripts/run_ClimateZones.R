@@ -48,7 +48,7 @@ library(scales)
 ramp2 <- colour_ramp(c("blue", "green", "red"))
 ramp2(seq(0, 1, length = 12)) %>% adjustcolor(alpha.f = 0.3)
 
-ClimateZones_png <- file.path(.fema_workdir, format(Sys.time(),"ClimateZones_%Y%m%d_%H%M.png")); print(file.info(ClimateZones_png))
+ClimateZones_png <- file.path(the$FEMA_WORKDIR, format(Sys.time(),"ClimateZones_%Y%m%d_%H%M.png")); print(file.info(ClimateZones_png))
 library(Cairo)
 Cairo::CairoPNG(filename = ClimateZones_png, width = 10.0, height = 6.0, dpi=300, units="in")
 opar <- par(mar=c(5.1,4.1,4.1,2.1))

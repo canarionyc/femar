@@ -186,7 +186,7 @@ confint(HOUSEHOLD.total)
 # RECS5 -------------------------------------------------------------------
 ?subset.svyrep.design
 
-RECS5_rds <- file.path(.fema_workdir, "RECS5.rds"); print(file.info(RECS5_rds))
+RECS5_rds <- file.path(the$FEMA_WORKDIR, "RECS5.rds"); print(file.info(RECS5_rds))
 if(file.exists(  RECS5_rds)) {
   RECS5 <- readRDS(RECS5_rds)
 } else {

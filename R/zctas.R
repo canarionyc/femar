@@ -68,7 +68,7 @@ get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 
 
 get_zip_code_short_vect <- function() {
 
-  zip_code_short_vect_gpkg <- file.path(.fema_workdir, "zip_code_short_vect.gpkg")
+  zip_code_short_vect_gpkg <- file.path(the$FEMA_WORKDIR, "zip_code_short_vect.gpkg")
   if(file.exists(zip_code_short_vect_gpkg)) {
     return(terra::vect(zip_code_short_vect_gpkg))
   }
