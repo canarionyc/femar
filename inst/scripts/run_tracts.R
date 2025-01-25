@@ -2,8 +2,9 @@
 # rm(list = ls())
 source("~/Spatial/.RProfile")
 library(configr)
+# configr::read.config()
 library(tigris)
-configr::read.config()
+
 devtools::load_all("~/fstutils/", export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 print(getOption("tigris_year"))
@@ -38,15 +39,28 @@ names(tract_sf)
 table(dupes <- duplicated(tract_sf, by=c( 'TRACTCE')))  # => tract code is unique nationwide
 
 
-# tracts_vect -------------------------------------------------------------
+# LA tracts -------------------------------------------------------------
 
 
 ?tracts
 
 
-devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); tracts_vect <- get_tracts_vect(cb=TRUE,state='22',keep_zipped_shapefile =TRUE)
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); tracts <- get_tracts(cb=TRUE,state='22',keep_zipped_shapefile =TRUE)
 
-tracts_vect %>% terra::plot(main="Louisiana tracts", border="grey")
+tracts %>% terra::plot(main="Louisiana tracts", border="grey")
+
+# Los Angeles tracts ------------------------------------------------------
+
+?tracts
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); LosAngeles_tracts <- tracts_vect(cb=TRUE,state='06', county='037', year=2020, keep_zipped_shapefile =TRUE) %>% project('EPSG:3857')
+
+LosAngeles_tracts %>% terra::plot(main="Los Angeles tracts", border="grey")
+
+DINS_2025_Palisades_tracts <- terra::intersect(LosAngeles_tracts, DINS_2025_Palisades)
+
+table(DINS_2025_Palisades_tracts$TRACTCE)
+
+unique(DINS_2025_Palisades_tracts$TRACTCE) %>% dput()
 
 # NRI_tracts_sf -----------------------------------------------------------
 
@@ -56,17 +70,17 @@ tracts_vect %>% terra::plot(main="Louisiana tracts", border="grey")
 (tx_NRI_tracts_sf <- NRI_tracts_sf %>% subset(STATEFIPS!='02' & STATEFIPS!='15' & STATEFIPS<60 & STATEFIPS=='48', 'ALR_VALB') %>%
     mutate(ALR_VALB_PER_MN=round(1e6*ALR_VALB),0) ) # %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
 
-(tx_NRI_tracts_vect <- terra::vect(tx_NRI_tracts_sf))
+(tx_NRI_tracts <- terra::vect(tx_NRI_tracts_sf))
 
 
 # tx_NRI_tracts_alr_valb_png ----
 
-tx_NRI_tracts_alr_valb_png <- file.path(the$CENSUS_WORKDIR, format(Sys.time(),"tx_NRI_tracts_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_NRI_tracts_alr_valb_png))
+tx_NRI_tracts_alr_valb_png <- file.path(the$CENSUS_WORKDIR, format(Sys.time(),"NRI_tracts_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_NRI_tracts_alr_valb_png))
 library(Cairo)
 Cairo::CairoPNG(filename = tx_NRI_tracts_alr_valb_png, width = 10.0, height = 6.0, dpi=300, units="in")
 ?terra::plot
 ?terra::legend
-terra::plot(tx_tracts_vect, 'ALR_VALB_PER_MN'
+terra::plot(tx_tracts, 'ALR_VALB_PER_MN'
             , main="Annualized Loss in Building Value $ Amt per $M"
             , border="grey"
             , alpha=0.5
@@ -134,6 +148,8 @@ terra::plot(NRI_tracts_RegIV_vect, 'RISK_RATNG'
 states.RegionIV.tracts_sf
 
 terra::plot(terra::vect(states.RegionIV.tracts_sf))
+
+
 
 
 # cleanup -----------------------------------------------------------------

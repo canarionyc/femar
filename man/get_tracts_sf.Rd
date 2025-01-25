@@ -7,7 +7,11 @@ Because blocks nest in tracts, and tract IDs even form the first part of block
 IDs, it's relatively straightforward to generate tract crosswalks from block
 crosswalks.}
 \usage{
-get_tracts_sf(year = getOption("tigris_year", 2020L))
+get_tracts_sf(
+  state = NULL,
+  county = NULL,
+  year = getOption("tigris_year", 2022L)
+)
 }
 \arguments{
 \item{year}{int tigris year}

@@ -10,24 +10,44 @@ options(tigris_year=2020L)
 browseURL("https://www2.census.gov/geo/tiger/TIGER2010/ZCTA5")
 browseURL("https://www2.census.gov/geo/tiger/TIGER2020/ZCTA5")
 
-# zctas area verification -------------------------------------------------------------------
+
+# CA zctas ----------------------------------------------------------------
+# ZCTAs are only available by state for 2000 and 2010.
+zctas <-zctas_vect(cb=TRUE
+                     # , starts_with = '902'
+                     #                     , state='CA'
+                     , year=2020
+                     , keep_zipped_shapefile =TRUE) %>% project("epsg:3857")
+zctas
+
+plot(zctas)
+# zctas920-------------------------------------------------------------------
 
 ?zctas
-zctas_sf <- zctas(cb=FALSE, keep_zipped_shapefile =TRUE)
-zctas_sf
+zctas920 <- zctas_vect(cb=TRUE
+                    , starts_with = '902'
+#                     , state='CA'
+                    , year=2020
+                    , keep_zipped_shapefile =TRUE) %>% project("epsg:3857")
+zctas920
+names(zctas)
+class(zctas)
 
-# devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);zctas_sf <- get_zctas_sf()
-devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);(zctas_vect <- zctas_vect())
-names(zctas_vect)
-class(zctas_vect)
+plot(zctas920)
+?terra::text
+text(zctas920, labels=zctas920$NAME20, cex=0.65)
 
-zctas_vect$ZCTA3CE20<-substr(zctas_vect$ZCTA5CE20, 1,3)
-summary(zctas_vect[, c('ZCTA3CE20','ALAND20', 'AWATER20')])
+# zctas area verification -------------------------------------------------------------------
+
+zctas$ZCTA3CE20<-substr(zctas$ZCTA5CE20, 1,3)
+# summary(zctas[, c('ZCTA3CE20','ALAND20', 'AWATER20')])
 
 
-(zctas_dt <- st_drop_geometry(zctas_sf) %>% setDT(key = c('ZCTA5CE20')))
+(zctas_dt <- as.data.frame(zctas) %>% setDT(key = c('ZCTA5CE20')))
 
-(zctas_stats <- zctas_dt[, .(ZCTA5CE20_COUNT=uniqueN(ZCTA5CE20), ALAND20 =sum( ALAND20 ), AWATER20=sum(AWATER20))]) %>% as_tibble()
+(zctas_stats <- zctas_dt[, .(ZCTA5CE20_COUNT=uniqueN(ZCTA5CE20)
+                             , ALAND20 =sum( ALAND20 )
+                             , AWATER20=sum(AWATER20))]) %>% print(big.mark=",")
 
 
 # tab20_zcta520_county20_natl ---------------------------------------------
@@ -56,4 +76,8 @@ tab20_zcta520_county20_natl[, .(county_count=uniqueN(GEOID_COUNTY_20)
 
 # zip_code_short ----------------------------------------------------------
 
-devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); zip_code_short_vect <- get_zip_code_short_vect()
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); zip_code_short <- get_zip_code_short_vect( )
+
+
+
+(zcta920 <- zip_code_short[zip_code_short$ZCTA3CE20=="920"]) %>% plot()

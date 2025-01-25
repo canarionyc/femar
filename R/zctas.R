@@ -18,10 +18,17 @@ get_zctas_sf <-  function(year=getOption("tigris_year", 2020)){
   return(zctas_sf)
 }
 
+
+get_zctas_sf <- purrr::partial(tigris::zctas, keep_zipped_shapefile = TRUE)
+
 #' @import terra
 #' @export
-zctas_vect <- purrr::compose(terra::vect, tigris::zctas)
 
+
+
+?purrr::compose
+?tigris::zctas
+zctas_vect <- purrr::compose(terra::vect, tigris::zctas)
 
 # state_zcta3_sf ----
 
@@ -83,7 +90,7 @@ get_zip_code_short_vect <- function() {
   #
   # debugonce(myfun)
 
-
+?tigris::zctas
   zip_code_short_vect <- terra::aggregate(zctas_vect[, c('ZCTA3CE20', 'ALAND20', 'AWATER20')]
                                           , by='ZCTA3CE20', fun=myfun )
 

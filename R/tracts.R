@@ -6,7 +6,9 @@
 #' @param year int tigris year
 #' @return simple feature
 #' @export
-get_tracts_sf <- function(year=getOption("tigris_year", 2020L)){
+get_tracts_sf <- function( state = NULL
+                           ,county = NULL
+                           ,year=getOption("tigris_year", 2022L)){
   message(paste("Retrieving census tracts for year", year))
   tracts_sf_rds <- file.path(the$CENSUS_WORKDIR, sprintf("tracts_%d.rds", year)); print(file.info(tracts_sf_rds))
   if(file.exists(  tracts_sf_rds)) {
@@ -20,8 +22,8 @@ get_tracts_sf <- function(year=getOption("tigris_year", 2020L)){
     #
     # tracts_sf <- do.call("rbind", tracts_sf.lst)
     ?tracts
-    (tracts_sf <- tracts(cb=TRUE,year=year,keep_zipped_shapefile = TRUE) %>% st_transform( st_crs(3857)))
-
+    tracts_sf <- tracts(cb=TRUE,year=year,keep_zipped_shapefile = TRUE) %>%
+      st_transform( st_crs(3857))
 
     # add coastline -----------------------------------------------------------
     # ?tigris::coastline
@@ -49,78 +51,88 @@ tracts_vect <- purrr::compose(terra::vect, tigris::tracts)
 #' @import sf
 #' @export
 #'
-get_NRI_tracts_sf <- function(state) {
+get_NRI_tracts_vect <- function(state) {
 
   # browseURL(.NRI_datadir)
   if(missing(state)) {
-    NRI_tracts_sf_Rds <- file.path(the$NRI_WORKDIR, "NRI_tracts_sf.Rds"); print(file.info(NRI_tracts_sf_Rds))
+    # NRI_tracts_Rds <- file.path(the$NRI_WORKDIR, "NRI_tracts_vect.Rds"); print(file.info(NRI_tracts_Rds))
+    #
+    # if(file.exists(NRI_tracts_Rds)) {
+    #   NRI_tracts<- readRDS(NRI_tracts_Rds)
+    #
+    # } else {
+    NRI_GDB_tracts_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
+    # print(st_layers(NRI_GDB_tracts_gdb))
 
-    if(file.exists(NRI_tracts_sf_Rds)) {
-      NRI_tracts_sf<- readRDS(NRI_tracts_sf_Rds)
+    # ?st_read
+    # debugonce(st_read)
 
-    } else {
-      NRI_GDB_tracts_gdb <- file.path(.NRI_datadir, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
-      # print(st_layers(NRI_GDB_tracts_gdb))
-
-      # ?st_read
-      # debugonce(st_read)
-
-      NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
-                                   , layer = "NRI_CensusTracts"
-                                   ,quiet=TRUE)
-      saveRDS(NRI_tracts_sf, NRI_tracts_sf_Rds)
-    }
-
+    # NRI_tracts <- sf::st_read(dsn = NRI_GDB_tracts_gdb
+    #                              , layer = "NRI_CensusTracts"
+    #                              ,quiet=TRUE)
+    ?terra::vect
+    ?`saveRDS,SpatVector-method`
+    NRI_tracts <- terra::vect(NRI_GDB_tracts_gdb , layer = "NRI_CensusTracts" )
+    # print(NRI_tracts)
+    # saveRDS(NRI_tracts, NRI_tracts_Rds)
   } else{
     # browser()
     state <- toupper(state)
-    statefips <- get_fips_code(state)
-    message(sprintf("Getting NRI tracts for state %s fips %s",state,statefips))
-    NRI_GDB_tracts_gdb <- file.path(.NRI_datadir, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
-    NRI_tracts_sf <- sf::st_read(dsn = NRI_GDB_tracts_gdb
-                                 , layer = "NRI_CensusTracts"
-                                 , query = sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS  = '%s'", statefips))
+    NRI_tracts_Rds <- file.path(the$NRI_WORKDIR, sprintf("NRI_tracts_%s_vect.Rds", state)); print(file.info(NRI_tracts_Rds))
+    if(file.exists(NRI_tracts_Rds)) {
+      NRI_tracts <- readRDS(NRI_tracts_Rds)
+    } else {
+      statefips <- get_fips_code(state)
+      message(sprintf("Getting NRI tracts for state %s fips %s",state,statefips))
 
+      NRI_GDB_tracts_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
+      ?terra::vect
+      NRI_tracts <- terra::vect(NRI_GDB_tracts_gdb
+                                , layer = "NRI_CensusTracts"
+                                , query = sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS  = '%s'", statefips))
 
+      print(NRI_tracts)
 
+      system.time(saveRDS(NRI_tracts, NRI_tracts_Rds))
+    }
 
   }
-  NRI_tracts_sf$RISK_RATNG<- factor(NRI_tracts_sf$RISK_RATNG
-                                    , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"))
-  # NRI_tracts_sf$RISK_RATNG <- fct_na_level_to_value(NRI_tracts_sf$RISK_RATNG,extra_levels  = "Insufficient Data" )
+  NRI_tracts$RISK_RATNG<- factor(NRI_tracts$RISK_RATNG
+                                 , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"))
+  # NRI_tracts$RISK_RATNG <- fct_na_level_to_value(NRI_tracts$RISK_RATNG,extra_levels  = "Insufficient Data" )
 
-  print(table(NRI_tracts_sf$RISK_RATNG, useNA = "ifany"))
+  print(table(NRI_tracts$RISK_RATNG, useNA = "ifany"))
 
-  # NRI_tracts_sf$RISK_RATNG2 <- forcats::fct_collapse(NRI_tracts_sf$RISK_RATNG
+  # NRI_tracts$RISK_RATNG2 <- forcats::fct_collapse(NRI_tracts$RISK_RATNG
   #                                                    , 'High'=c('Very High','Relatively High')
   #                                                    , 'Moderate'="Relatively Moderate"
   #                                                    , "Low"=c("Relatively Low","Very Low"))
 
-  NRI_tracts_sf$SOVI_RATNG <- factor(NRI_tracts_sf$SOVI_RATNG
-                                     , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ))
-  print(levels(NRI_tracts_sf$SOVI_RATNG))
-  # NRI_tracts_sf$SOVI_RATNG <- fct_na_level_to_value(NRI_tracts_sf$SOVI_RATNG,extra_levels  = "Data Unavailable" )
+  NRI_tracts$SOVI_RATNG <- factor(NRI_tracts$SOVI_RATNG
+                                  , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ))
+  print(levels(NRI_tracts$SOVI_RATNG))
+  # NRI_tracts$SOVI_RATNG <- fct_na_level_to_value(NRI_tracts$SOVI_RATNG,extra_levels  = "Data Unavailable" )
 
-  print(table(NRI_tracts_sf$SOVI_RATNG, useNA = "ifany"))
+  print(table(NRI_tracts$SOVI_RATNG, useNA = "ifany"))
 
   # add coastline -----------------------------------------------------------
-  coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
-  coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
+  # coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
+  # coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
+  #
+  # tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()
+  # print(summary(tmp_df))
+  # (NRI_tracts <- cbind(NRI_tracts, tmp_df))
+  #
+  # # ?sf::st_is_valid.sf
+  # print(table(polygon_ok <- sf::st_is_valid(NRI_tracts), useNA = "ifany"))
+  # print(NRI_tracts[!polygon_ok ,  'STCOFIPS'])
+  # if(!all(polygon_ok)){
+  #
+  #   NRI_tracts <- NRI_tracts %>% sf::st_make_valid()
+  # }
 
-  tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()
-  print(summary(tmp_df))
-  (NRI_tracts_sf <- cbind(NRI_tracts_sf, tmp_df))
 
-  # ?sf::st_is_valid.sf
-  print(table(polygon_ok <- sf::st_is_valid(NRI_tracts_sf), useNA = "ifany"))
-  print(NRI_tracts_sf[!polygon_ok ,  'STCOFIPS'])
-  if(!all(polygon_ok)){
-
-    NRI_tracts_sf <- NRI_tracts_sf %>% sf::st_make_valid()
-  }
-
-
-  return(NRI_tracts_sf)
+  return(NRI_tracts)
 }
 
 #' Get NRI Hazards table by Census Tract
@@ -150,8 +162,8 @@ get_NRI_tracts_dt <- function() {
     # print(range(NRI_tracts_dt$STCOFIPS))
     # NRI_tracts_dt[, STCOFIPS:=sprintf("%05d", STCOFIPS)]
     # str(NRI_tracts_dt$STCOFIPS)
-    # NRI_tracts_sf <- get_NRI_tracts_sf()
-    # NRI_tracts <- data.table(st_drop_geometry(NRI_tracts_sf), stringsAsFactors = TRUE)
+    # NRI_tracts <- get_NRI_tracts()
+    # NRI_tracts <- data.table(st_drop_geometry(NRI_tracts), stringsAsFactors = TRUE)
     area_cols <- grep("AREA$", names(NRI_tracts_dt ), value=TRUE) # in sq miles
     print(area_cols)
     # NRI_tracts_dt[, AREA:=set_units(AREA, "mile^2")]

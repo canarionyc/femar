@@ -72,8 +72,7 @@ get_fips_code <- function (state, county = NULL){
   }
   else {
     vals <- utils::head(tigris::fips_codes[tigris::fips_codes$state_code == state,1:3], 1)
-    message(paste0("The code for ", vals$state_name, " is '",
-                   vals$state_code, "'."))
+    message(paste0("The code for ", vals$state_name, " is '", vals$state_code, "'."))
     return(vals$state_code)
   }
 

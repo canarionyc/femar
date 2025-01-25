@@ -23,9 +23,6 @@ get_NRI_HazardInfo <- function(){
   return(NRI_HazardInfo)
 }
 
-
-
-
 get_hrcn_cat_dt <- function(){
 
   hrcn_cat_rds <- file.path(the$NRI_WORKDIR, "hrcn_cat.rds"); print(file.info(hrcn_cat_rds))
