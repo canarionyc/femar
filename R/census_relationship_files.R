@@ -15,7 +15,8 @@ get_tab20_tract20_tract10_natl <- function(){
     ?sub
     geoid_tract_cols <- c('GEOID_TRACT_10','GEOID_TRACT_20')
     tab20_tract20_tract10_natl[, (geoid_tract_cols):=lapply(.SD,sub, pattern = "(\\d+)(\\d{2})$", replacement = "\\1.\\2", perl = TRUE), .SDcols = geoid_tract_cols]
-
+    tab20_tract20_tract10_natl[, STCNTY_20:=substr(GEOID_TRACT_20,1,5)]
+    tab20_tract20_tract10_natl[, STCNTY_10:=substr(GEOID_TRACT_10,1,5)]
     # tab20_tract20_tract10_natl[, GEOID_TRACT_10:=sub(x = GEOID_TRACT_10, pattern = "(\\d+)(\\d{2})$", replacement = "\\1.\\2", perl = TRUE)]
     write_fst(tab20_tract20_tract10_natl,tab20_tract20_tract10_natl_fst); print(file.info(tab20_tract20_tract10_natl_fst)['size'])
   }; str(tab20_tract20_tract10_natl)
