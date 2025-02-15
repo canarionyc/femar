@@ -8,7 +8,7 @@ get_cbsa_sf <- function(year = getOption("tigris_year",2020L)){
   #  tigris::core_based_statistical_areas is not currently available for years prior to 2010.
   cbsa_sf <- tigris::core_based_statistical_areas(cb=TRUE, year=year, keep_zipped_shapefile=TRUE)
   # (cbsa_lcc_sf <- cbsa_sf %>% st_transform(st_crs(lcc)))
-  # cbsa_sf%>% subset(CBSA=="37700")
+  # cbsa_sf%>% subset(CBSAFP=="37700")
   return(cbsa_sf)
 }
 
@@ -16,24 +16,23 @@ get_cbsa_sf <- function(year = getOption("tigris_year",2020L)){
 #' @export
 core_based_statistical_areas_vect <- purrr::compose(terra::vect, tigris::core_based_statistical_areas)
 
-# cbsa_names --------------------------------------------------------------
+# get_cbsa_names --------------------------------------------------------------
 #' @export
 get_cbsa_names <- function(){
 
-  cbsa_names_fst <- file.path(the$CENSUS_WORKDIR, "cbsa_names.fst"); print(file.info(cbsa_names_fst))
+  cbsa_names_fst <- file.path(the$CENSUS_WORKDIR, "cbsa_names.fst")
 
   if(file.exists(cbsa_names_fst)) {
     print(fst.metadata(cbsa_names_fst))
     cbsa_names <- read_fst(cbsa_names_fst, as.data.table = TRUE)
   } else {
-    cbsa_sf <- get_cbsa_sf()
-    cbsa_names <- st_drop_geometry(cbsa_sf)
+    cbsa_names <-  get_cbsa_sf() %>% sf::st_drop_geometry()
     cbsa_names
     setDT(cbsa_names, key=c('CBSAFP')) %>% setcolorder()
     cbsa_names[, STUSPS := stri_extract_last_regex(NAME, pattern = "[A-Z]{2}(-[A-Z]{2})*")]
     print(cbsa_names[, sort(table(STUSPS, useNA = "ifany"), decreasing = TRUE)])
     cbsa_names[, NAMELSAD := NAMELSAD %>% iconv(to="ASCII//TRANSLIT") %>% toupper()]
-    str(cbsa_names)
+
     write_fst(cbsa_names, path = cbsa_names_fst);   print(file.info(cbsa_names_fst)['size'])
   }; str(cbsa_names)
   return(cbsa_names)

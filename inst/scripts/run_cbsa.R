@@ -12,6 +12,8 @@ cbsa_sf <- get_cbsa_sf()
 cbsa_sf
 
 cbsa_sf%>%subset(CBSAFP == 26420)
+cbsa_sf%>%subset(CSAFP == 408)
+cbsa_sf%>%subset(grepl(pattern = "Kiryas Joel", NAME))
 
 (cbsa_lcc_sf <- cbsa_sf %>% st_transform(st_crs(lcc)))
 
