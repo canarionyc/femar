@@ -55,6 +55,12 @@ NRI_states_dt[, .(STATEFIPS, )]
 
 (valt_cols <- grep("VALT$", names(NRI_states_dt), value = TRUE))
 
+
+# NRI_states_vect ---------------------------------------------------------
+
+NRI_states_vect <- get_NRI_states_vect()
+plot(NRI_states_vect)
+
 # correlations ------------------------------------------------------------
 
 (st_num_cols <- which(sapply(NRI_states_dt, is.numeric)==TRUE))

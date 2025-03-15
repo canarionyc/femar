@@ -17,8 +17,8 @@ units::valid_udunits_prefixes()
 my_area <- set_units(1, "mile^2")
 set_units(my_area, "km^2")
 stop()
-browseURL(.NRI_datadir)
-list.files(.NRI_datadir, full.names = TRUE)
+browseURL(the$NRI_DATADIR)
+list.files(the$NRI_DATADIR, full.names = TRUE)
 
 browseURL(the$NRI_WORKDIR)
 
@@ -26,7 +26,7 @@ browseURL(the$NRI_WORKDIR)
 NRIDataDictionary_xlsx <- system.file("extdata","FEMA","NRI",  "NRIDataDictionary.xlsx", package="femar",mustWork = TRUE)
 browseURL(NRIDataDictionary_xlsx)
 
-NRIDataDictionary <- fread(file.path(.NRI_datadir, "NRIDataDictionary.csv"))
+NRIDataDictionary <- fread(file.path(the$NRI_DATADIR, "NRIDataDictionary.csv"))
 NRIDataDictionary
 
 

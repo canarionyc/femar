@@ -1,4 +1,4 @@
-utils::globalVariables(c('.NRI_datadir', 'Hazard'
+utils::globalVariables(c('the$NRI_DATADIR', 'Hazard'
                          ,'RISK_RATNG', 'SOVI_RATNG'))
 # NRI by state ------------------------------------------------------------
 

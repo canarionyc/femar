@@ -13,9 +13,9 @@ get_NRI_HazardInfo <- function(){
     NRI_HazardInfo  <- read_fst(NRI_HazardInfo_fst, as.data.table = TRUE)
   } else {
 
-    stopifnot(dir.exists(.NRI_datadir))
-    NRI_GDB_states_gdb <- file.path(.NRI_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
-
+    stopifnot(dir.exists(the$NRI_DATADIR))
+    NRI_GDB_states_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
+# browseURL(NRI_GDB_states_gdb)
     suppressWarnings(NRI_HazardInfo <- sf::st_read(NRI_GDB_states_gdb, layer = "NRI_HazardInfo"))
     fst::write_fst(NRI_HazardInfo, path = NRI_HazardInfo_fst);  print(file.info(NRI_HazardInfo_fst))
   }; utils::str(NRI_HazardInfo )
@@ -34,8 +34,6 @@ get_hrcn_cat_dt <- function(){
     hrcn_cat <- readxl::read_xlsx(hrcn_cat_xlsx) %>% setDT() %>% sanitize()
     print(names(hrcn_cat))
     hrcn_cat[, c("MINIMUM_WIND_SPEED_MPH","MAXIMUM_WIND_SPEED_MPH"):=NULL]
-
-
 
     hrcn_cat[, AVERAGE_RADIUS_OF_HURRICANE_OR_TROPICAL_STORM_FORCE_WINDS_MILES:=set_units(AVERAGE_RADIUS_OF_HURRICANE_OR_TROPICAL_STORM_FORCE_WINDS_MILES , "mile")]
     hrcn_cat[, c("MINIMUM_WIND_SPEED_KTS","MAXIMUM_WIND_SPEED_KTS"):=lapply(.SD, set_units, "kts")

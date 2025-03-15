@@ -9,7 +9,7 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 
 stop()
 
-list.files(.NRI_datadir, full.names = TRUE)
+list.files(the$NRI_DATADIR, full.names = TRUE)
 
 browseURL(the$NRI_WORKDIR)
 

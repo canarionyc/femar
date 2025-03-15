@@ -10,7 +10,7 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 print(getOption("tigris_year"))
 # source("~/lattice_setup.R")
 
-# -------------------------------------------------------------------------
+# download tracts -------------------------------------------------------------------------
 
 (STATEFP <- unique(tigris::fips_codes$state_code))
 
@@ -18,13 +18,11 @@ print(getOption("tigris_year"))
 
 ?download.file
 setwd()
-lapply(url_tracts_zip[-1], function(url) tryCatch(
-  {
+lapply(url_tracts_zip[-1], function(url) tryCatch({
     destfile <- file.path(Sys.getenv('TIGRIS_CACHE_DIR'),basename(url))
     if(file.exists(destfile)) return(destfile)
     download.file(url, destfile = destfile)}
-  , error=function(e) {print(e); return(NULL)}
-))
+  , error=function(e) {print(e); return(NULL)}))
 
 (STATEFP <- unique(tigris::fips_codes$state_code))
 
@@ -49,29 +47,30 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); tract
 
 tracts %>% terra::plot(main="Louisiana tracts", border="grey")
 
-# Los Angeles tracts ------------------------------------------------------
+# cty06037_tracts_2020 ------------------------------------------------------
 
 ?tracts
-devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); LosAngeles_tracts <- tracts_vect(cb=TRUE,state='06', county='037', year=2020, keep_zipped_shapefile =TRUE) %>% project('EPSG:3857')
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); cty06037_tracts_2020 <- tracts_vect(cb=TRUE,state='06', county='037', year=2020, keep_zipped_shapefile =TRUE) %>% project('EPSG:3857')
+cty06037_tracts_2020 <- cty06037_tracts_2020 %>% subset(! cty06037_tracts_2020$TRACTCE %in% c('599000','599100'))
+cty06037_tracts_2020 %>% terra::plot(main="Los Angeles tracts", border="grey")
 
-LosAngeles_tracts %>% terra::plot(main="Los Angeles tracts", border="grey")
 
-DINS_2025_Palisades_tracts <- terra::intersect(LosAngeles_tracts, DINS_2025_Palisades)
+# DINS_2025_Palisades_tracts ----------------------------------------------
+
+
+DINS_2025_Palisades_tracts <- terra::intersect(cty06037_tracts_2020, DINS_2025_Palisades)
 
 table(DINS_2025_Palisades_tracts$TRACTCE)
 
 unique(DINS_2025_Palisades_tracts$TRACTCE) %>% dput()
 
-# NRI_tracts_sf -----------------------------------------------------------
+# NRI_tracts -----------------------------------------------------------
 
-(NRI_tracts_sf <- get_NRI_tracts_sf())
+(NRI_tracts06 <- get_NRI_tracts_vect(state='06'))
+summary(NRI_tracts)
 
-
-(tx_NRI_tracts_sf <- NRI_tracts_sf %>% subset(STATEFIPS!='02' & STATEFIPS!='15' & STATEFIPS<60 & STATEFIPS=='48', 'ALR_VALB') %>%
+(NRI_tracts06 <- NRI_tracts %>% subset(NRI_tracts$STATEFIPS=='06', 'ALR_VALB') %>%
     mutate(ALR_VALB_PER_MN=round(1e6*ALR_VALB),0) ) # %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
-
-(tx_NRI_tracts <- terra::vect(tx_NRI_tracts_sf))
-
 
 # tx_NRI_tracts_alr_valb_png ----
 

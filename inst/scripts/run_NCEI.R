@@ -19,7 +19,7 @@ devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
 source("~/Spatial/FEMA/femar/R/string_utils.R")
 
 stop()
-list.files(.NRI_datadir, full.names = TRUE, recursive = TRUE)
+list.files(the$NRI_DATADIR, full.names = TRUE, recursive = TRUE)
 
 browseURL(the$NRI_WORKDIR)
 
@@ -257,15 +257,15 @@ fips_state_table <- tigris:::fips_state_table
 save(fips_state_table, file=file.path(system.file("R", package="femar"),"sysdata.Rda"))
 
 # NRIDataDictionary.csv ---------------------------------------------------
-NRIDataDictionary_xlsx <- file.path(.NRI_datadir, "NRIDataDictionary.xlsx")
+NRIDataDictionary_xlsx <- file.path(the$NRI_DATADIR, "NRIDataDictionary.xlsx")
 browseURL(NRIDataDictionary_xlsx)
 
-NRIDataDictionary <- fread(file.path(.NRI_datadir, "NRIDataDictionary.csv"))
+NRIDataDictionary <- fread(file.path(the$NRI_DATADIR, "NRIDataDictionary.csv"))
 NRIDataDictionary
 
 
 # NRI_states_sf ------------------------------------------------------------------
-NRI_GDB_states_gdb <- file.path(.NRI_datadir, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
+NRI_GDB_states_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
 st_layers(NRI_GDB_states_gdb)
 
 NRI_states_sf <- st_read(NRI_GDB_states_gdb, layer = "NRI_States")

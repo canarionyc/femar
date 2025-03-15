@@ -6,7 +6,7 @@
 #' @param year int tigris year
 #' @return simple feature
 #' @export
-get_tracts_sf <- function( state = NULL
+get_tracts_sf <- function( stateabbr = NULL
                            ,county = NULL
                            ,year=getOption("tigris_year", 2022L)){
   message(paste("Retrieving census tracts for year", year))
@@ -45,75 +45,42 @@ tracts_vect <- purrr::compose(terra::vect, tigris::tracts)
 
 #' NRI Hazard Info by Census Tabulation Block
 #'
-#' @param state character
+#' @param statefips character
 #'
-#' @return sf simple feature
-#' @import sf
+#' @return SpatialVector
+#' @import glue
 #' @export
 #'
-get_NRI_tracts_vect <- function(state) {
+get_NRI_tracts_vect <- function(statefips, countyfips) {
 
-  # browseURL(.NRI_datadir)
-  if(missing(state)) {
-    # NRI_tracts_Rds <- file.path(the$NRI_WORKDIR, "NRI_tracts_vect.Rds"); print(file.info(NRI_tracts_Rds))
-    #
-    # if(file.exists(NRI_tracts_Rds)) {
-    #   NRI_tracts<- readRDS(NRI_tracts_Rds)
-    #
-    # } else {
-    NRI_GDB_tracts_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
-    # print(st_layers(NRI_GDB_tracts_gdb))
+  NRI_GDB_tracts_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
 
-    # ?st_read
-    # debugonce(st_read)
+  if(missing(statefips)) {
+    query <- ""
+  } else {
+    stopifnot(nchar(statefips)==2L)
 
-    # NRI_tracts <- sf::st_read(dsn = NRI_GDB_tracts_gdb
-    #                              , layer = "NRI_CensusTracts"
-    #                              ,quiet=TRUE)
-    ?terra::vect
-    ?`saveRDS,SpatVector-method`
-    NRI_tracts <- terra::vect(NRI_GDB_tracts_gdb , layer = "NRI_CensusTracts" )
-    # print(NRI_tracts)
-    # saveRDS(NRI_tracts, NRI_tracts_Rds)
-  } else{
-    # browser()
-    state <- toupper(state)
-    NRI_tracts_Rds <- file.path(the$NRI_WORKDIR, sprintf("NRI_tracts_%s_vect.Rds", state)); print(file.info(NRI_tracts_Rds))
-    if(file.exists(NRI_tracts_Rds)) {
-      NRI_tracts <- readRDS(NRI_tracts_Rds)
+    # statefips <- get_fips_code(stateabbr)
+    message(sprintf("Getting NRI tracts for state fips %s",statefips))
+
+
+    if(missing(countyfips)) {
+      query <- sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS = '%s'", statefips)
     } else {
-      statefips <- get_fips_code(state)
-      message(sprintf("Getting NRI tracts for state %s fips %s",state,statefips))
-
-      NRI_GDB_tracts_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
-      ?terra::vect
-      NRI_tracts <- terra::vect(NRI_GDB_tracts_gdb
-                                , layer = "NRI_CensusTracts"
-                                , query = sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS  = '%s'", statefips))
-
-      print(NRI_tracts)
-
-      system.time(saveRDS(NRI_tracts, NRI_tracts_Rds))
+      stopifnot(nchar(countyfips)==3L)
+      stcofips  <- paste0(statefips,countyfips)
+      query <- glue::glue("SELECT * FROM NRI_CensusTracts where STCOFIPS = '{stcofips}'")
     }
-
+    cat(query,"\n")
   }
-  NRI_tracts$RISK_RATNG<- factor(NRI_tracts$RISK_RATNG
-                                 , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"))
-  # NRI_tracts$RISK_RATNG <- fct_na_level_to_value(NRI_tracts$RISK_RATNG,extra_levels  = "Insufficient Data" )
 
-  print(table(NRI_tracts$RISK_RATNG, useNA = "ifany"))
+  #?terra::vect
+  NRI_tracts <- terra::vect(NRI_GDB_tracts_gdb, layer = "NRI_CensusTracts", query = query)
 
-  # NRI_tracts$RISK_RATNG2 <- forcats::fct_collapse(NRI_tracts$RISK_RATNG
-  #                                                    , 'High'=c('Very High','Relatively High')
-  #                                                    , 'Moderate'="Relatively Moderate"
-  #                                                    , "Low"=c("Relatively Low","Very Low"))
+  # print(NRI_tracts)
 
-  NRI_tracts$SOVI_RATNG <- factor(NRI_tracts$SOVI_RATNG
-                                  , levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low" ))
-  print(levels(NRI_tracts$SOVI_RATNG))
-  # NRI_tracts$SOVI_RATNG <- fct_na_level_to_value(NRI_tracts$SOVI_RATNG,extra_levels  = "Data Unavailable" )
+  # saveRDS(NRI_tracts, NRI_tracts_Rds); print(file.info(NRI_tracts_Rds))
 
-  print(table(NRI_tracts$SOVI_RATNG, useNA = "ifany"))
 
   # add coastline -----------------------------------------------------------
   # coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
@@ -130,7 +97,6 @@ get_NRI_tracts_vect <- function(state) {
   #
   #   NRI_tracts <- NRI_tracts %>% sf::st_make_valid()
   # }
-
 
   return(NRI_tracts)
 }
@@ -152,9 +118,9 @@ get_NRI_tracts_dt <- function() {
     print(fst.metadata(NRI_tracts_fst))
     NRI_tracts_dt <- read_fst(NRI_tracts_fst, as.data.table = TRUE)
   } else {
-    # list.files(.NRI_datadir)
-    browseURL(.NRI_datadir)
-    NRI_tracts_dt <- fread(file.path(.NRI_datadir, "NRI_Table_CensusTracts.csv")
+    # list.files(the$NRI_DATADIR)
+    browseURL(the$NRI_DATADIR)
+    NRI_tracts_dt <- fread(file.path(the$NRI_DATADIR, "NRI_Table_CensusTracts.csv")
                            , colClasses = list(character=c('STATEFIPS','COUNTYFIPS','STCOFIPS','TRACT','TRACTFIPS')))
     str(NRI_tracts_dt)
     # NRI_tracts_dt[, STATEFIPS:=sprintf("%02d", STATEFIPS)]
@@ -172,16 +138,7 @@ get_NRI_tracts_dt <- function() {
     str(NRI_tracts_dt[,   .SD,.SDcols = area_cols])
     # ?fct_relevel
 
-    NRI_tracts_dt[, RISK_RATNG:=factor(RISK_RATNG, levels = c("Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                              # ,"Insufficient Data"
-    ))]
-    print(table(NRI_tracts_dt$RISK_RATNG, useNA = "ifany"))
-
-    NRI_tracts_dt[, SOVI_RATNG:=factor(SOVI_RATNG, levels = c( "Very High","Relatively High" ,"Relatively Moderate", "Relatively Low"  ,"Very Low"
-                                                               #    ,"Data Unavailable"
-    ))]
-    print(levels(NRI_tracts_dt$SOVI_RATNG))
-    print(table(NRI_tracts_dt$SOVI_RATNG, useNA = "ifany"))
+    NRI_tracts_dt <- NRI_add_categoricals(NRI_tracts_dt)
     write_fst(NRI_tracts_dt, path = NRI_tracts_fst);   print(file.info(NRI_tracts_fst))
     saveRDS(NRI_tracts_dt, NRI_tracts_dt_rds);   print(file.info(NRI_tracts_dt_rds))
   }# ; str(NRI_tracts_dt)

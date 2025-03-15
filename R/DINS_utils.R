@@ -1,6 +1,7 @@
 #' @export
 get_DINS <- function() {
   DINS_2025_Palisades.shp <-"E:\\Datasets\\GOV\\CA\\CNRA\\DINS_2025_Palisades_Public_View.shp"; stopifnot(file.exists(DINS_2025_Palisades.shp))
+  message(DINS_2025_Palisades.shp)
   DINS_2025_Palisades <- terra::vect(DINS_2025_Palisades.shp)
   show(DINS_2025_Palisades)
   summary(DINS_2025_Palisades)
