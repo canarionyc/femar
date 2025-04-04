@@ -16,11 +16,19 @@ Imports:
   , readxl, dplyr
   ,magrittr,purrr
   ,stringi
-  ,sf,terra
+  ,sf,tigris
   ,RCurl
-  ,tigris
   ,httr
   ,readr
+  ,glue
+  ,RSQLite
+  ,spdep
 Suggests:
-  Cairo,clipr,devtools
+    Cairo,
+    clipr,
+    devtools,
+    knitr,
+    rmarkdown
 RoxygenNote: 7.3.2
+VignetteBuilder:
+  knitr

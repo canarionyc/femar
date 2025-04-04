@@ -6,7 +6,7 @@ options("yaml.eval.expr"=TRUE)
   options(tigris_use_cache = TRUE)
   options(tigris_use_cache = TRUE)
 
-  options(tigris_year=2021L);
+  # options(tigris_year=2021L)
   # ?tigris_cache_dir
   # debugonce(tigris_cache_dir)
   # tigris_cache_dir(Sys.getenv('TIGRIS_CACHE_DIR'))
@@ -28,8 +28,7 @@ options("yaml.eval.expr"=TRUE)
 
 
 
-  packageStartupMessage(paste(msgs, collapse  = "\n")
-  )
+  packageStartupMessage(paste(msgs, collapse  = "\n"))
 }
 
 

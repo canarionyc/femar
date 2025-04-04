@@ -101,9 +101,9 @@ names(svc3)
 (builtUpA <- svc3[['builtUpA']])
 fstutils::fsummary(as.data.frame(builtUpA))
 
-builtUpA %>% terra::subset(builtUpA$obj_type=="11-Residential Buildings")
+builtUpA %>% subset(builtUpA$obj_type=="11-Residential Buildings")
 
-builtUpA_msk <- terra::mask(builtUpA %>% terra::subset(builtUpA$obj_type=="11-Residential Buildings"), areaOfInterestA)
+builtUpA_msk <- terra::mask(builtUpA %>% subset(builtUpA$obj_type=="11-Residential Buildings"), areaOfInterestA)
 ?terra::plot
 terra::plot( builtUpA_msk
              , border="grey"
@@ -120,9 +120,9 @@ names(builtUpP)
 builtUpP$simplified <- factor(builtUpP$simplified)
 str(builtUpP$simplified)
 
-builtUpP %>% terra::subset(builtUpP$obj_type=="11-Residential Buildings") %>% xtabs_obj_type_info()
+builtUpP %>% subset(builtUpP$obj_type=="11-Residential Buildings") %>% xtabs_obj_type_info()
 
-builtUpP_msk <- terra::mask(builtUpP %>% terra::subset(builtUpP$obj_type=="11-Residential Buildings"), areaOfInterestA)
+builtUpP_msk <- terra::mask(builtUpP %>% subset(builtUpP$obj_type=="11-Residential Buildings"), areaOfInterestA)
 
 
 

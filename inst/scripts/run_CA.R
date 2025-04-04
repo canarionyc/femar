@@ -158,7 +158,7 @@ tracts06037_sf <- tracts(state='06', county='037', cb=TRUE, year=2020, keep_zipp
 tracts06037_sf
 
 tracts06
-?terra::subset
+?subset
 tracts06037 <- tracts06%>% subset(COUNTYFP=='037', NSE=TRUE) %>% subset( ! TRACTCE %in% c('599000','599100'), NSE=TRUE)
 
 tracts06[grepl("Los Angeles", tracts06$NAME) & tracts06$LSAD=="25",] %>% plot()

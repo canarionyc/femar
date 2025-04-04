@@ -64,30 +64,62 @@ table(DINS_2025_Palisades_tracts$TRACTCE)
 
 unique(DINS_2025_Palisades_tracts$TRACTCE) %>% dput()
 
+
+
 # NRI_tracts -----------------------------------------------------------
 
-(NRI_tracts06 <- get_NRI_tracts_vect(state='06'))
-summary(NRI_tracts)
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); debugonce(get_NRI_tracts_sf); NRI_tracts_sf <- get_NRI_tracts_sf(statefips = SW.states$STATEFP)
+str(NRI_tracts_sf)
 
-(NRI_tracts06 <- NRI_tracts %>% subset(NRI_tracts$STATEFIPS=='06', 'ALR_VALB') %>%
-    mutate(ALR_VALB_PER_MN=round(1e6*ALR_VALB),0) ) # %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
+quantile(NRI_tracts_sf$POPULATION)
 
-# tx_NRI_tracts_alr_valb_png ----
+NRI_tracts_pop_sf <- NRI_tracts_sf %>% subset(POPULATION>=5e3)
 
-tx_NRI_tracts_alr_valb_png <- file.path(the$CENSUS_WORKDIR, format(Sys.time(),"NRI_tracts_alr_valb_%Y%m%d_%H%M.png")); print(file.info(tx_NRI_tracts_alr_valb_png))
+# ALR_VALB_png ----
+plot(st_simplify(NRI_tracts_pop_sf['ALR_VALB']))
+
+plot(density(NRI_tracts_sf$ALR_VALB))
+
+library(classInt)
+help(package="classInt")
+?classIntervals
+pal1 <- c("wheat1", "red3")
+
+library(grDevices)
+?colorRampPalette
+
+clI <- classIntervals(NRI_tracts_sf$ALR_VALB,n=5L, style = "quantile")
+str(clI)
+
+plot(clI,pal=pal1, main="tracts ALR_VALB")
+
+?findColours
+cols <- findColours(clI, pal1)
+attributes(cols)
+attr(cols, "palette")
+# NRI_tracts_sf <- NRI_tracts_sf %>% subset(POPULATION>=5e4)
+
+# NRI_tracts_sf <- NRI_tracts_sf %>% subset(STATEFIPS!='02' & STATEFIPS!='15' & STATEFIPS<60 )
+?plot.sf
+
+
+?st_simplify
+# NRI_tracts_sf %>% subset(STATEABBRV=="CA") %>% st_simplify() %>% plot()
+
+?plot.sf
+plot(st_simplify(NRI_tracts_sf['ALR_VALB'], preserveTopology = TRUE, dTolerance = 1e3)
+     , breaks=clI$brks
+     , pal=colorRampPalette(pal1)
+     , border=NA
+     , main="Annualized Loss Rate in Building Value")
+
+
+ALR_VALB_png <- file.path(the$FHFA_WORKDIR, format(Sys.time(),"ALR_VALB_%Y%m%d_%H%M.png")); print(file.info(ALR_VALB_png))
 library(Cairo)
-Cairo::CairoPNG(filename = tx_NRI_tracts_alr_valb_png, width = 10.0, height = 6.0, dpi=300, units="in")
-?terra::plot
-?terra::legend
-terra::plot(tx_tracts, 'ALR_VALB_PER_MN'
-            , main="Annualized Loss in Building Value $ Amt per $M"
-            , border="grey"
-            , alpha=0.5
-            , axes=TRUE
-            , grid=TRUE)
+dev.copy(device=Cairo::CairoPNG,filename = ALR_VALB_png, width = 10.0, height = 6.0, dpi=300, units="in")
 dev.off()
-print(file.info(tx_NRI_tracts_alr_valb_png))
-browseURL(dirname(tx_NRI_tracts_alr_valb_png))
+print(file.info(ALR_VALB_png)['size'])
+browseURL(dirname(ALR_VALB_png))
 
 library(tmap)
 tmap_mode("view")

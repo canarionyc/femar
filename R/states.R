@@ -1,6 +1,6 @@
 
 
-#' @import tigris
+
 #' @import stringi
 validate_state<- function (state, verbose = interactive())
 {
@@ -92,17 +92,20 @@ get_fips_code <- function (state, county = NULL){
 
 get_states_sf <- function(year=getOption("tigris_year",2020L)){
   # states_dsn <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.shp", year)); print(file.info(states_dsn))
-  states_gpkg <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.gpkg", year)); print(file.info(states_gpkg)['size'])
-  # states_sf_rds <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.rds", year)); print(file.info(states_sf_rds)['size'])
-  if(file.exists(states_gpkg)) {
-    states_sf <- st_read(states_gpkg)
-  } else {
+  # states_gpkg <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.gpkg", year)); print(file.info(states_gpkg)['size'])
+  # # states_sf_rds <- file.path(the$CENSUS_WORKDIR, sprintf("states_%d.rds", year)); print(file.info(states_sf_rds)['size'])
+  # if(file.exists(states_gpkg)) {
+  #   states_sf <- st_read(states_gpkg)
+  # } else {
     # print(year)
     # ?states
-    (states_sf <- tigris::states(cb=TRUE
+    states_sf <- tigris::states(cb=TRUE
                                  , year=year
                                  , class="sf"
-                                 , keep_zipped_shapefile =TRUE, progress_bar = FALSE))
+                                 , keep_zipped_shapefile =TRUE, progress_bar = FALSE) %>%
+      subset(STATEFP!="02" & STATEFP !="15" & STATEFP<60) %>%
+      st_transform(st_crs(3857)) # projected CRS: WGS 84 / Pseudo-Mercator
+    print(states_sf)
     # str(states_sf)
     # states_sf$INTPTLAT <- as.numeric(states_sf$INTPTLAT)
     # states_sf$INTPTLON <- as.numeric(states_sf$INTPTLON)
@@ -114,11 +117,6 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
     # states_sf <- states_sf%>% subset(STATEFP!="02" & STATEFP !="15" & STATEFP<60)
 
     print(length(states_sf$STUSPS))
-
-
-    ## projected CRS: WGS 84 / Pseudo-Mercator ---------------------------------
-
-    states_sf <- st_transform(states_sf, st_crs(3857)) #
 
     # add coastline -----------------------------------------------------------
     if(FALSE){
@@ -142,18 +140,13 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
     # ?st_write.sf
     # debugonce(st_write)
     # st_write(states_sf, dsn=states_dsn, append = FALSE)
-    st_write(states_sf, dsn=states_gpkg, append = FALSE)
+    # st_write(states_sf, dsn=states_gpkg, append = FALSE)
     # saveRDS(states_sf, states_sf_rds);print(file.info(states_sf_rds))
 
-  }# ; str(states_sf)
+  # ; str(states_sf)
   return(states_sf)
 }
 
-
-
-#' @import terra
-#' @export
-states_vect <- purrr::compose(terra::vect, tigris::states)
 
 NRI_states_info <- function() {
   NRI_states_fst <- file.path(the$NRI_WORKDIR, "NRI_states.fst"); print(file.info(NRI_states_fst))
@@ -229,27 +222,27 @@ get_NRI_states_sf <- function(){
 }
 
 # NRI_states_vect ------------------------------------------------------------------
-get_NRI_states_vect <- function(){
-
-  NRI_GDB_states_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
-  print(st_layers(NRI_GDB_states_gdb))
-  ?st_read
-  NRI_states_vect <- terra::vect(NRI_GDB_states_gdb, layer = "NRI_States")
-  writeLines(terra::crs(NRI_states_vect))
-  if(FALSE){
-    coastline_vect <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857))  %>% subset(NAME!="Arctic")%>% terra::vect()
-
-    print(table(coastline_vect$NAME))
-
-    # (coastline_3857_sf <- st_transform(coastline_sf, st_crs(3857)))
-
-    (NRI_states.coastline_lst <- st_intersects(NRI_states_sf, coastline_sf))
-
-    NRI_states_sf$IS_COASTAL <- lengths(NRI_states.coastline_lst)>0
-    print(table(NRI_states_sf$IS_COASTAL, useNA = "ifany"))
-  }
-
-  NRI_states_vect
-}
-
+# get_NRI_states_vect <- function(){
+#
+#   NRI_GDB_states_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_States.gdb"); stopifnot(dir.exists(NRI_GDB_states_gdb))
+#   print(st_layers(NRI_GDB_states_gdb))
+#   ?st_read
+#   NRI_states_vect <- terra::vect(NRI_GDB_states_gdb, layer = "NRI_States")
+#   writeLines(terra::crs(NRI_states_vect))
+#   if(FALSE){
+#     coastline_vect <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857))  %>% subset(NAME!="Arctic")%>% terra::vect()
+#
+#     print(table(coastline_vect$NAME))
+#
+#     # (coastline_3857_sf <- st_transform(coastline_sf, st_crs(3857)))
+#
+#     (NRI_states.coastline_lst <- st_intersects(NRI_states_sf, coastline_sf))
+#
+#     NRI_states_sf$IS_COASTAL <- lengths(NRI_states.coastline_lst)>0
+#     print(table(NRI_states_sf$IS_COASTAL, useNA = "ifany"))
+#   }
+#
+#   NRI_states_vect
+# }
+#
 

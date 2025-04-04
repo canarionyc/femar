@@ -39,43 +39,49 @@ get_tracts_sf <- function( stateabbr = NULL
   tracts_sf
 }
 
-#' @import terra
-#' @export
-tracts_vect <- purrr::compose(terra::vect, tigris::tracts)
+
 
 #' NRI Hazard Info by Census Tabulation Block
 #'
 #' @param statefips character
 #'
-#' @return SpatialVector
+#' @return simple feature
 #' @import glue
+#' @import RSQLite
 #' @export
 #'
-get_NRI_tracts_vect <- function(statefips, countyfips) {
+get_NRI_tracts_sf <- function(statefips) {
 
   NRI_GDB_tracts_gdb <- file.path(the$NRI_DATADIR, "NRI_GDB_CensusTracts.gdb"); stopifnot(dir.exists(NRI_GDB_tracts_gdb))
+  conn <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
 
-  if(missing(statefips)) {
-    query <- ""
-  } else {
-    stopifnot(nchar(statefips)==2L)
+  query <- "select STATEABBRV,STATEFIPS,COUNTY,COUNTYTYPE,COUNTYFIPS,STCOFIPS
+  ,TRACT,TRACTFIPS
+POPULATION,BUILDVALUE,AREA,RISK_VALUE
+      ,RISK_SCORE
+    ,EAL_SCORE,EAL_RATNG,EAL_VALB
+    ,ALR_VALB
+    ,SOVI_SCORE,SOVI_RATNG,SOVI_SPCTL,RESL_SCORE,RESL_RATNG,RESL_SPCTL,RESL_VALUE,CRF_VALUE
+    ,AVLN_ALRB,CFLD_ALRB,CWAV_ALRB,ERQK_ALRB,HAIL_ALRB,HWAV_ALRB,HRCN_ALRB,ISTM_ALRB,LNDS_ALRB,LTNG_ALRB,RFLD_ALRB,SWND_ALRB,TRND_ALRB,TSUN_ALRB,VLCN_ALRB,WFIR_ALRB,WNTW_ALRB
+  FROM NRI_CensusTracts"
+
+  query <- "select * FROM NRI_CensusTracts"
+
+  if(!missing(statefips)) {
+    # stopifnot(nchar(statefips)==2L)
+
 
     # statefips <- get_fips_code(stateabbr)
-    message(sprintf("Getting NRI tracts for state fips %s",statefips))
+    message(sprintf("Getting NRI tracts for state fips %s",paste(statefips, collapse = ",")))
 
 
-    if(missing(countyfips)) {
-      query <- sprintf("SELECT * FROM NRI_CensusTracts where STATEFIPS = '%s'", statefips)
-    } else {
-      stopifnot(nchar(countyfips)==3L)
-      stcofips  <- paste0(statefips,countyfips)
-      query <- glue::glue("SELECT * FROM NRI_CensusTracts where STCOFIPS = '{stcofips}'")
-    }
-    cat(query,"\n")
+    query <- paste(query,glue::glue_sql("where STATEFIPS in ({fips*})", fips=statefips, .con=conn)); cat(query,"\n")
+
   }
-
-  #?terra::vect
-  NRI_tracts <- terra::vect(NRI_GDB_tracts_gdb, layer = "NRI_CensusTracts", query = query)
+  # ?sf::st_read
+  NRI_tracts_sf <- sf::st_read(NRI_GDB_tracts_gdb
+                               # , layer = "NRI_CensusTracts"
+                               , query = query)
 
   # print(NRI_tracts)
 
@@ -97,8 +103,9 @@ get_NRI_tracts_vect <- function(statefips, countyfips) {
   #
   #   NRI_tracts <- NRI_tracts %>% sf::st_make_valid()
   # }
-
-  return(NRI_tracts)
+str(NRI_tracts_sf)
+  dbDisconnect(conn)
+  return(NRI_tracts_sf)
 }
 
 #' Get NRI Hazards table by Census Tract

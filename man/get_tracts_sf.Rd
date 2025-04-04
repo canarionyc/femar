@@ -8,7 +8,7 @@ IDs, it's relatively straightforward to generate tract crosswalks from block
 crosswalks.}
 \usage{
 get_tracts_sf(
-  state = NULL,
+  stateabbr = NULL,
   county = NULL,
   year = getOption("tigris_year", 2022L)
 )

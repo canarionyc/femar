@@ -1,3 +1,13 @@
+---
+title: "Panama Canal Port Authority"
+description: ""
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Panama Canal Port Authority}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
 Dana floods (Oct 29 to Nov 16, 2004) caused 229 deaths and ~3.5 billion euros loss in Valencia, Spain. 
 The disruption in trade in the port of Valencia can be seen with a new tool created by the IMF, https://portwatch.imf.org/,
 that also allows to simulate climate scenarios and spillover effects of a port close (does not account for rerouting).

@@ -19,7 +19,7 @@ cat("TIGRIS_CACHE_DIR:", Sys.getenv('TIGRIS_CACHE_DIR'))
 #   dir.create(Sys.getenv('TIGRIS_CACHE_DIR'))
 
 source("~/Spatial/Tigris/.RProfile")
-
+devtools::load_all("~/Spatial/FEMA/femar/")
 # browseURL(the$CENSUS_WORKDIR)
 
 # Lamberts Conical Projection ---------------------------------------------
@@ -31,16 +31,76 @@ print(st_crs(lcc)$units)
 
 ?tigris::coastline
 ?load_tiger
+devtools::load_all("~/Spatial/FEMA/femar/"); coastline_sf <- get_coastline_sf(crs=3857)
 
-coastline_sf %>% subset(NAME=="Atlántico") %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
+?aggregate.sf
+sf <- coastline_sf%>% subset(NAME=="Gulf")
+
+out2_sf <- st_combine(sf)
+out2_sf
+
+out3_sf <- st_union(sf)
+out3_sf
+
+debugonce(aggregate)
+?st_combine
+?st_join
+?by
+help(package="sf")
+
+?st_intersects
+lst <- st_intersects(counties_sf,coastline_sf, sparse = TRUE)
+dim(counties_sf);dim(coastline_sf);  dim(lst)
+as.data.frame(lst)
+
+length(lst)
+
+str(lst[1:10L])
+counties_sf[10,]
+dev.off()
+
+i <- which(counties_sf$STCOFIPS=="06037")
+
+LA_sf <- counties_sf[i,]
+plot(st_geometry(LA_sf), add=FALSE, reset=FALSE)
+coastline_sf[lst[[i]],] %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE, add=TRUE, col="blue")
+
+coastline_sf[lst[[i]],] %>% st_geometry() %>% st_length() %>% sum()
+
+?lapply
+
+print(coastal_length)
+
+?st_distance
+
+
+
+imin <- which(out==min(out))
+coastline_sf[imin,]
+
+coastline_sf %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE, las=2)
+plot(st_geometry(LA_sf), add=TRUE)
+plot(st_centroid(st_geometry(LA_sf)), add=TRUE)
+
+st_intersection(counties_sf,coastline_sf)
+# coastline_sf %>% subset(NAME %in% c("Atlantic","Atlántico","Caribbean","Gulf"), select="NAME") %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE)
+
+
+# coastline_sf %>% subset(NAME=="Atlántico") %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
 
 library(tmap)
 tmap_mode("view")
+coastline_sf %>% subset(NAME=="Gulf") %>% qtm()+tm_title(text="Gulf coastline")
+
+
 coastline_sf %>% subset(NAME=="Atlántico") %>% qtm() # North shore of PR
 coastline_sf %>% subset(NAME=="Caribe") %>% qtm() # South shore of PR
-coastline_sf %>% subset(NAME=="Caribbean") %>% qtm() # South of VI
 
-coastline_sf %>% subset(NAME=="Atlantic") %>% qtm() # From Florida Keys to Maine, includes North of VI
+coastline_sf %>% subset(NAME=="Pacific") %>% qtm()+tm_title(text="Pacific coastline") # South of VI
+
+coastline_sf %>% subset(NAME=="Caribbean") %>% qtm()+tm_title(text="Caribbean coastline") # South of VI
+
+coastline_sf %>% subset(NAME=="Atlantic") %>% qtm()+tm_title(text="Atlantic coastline") # From Florida Keys to Maine, includes North of VI
 
 (ATL.coastline_sf <- coastline_sf%>% subset(NAME=="Atlantic") %>% st_combine() )%>% plot()
 st_buffer(ATL.coastline_sf, dist) %>% plot()
@@ -65,8 +125,8 @@ st_crs(states_sf)
 
 # states.coastline_sf -----------------------------------------------------
 
+st_crs(states_sf)
 
-states_sf <- st_transform(states_sf, st_crs(3857))
 (tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=states_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame() )
 
 (states.coastline_sf <- cbind(states_sf, tmp_df))
@@ -108,7 +168,7 @@ out <- map(seq_along(states.coastline_lst), function(i) {
 
   states_sf[[coast.name]] <- coast.bool
   return(table(coast.bool))
-  })
+})
 
 dev.off()
 ATL.coastline_sf  %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
@@ -223,13 +283,16 @@ table(coastline_sf$NAME)
 
 
 
-coastline_sf %>% subset(NAME %in% c("Atlantic","Atlántico","Caribbean","Gulf"), select="NAME") %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
+
 
 # coastal states ----------------------------------------------------------
 ?st_intersects
 print(table(coastline_sf$NAME))
+
+
 (states.coastline.lst <- st_intersects(states_sf, coastline_sf#%>%subset(NAME %in% c("Atlantic","Atlántico","Caribbean","Gulf"))
-                                      , sparse = TRUE))
+                                       , sparse = TRUE))
+print(states.coastline.lst)
 lengths(states.coastline.lst) > 0
 
 states_sf%>% subset( lengths(states.coastline.lst) > 0, 'STATEFP')

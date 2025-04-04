@@ -160,7 +160,7 @@ browseURL(dirname(lc_png))
 # developed ---------------------------------------------------------------
 
 ?terra::segregate
-?terra::subset
+?subset
 coltab(CLMS_CLCplus)
 (CLMS_CLCplus_stk <- terra::segregate(CLMS_CLCplus, classes=c(1L
 #                                                               , 10L,  253L, 254L
@@ -233,7 +233,7 @@ lau_es_AOI1$expanse_pct <- 100*lau_es_AOI1$expanse/lau_es_AOI1$Shape_Area
 
 names(lau_es_AOI1)
 lau_es_AOI1[lau_es_AOI1$GISCO_ID=="ES_46250", c("LAU_NAME",'POP_2021','Shape_Area','expanse','expanse_pct')]
-lau_es_AOI1[order(lau_es_AOI1$expanse_pct, decreasing = TRUE), c("LAU_NAME",'POP_2021','Shape_Area','expanse','expanse_pct')] %>% terra::subset(lau_es_AOI1$expanse_pct>=100) %>% plot()
+lau_es_AOI1[order(lau_es_AOI1$expanse_pct, decreasing = TRUE), c("LAU_NAME",'POP_2021','Shape_Area','expanse','expanse_pct')] %>% subset(lau_es_AOI1$expanse_pct>=100) %>% plot()
 
 lau_es_AOI1$pop_aoi <- lau_es_AOI1$POP_DENS_2021*lau_es_AOI1$expanse
 plot(lau_es_AOI1,"pop_aoi")

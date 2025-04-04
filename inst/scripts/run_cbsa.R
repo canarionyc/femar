@@ -51,8 +51,8 @@ cbsa_vect %>% subset(grepl("NJ", cbsa_vect$NAME))
 # Louisiana ---------------------------------------------------------------
 
 
-?terra::subset
-devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); LA.state_vect <- states_vect(cb=TRUE) %>% terra::subset(STATEFP=='22', NSE=TRUE)
+?subset
+devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); LA.state_vect <- states_vect(cb=TRUE) %>% subset(STATEFP=='22', NSE=TRUE)
 LA.state_vect
 labels <-paste(cbsa_vect$NAME, LA_cbsa_vec$CBSAFP, sep = " ")
 ?`plot,SpatVector,character-method`

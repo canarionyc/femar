@@ -28,7 +28,7 @@ methods(class = "SpatVector")
 
 
 # states_vect -------------------------------------------------------------
-?terra::subset
+?subset
 devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); (states_vect <- get_states_vect(keep_zipped_shapefile =TRUE) %>% subset(states_vect$STUSPS=='NC'))
 names(states_vect)
 

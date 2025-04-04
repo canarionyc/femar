@@ -21,15 +21,6 @@ get_zctas_sf <-  function(year=getOption("tigris_year", 2020)){
 
 get_zctas_sf <- purrr::partial(tigris::zctas, keep_zipped_shapefile = TRUE)
 
-#' @import terra
-#' @export
-
-
-
-?purrr::compose
-?tigris::zctas
-zctas_vect <- purrr::compose(terra::vect, tigris::zctas)
-
 # state_zcta3_sf ----
 
 get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 2000 and 2010.
@@ -71,13 +62,13 @@ get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 
 }
 
 
-# zip_code_short_vect -----------------------------------------------------
+# zip_code_short_sf-----------------------------------------------------
 
-get_zip_code_short_vect <- function() {
+get_zip_code_short_sf <- function() {
 
   zip_code_short_vect_gpkg <- file.path(the$FEMA_WORKDIR, "zip_code_short_vect.gpkg")
   if(file.exists(zip_code_short_vect_gpkg)) {
-    return(terra::vect(zip_code_short_vect_gpkg))
+    return(sf::st_read(zip_code_short_vect_gpkg))
   }
   # ?aggregate
 
@@ -91,7 +82,7 @@ get_zip_code_short_vect <- function() {
   # debugonce(myfun)
 
 ?tigris::zctas
-  zip_code_short_vect <- terra::aggregate(zctas_vect[, c('ZCTA3CE20', 'ALAND20', 'AWATER20')]
+  zip_code_short_sf<- aggregate(zctas[, c('ZCTA3CE20', 'ALAND20', 'AWATER20')]
                                           , by='ZCTA3CE20', fun=myfun )
 
   zip_code_short_vect

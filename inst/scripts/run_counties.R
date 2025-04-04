@@ -1,23 +1,40 @@
 
 # setup -------------------------------------------------------------------
 # rm(list = ls())
-source("~/Spatial/.RProfile")
-library(configr)
-configr::read.config()
+#source("~/Spatial/.RProfile")
+#library(configr)
+# print(configr::read.config())
+library(sf); sf_use_s2(FALSE)
 devtools::load_all("~/fstutils/", export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
+options(tigris_year=2020L)
 print(getOption("tigris_year"))
 # source("~/lattice_setup.R")
 
+state.fips
+
+library(maps)
+
+# library(purrr)
+# ?purrr::compose
+# purrr::compose(plot,st_geometry)
 # counties_sf -------------------------------------------------------------
 
-counties_sf <- get_counties_sf()
+args(get_counties_sf)
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);counties_sf <- get_counties_sf()
 counties_sf
+st_crs(counties_sf)
+dev.off()
+counties_sf %>% subset(STCOFIPS=="06037") %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
+
+
+plot(counties_sf[10,], add=TRUE)
+
+# counties_dt -------------------------------------------------------------
 
 counties_dt <- st_drop_geometry(counties_sf) %>% setDT(key='GEOID')
 
-
-# counties_vect ------------------------------------------------------------
+# LA.counties_vect ------------------------------------------------------------
 
 (LA.counties_vect <- counties_vect(state = '22', cb = TRUE))
 
@@ -146,10 +163,113 @@ NRI_counties_dt[, .(SOVI_SCORE,  RISK_VALUE,EAL_VALT*CRF_VALUE/RESL_VALUE )]
 
 (counties_num_cols <- which(sapply(NRI_counties_dt, is.numeric)==TRUE))
 
+# cleanup tigris ----------------------------------------------------------
+
+rm(counties_sf)
 
 # NRI_counties_sf -------------------------------------------------------------
+args(get_NRI_counties_sf)
+SW.states$STATEFP
 
-(NRI_counties_sf <- get_NRI_counties_sf())
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); debugonce(get_NRI_counties_sf); (NRI_counties_sf <- get_NRI_counties_sf(SW.states$STATEFP) %>% subset(STATEFIPS!='02' & STATEFIPS!='15' & STATEFIPS<60 ))
+print(NRI_counties_sf)
+st_crs(NRI_counties_sf)
+
+NRI_counties_sf <- st_simplify(NRI_counties_sf)
+
+NRI_counties_sf$perimeter_length <- NRI_counties_sf %>% st_geometry() %>% st_perimeter()
+
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); debugonce(add_coastline); NRI_counties_sf <- add_coastline(NRI_counties_sf)
+print(NRI_counties_sf[order(NRI_counties_sf$distance_to_coastline),])
+
+
+# ALR_VALB_png ----
+plot(NRI_counties_sf['ALR_VALB'])
+
+
+plot(density(NRI_counties_sf$ALR_VALB))
+
+library(classInt)
+help(package="classInt")
+?classIntervals
+pal1 <- c("wheat1", "red3")
+library(grDevices)
+?colorRampPalette
+colorRampPalette(pal1)
+clI <- classIntervals(NRI_counties_sf$ALR_VALB,n=5L, style = "headtails")
+str(clI)
+
+plot(clI,pal=pal1, main="ALR_VALB")
+
+?findColours
+cols <- findColours(clI, pal1)
+attributes(cols)
+attr(cols, "palette")
+# NRI_counties_sf <- NRI_counties_sf %>% subset(POPULATION>=5e4)
+
+# NRI_counties_sf <- NRI_counties_sf %>% subset(STATEFIPS!='02' & STATEFIPS!='15' & STATEFIPS<60 )
+?plot.sf
+
+
+?st_simplify
+# NRI_counties_sf %>% subset(STATEABBRV=="CA") %>% st_simplify() %>% plot()
+
+?plot.sf
+plot(st_simplify(NRI_counties_sf['ALR_VALB'], preserveTopology = TRUE, dTolerance = 1e3), breaks=clI$brks, pal=colorRampPalette(pal1), main="Annualized Loss Rate in Building Value")
+
+
+
+ALR_VALB_png <- file.path(the$FHFA_WORKDIR, format(Sys.time(),"ALR_VALB_%Y%m%d_%H%M.png")); print(file.info(ALR_VALB_png))
+library(Cairo)
+dev.copy(device=Cairo::CairoPNG,filename = ALR_VALB_png, width = 10.0, height = 6.0, dpi=300, units="in")
+dev.off()
+print(file.info(ALR_VALB_png)['size'])
+browseURL(dirname(ALR_VALB_png))
+
+# NRI counties for CA -----------------------------------------------------
+maps::state.fips
+# NRI_counties_sf <- NRI_counties_sf %>% subset(STATEFIPS=='06' )
+
+# NRI_counties_sf <- NRI_counties_sf %>% subset(STCOFIPS %in% c("25007", "25019", "36085", "53055"))
+# plot(st_geometry(NRI_counties_sf))
+
+
+library(spdep)
+
+rn <- NRI_counties_sf$STCOFIPS
+
+NRI_counties.coords <- st_centroid(st_geometry(NRI_counties_sf), of_largest_polygon = TRUE)
+NRI_counties.nb <- spdep::poly2nb(st_geometry(NRI_counties_sf),row.names = rn)
+print(NRI_counties.nb)
+
+rn[which(card(NRI_counties.nb)==0)]
+
+plot(st_geometry(NRI_counties_sf[which(card(NRI_counties.nb)==0),c( "STATE"  ,  "COUNTY",'STCOFIPS')]))
+
+NRI_counties.W <- nb2listw(NRI_counties.nb, zero.policy = TRUE)
+attr(NRI_counties.W, "zero.policy")
+
+#plot(st_simplify(st_geometry(NRI_counties_sf)), reset=FALSE)
+?plot.nb
+plot(NRI_counties.nb, coords=NRI_counties.coords, col=2, add=FALSE)
+
+# Global spatial association ----------------------------------------------
+
+moran.test(NRI_counties_sf$ALR_VALB, listw=NRI_counties.W)
+moran.plot(NRI_counties_sf$ALR_VALB, listw=NRI_counties.W)
+
+# Local spatial association ----------------------------------------------
+
+?localmoran
+resI <- localmoran(NRI_counties_sf$ALR_VALB, listw=NRI_counties.W)
+summary(resI)
+
+?hotspot
+Ih <- hotspot(resI, Prname = "Pr(z != E(Ii))")
+Ih
+
+# tx_sf -------------------------------------------------------------------
+
 
 
 (tx_sf <- NRI_counties_sf %>% subset(STATEFIPS!='02' & STATEFIPS!='15' & STATEFIPS<60 & STATEFIPS=='48', 'ALR_VALB') %>%
@@ -217,3 +337,4 @@ plot(counties_lcc_buff_sf['NAME'])
 (coastal_counties_lcc_sf  <- counties_lcc_sf %>% subset(lengths(counties.coastline_buff_lst)>0)) %>%
   subset(subset=STATEFP!="02" & STATEFP !="15" & STATEFP<60) %>%
   st_geometry() %>% plot()
+

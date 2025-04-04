@@ -375,12 +375,12 @@ if(file.exists(dana_out_gpkg)){
   dana_out$value_area_developed_pop_2021_density <- round(dana_out$POP_DENS_2021*dana_out$value_area/dana_out$value_area_developed,0L)
 
 
-  dana_out %>% terra::subset(dana_out$GISCO_ID=="ES_46250", select=c( "GISCO_ID"  #,"POP_2021",  "POP_DENS_2021"
+  dana_out %>% subset(dana_out$GISCO_ID=="ES_46250", select=c( "GISCO_ID"  #,"POP_2021",  "POP_DENS_2021"
                                                                       # , "Shape_Area"
                                                                       #  ,           "area", "developed_area"
                                                                       #  , "area_crp", "area_crp_pct_of_area", "developed_area_crp"
                                                                       ,"value"    , "value_area","value_area_developed",'value_area_developed_pop_2021'   ))
-  dana_out %>% terra::subset(dana_out$GISCO_ID=="ES_46250" & dana_out$value=="Below 0.50", select=c( "GISCO_ID"  #,"POP_2021",  "POP_DENS_2021"
+  dana_out %>% subset(dana_out$GISCO_ID=="ES_46250" & dana_out$value=="Below 0.50", select=c( "GISCO_ID"  #,"POP_2021",  "POP_DENS_2021"
                                                                                                      # , "Shape_Area"
                                                                                                      #  ,           "area", "developed_area"
                                                                                                      #  , "area_crp", "area_crp_pct_of_area", "developed_area_crp"
@@ -401,7 +401,7 @@ muni_is_related <- terra::is.related(lau_es_crp, EMSR773_AOI01_DEL_PRODUCT_flood
 lau_es_crp[muni_is_related,]
 
 dana_out %>%
-  #  terra::subset(dana_out$GISCO_ID=="ES_46250") %>%
+  #  subset(dana_out$GISCO_ID=="ES_46250") %>%
   plot("value"
        #       , col=rev(heat.colors(5))
        , col=colorRamp(c("lightblue", "darkblue"))( (0:4)/4 ) %>% rgb( maxColorValue = 255)
@@ -427,7 +427,7 @@ browseURL(dirname(dana_out_png))
 # population density by flood level ---------------------------------------
 
 names(dana_out)
-dana_out %>% terra::subset(#dana_out$GISCO_ID=="ES_46250" &
+dana_out %>% subset(#dana_out$GISCO_ID=="ES_46250" &
   dana_out$value=="Below 0.50"
   , select=c( "GISCO_ID"  #,"POP_2021",  "POP_DENS_2021"
               # , "Shape_Area"

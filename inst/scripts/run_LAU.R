@@ -25,7 +25,7 @@ terra::plot(lau_es)
 ?terra::plot
 names(lau_es)
 lau_es %>%
-  # terra::subset(lau_es$GISCO_ID=="ES_46250") %>%
+  # subset(lau_es$GISCO_ID=="ES_46250") %>%
   terra::plot("POP_DENS_2023"
 
               , ext=terra::ext(areaOfInterestA)
@@ -50,7 +50,7 @@ browseURL(dirname(valencia_pop_dens_2021_png))
 # developed_area_pct_of_area ----------------------------------------------------
 
 lau_es %>%
-  # terra::subset(lau_es$GISCO_ID=="ES_46250") %>%
+  # subset(lau_es$GISCO_ID=="ES_46250") %>%
   terra::plot("developed_area_pct_of_area"
 
               , ext=terra::ext(EMSR773_AOI01_DEL_PRODUCT_areaOfInterestA_v1)

@@ -12,9 +12,6 @@ get_cbsa_sf <- function(year = getOption("tigris_year",2020L)){
   return(cbsa_sf)
 }
 
-#' @import terra
-#' @export
-core_based_statistical_areas_vect <- purrr::compose(terra::vect, tigris::core_based_statistical_areas)
 
 # get_cbsa_names --------------------------------------------------------------
 #' @export

@@ -91,11 +91,7 @@ divs_conus_v
 # plot(st_geometry(st_centroid(divs_conus_sf)),add=TRUE)
 # terra::plot(divs_conus_sf['NAME'])
 
-subset(states_sf, REGION==1, select=c('STUSPS', 'NAME' )) # North East
-subset(states_sf, REGION==2, select=c('STUSPS', 'NAME' )) # North West
-subset(states_sf, REGION==3, select=c('STUSPS', 'NAME' )) # South East
-subset(states_sf, REGION==4, select=c('STUSPS', 'NAME' ))# South West + Hawaii
-subset(states_sf, REGION==9, select=c('STUSPS', 'NAME' )) # PR, VI, Guam
+
 
 
 # uscon <- subset(states_sf, ! STUSPS  %in%  c("AK", "AS","MP", "HI","PR","VI","GU"))

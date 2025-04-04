@@ -1,16 +1,17 @@
 
 # setup -------------------------------------------------------------------
 
-
 devtools::load_all("~/Spatial/FEMA/femar/")
 
 # states_sf ---------------------------------------------------------------
 
 devtools::load_all("~/Spatial/FEMA/femar/"); (states_sf <- get_states_sf())
-
+st_bbox(states_sf)
 library(tmap)
 tmap_mode("view")
-states_sf %>% subset(STATEFP=='06') %>% qtm()
+states_sf %>%
+#  subset(STATEFP=='06') %>%
+  qtm()
 
 # us states ----
 ?states
