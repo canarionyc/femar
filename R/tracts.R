@@ -89,7 +89,12 @@ POPULATION,BUILDVALUE,AREA,RISK_VALUE
 
 
   # add coastline -----------------------------------------------------------
-  # coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
+  coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
+
+  Pacific_coastline_sf <- coastline_sf %>% subset(NAME=="Pacific") %>% st_geometry() %>% st_combine()
+
+  NRI_tracts_sf$Pacific_distance <- st_distance(st_centroid(st_geometry(NRI_tracts_sf[,])), Pacific_coastline_sf)
+
   # coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
   #
   # tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()

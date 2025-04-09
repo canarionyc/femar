@@ -1,6 +1,5 @@
 get_coastline_sf <- function(crs) {
   states_sf <- tigris::states(cb=TRUE
-
                               , class="sf"
                               , keep_zipped_shapefile =TRUE, progress_bar = FALSE) %>%
     subset(STATEFP!="02" & STATEFP !="15" & STATEFP<60)
@@ -8,8 +7,7 @@ get_coastline_sf <- function(crs) {
   # ?tigris::coastline
   coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE, filter_by=st_bbox(states_sf))  %>%
     subset(!NAME %in% c('Atlántico', "Arctic",'Caribe'))
-print(coastline_sf)
-
+  # print(coastline_sf)
 
   if(!missing(crs)) {
     coastline_sf <- coastline_sf %>% st_transform(st_crs(crs))
@@ -31,7 +29,7 @@ print(coastline_sf)
 #' @export
 #'
 add_coastal_length <- function(counties_sf, coastline_sf){
-print(counties_sf)
+  print(counties_sf)
   cty_coastline.sgbp <- st_intersects(counties_sf,coastline_sf, sparse = TRUE)
   # print(cty_coastline.sgbp)
   counties_sf$coastal_length <- sapply(cty_coastline.sgbp  , function(i) {

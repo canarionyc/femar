@@ -88,7 +88,6 @@ get_counties_within_cbsas <- function(year=2021) {
 
   print(counties_sf %>% subset(CBSAFP == 26420)) # Houston, TX greater metropolitan area
 
-
   cbsa_sf <- tigris::core_based_statistical_areas(cb = FALSE, year=2021)
 
   # cbsa_sf <- aggregate(counties_sf[, c('ALAND', 'AWATER')], list(CBSAFP=counties_sf$CBSAFP), FUN=sum)

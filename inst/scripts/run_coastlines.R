@@ -28,7 +28,8 @@ lcc <- "+proj=lcc +lat_1=60 +lat_2=30 +lon_0=-60"
 print(st_crs(lcc)$units)
 
 # coastline_sf --------------------------------------------------------------
-
+options(tigris_year=2020L)
+getOption("tigris_year")
 ?tigris::coastline
 ?load_tiger
 devtools::load_all("~/Spatial/FEMA/femar/"); coastline_sf <- get_coastline_sf(crs=3857)
@@ -120,7 +121,12 @@ plot(st_geometry(coastline_lcc_dist_sf), col="grey", alpha=0.5, add=TRUE)
 # coastline_lst -----------------------------------------------------------
 
 coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
+str(coastline_lst)
 st_crs(states_sf)
+
+?st_combine
+(ATL_coastline_sf <- coastline_lst[['Atlantic']] %>% st_geometry() %>% st_combine()) %>% plot()
+(Pacific_coastline_sf <- coastline_lst[['Pacific']] %>% st_geometry() %>% st_combine()) %>% plot()
 
 
 # states.coastline_sf -----------------------------------------------------
@@ -132,7 +138,6 @@ st_crs(states_sf)
 (states.coastline_sf <- cbind(states_sf, tmp_df))
 
 states.coastline_sf %>% subset(Atlantic==TRUE | Atlántico==TRUE, 'STUSPS') %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
-
 
 # counties.coastline_sf -----------------------------------------------------
 
@@ -149,7 +154,16 @@ counties.coastline_sf %>% subset(Atlantic==TRUE | Atlántico==TRUE, 'STUSPS') %>
 
 ?load_tiger
 (tracts_sf <- tracts(cb=TRUE,keep_zipped_shapefile = TRUE) %>% st_transform( st_crs(3857)))
-(tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=tracts_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame() )
+row.names(NRI_tracts_sf) <- NRI_tracts_sf$TRACTFIPS
+?lapply
+
+?st_distance
+
+(tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts_sf,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame() )
+row.names(tmp_df)
+
+setDT(tmp_df)
+melt.data.table(tmp_df, )
 
 (tracts.coastline_sf <- cbind(tracts_sf, tmp_df))
 
@@ -164,8 +178,6 @@ out <- map(seq_along(states.coastline_lst), function(i) {
   browser();
   coast.name <- names(states.coastline_lst)[i]
   coast.bool <- lengths(states.coastline_lst[[i]])>0
-
-
   states_sf[[coast.name]] <- coast.bool
   return(table(coast.bool))
 })
