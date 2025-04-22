@@ -6,6 +6,8 @@ devtools::load_all("~/Spatial/FEMA/femar/")
 # states_sf ---------------------------------------------------------------
 
 devtools::load_all("~/Spatial/FEMA/femar/"); (states_sf <- get_states_sf())
+
+states_sf %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2)
 st_bbox(states_sf)
 library(tmap)
 tmap_mode("view")
@@ -18,24 +20,24 @@ states_sf %>%
 
 # (states_sf <- tigris::states(cb=TRUE))
 st_crs(states_sf)
-
-# states_vect --------------------------------------------------------------
-
-devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); (states_vect <- states_vect(cb = TRUE))
-
-?filter
-?subset
-conus_vect <- states_vect %>% subset(! states_vect$STATEFP %in% c('02','15') & as.integer(states_vect$STATEFP)<60)
-plot(conus_vect)
-
-?terra::rasterize
-as.lines(conus_vect)
-(r <- rast(conus_vect, res=1))
-(conus.SpatRast <- terra::rasterizeGeom(as.lines(conus_vect),  r, fun="length", "m"))
-plot(conus.SpatRast)
-
-terra::flip(conus.SpatRast, direction="vertical") %>% plot()
-terra::flip(conus.SpatRast, direction="horizontal") %>% plot()
+#
+# # states_vect --------------------------------------------------------------
+#
+# devtools::load_all("~/Spatial/FEMA/femar/", export_all = TRUE); (states_sf <- states_vect(cb = TRUE))
+#
+# ?filter
+# ?subset
+# conus_vect <- states_vect %>% subset(! states_vect$STATEFP %in% c('02','15') & as.integer(states_vect$STATEFP)<60)
+# plot(conus_vect)
+#
+# ?terra::rasterize
+# as.lines(conus_vect)
+# (r <- rast(conus_vect, res=1))
+# (conus.SpatRast <- terra::rasterizeGeom(as.lines(conus_vect),  r, fun="length", "m"))
+# plot(conus.SpatRast)
+#
+# terra::flip(conus.SpatRast, direction="vertical") %>% plot()
+# terra::flip(conus.SpatRast, direction="horizontal") %>% plot()
 
 # verify area -------------------------------------------------------------
 

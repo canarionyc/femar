@@ -16,7 +16,7 @@ subset(states_sf, REGION==3, select=c('STUSPS', 'NAME' )) # South East
 subset(states_sf, REGION==4) %>% subset(! STATEFP %in% c('02','15') & as.integer(STATEFP)<60) %>%
   st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2)
 
-SW.states <- states_sf %>% st_drop_geometry() %>% subset(REGION==4 & ! STATEFP %in% c('02','15') & as.integer(STATEFP)<60, drop = TRUE)
+SW.states <-  states(cb=FALSE) %>% st_drop_geometry() %>% subset(REGION==4 & ! STATEFP %in% c('02','15') & as.integer(STATEFP)<60, drop = TRUE)
 SW.states
 
 # PR, VI, Guam

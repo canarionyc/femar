@@ -23,16 +23,16 @@ get_zctas_sf <- purrr::partial(tigris::zctas, keep_zipped_shapefile = TRUE)
 
 # state_zcta3_sf ----
 
-get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 2000 and 2010.
+get_zip3_2010 <- function(state, year=2010){ # ZCTAs are only available by state for 2000 and 2010.
 
   debugonce(zctas)
 
   state_zcta_rds <- file.path(the$CENSUS_WORKDIR, sprintf("%s_zcta_%d_sf.rds",state, year)); print(file.info(state_zcta_rds))
   state_zcta3_rds <- file.path(the$CENSUS_WORKDIR, sprintf("%s_zcta3_%d_sf.rds",state, year)); print(file.info(state_zcta3_rds))
- state_zcta3_gpkg <- file.path(the$CENSUS_WORKDIR, sprintf("%s_zcta3_%d_sf.gpkg",state, year)); print(file.info(state_zcta3_gpkg))
+  state_zcta3_gpkg <- file.path(the$CENSUS_WORKDIR, sprintf("%s_zcta3_%d_sf.gpkg",state, year)); print(file.info(state_zcta3_gpkg))
   if(!file.exists(state_zcta3_gpkg)) {
     state_zcta_sf <- zctas(cb=FALSE,
-                                                    year=year,
+                           year=year,
                            state = state
                            , keep_zipped_shapefile=TRUE)
     print(state_zcta_sf)
@@ -66,9 +66,9 @@ get_zip3 <- function(state, year=2010){ # ZCTAs are only available by state for 
 
 get_zip_code_short_sf <- function() {
 
-  zip_code_short_vect_gpkg <- file.path(the$FEMA_WORKDIR, "zip_code_short_vect.gpkg")
-  if(file.exists(zip_code_short_vect_gpkg)) {
-    return(sf::st_read(zip_code_short_vect_gpkg))
+  zip_code_short_gpkg <- file.path(the$FEMA_WORKDIR, "zip_code_short.gpkg")
+  if(file.exists(zip_code_short_gpkg)) {
+    return(sf::st_read(zip_code_short_gpkg))
   }
   # ?aggregate
 
@@ -81,15 +81,73 @@ get_zip_code_short_sf <- function() {
   #
   # debugonce(myfun)
 
-?tigris::zctas
-  zip_code_short_sf<- aggregate(zctas[, c('ZCTA3CE20', 'ALAND20', 'AWATER20')]
-                                          , by='ZCTA3CE20', fun=myfun )
+?states
+  states_sf <- tigris::states(cb=TRUE, resolution =  '20m', keep_zipped_shapefile =TRUE) %>%
+    subset(! STATEFP %in% c('02','15') & as.integer(STATEFP) <60)
+  str(states_sf)
+  st_crs(states_sf)
+states_sf %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2)
 
-  zip_code_short_vect
-  class(zip_code_short_vect)
+  ?tigris::zctas
+?load_tiger
+  zctas_sf <-zctas(cb=TRUE
+                   # , starts_with = '902'
+                   #                     , state='CA'
+                   , year=2020
+                   , keep_zipped_shapefile =TRUE
+                   , filter_by=st_bbox(states_sf))
+print(st_bbox(zctas_sf))
+  # zctas_sf$ZCTA3CE20 <- substr(zctas_sf$ZCTA5CE20, 1,3)
+  ?aggregate.sf
+  # methods("aggregate")
+  # debugonce(sf:::aggregate.sf)
+  zip_code_short_sf<- aggregate(zctas_sf[, c( 'ALAND20', 'AWATER20')]
+                                , by=list(ZCTA3CE20=substr(zctas_sf$ZCTA5CE20, 1,3)), FUN=sum ) %>%
+    st_transform("epsg:3857")
 
-  writeVector(zip_code_short_vect,zip_code_short_vect_gpkg)
-  return(zip_code_short_vect)
+  print(zip_code_short_sf)
+
+  zip_code_short_sf %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2, col="grey")
+
+  print(object.size(zip_code_short_sf)/1024^2)
+  print(st_crs(zip_code_short_sf))
+  print(st_is_longlat(st_geometry(zip_code_short_sf)))
+  stopifnot(all(st_is_valid(zip_code_short_sf)))
+
+  write_sf(zip_code_short_sf,zip_code_short_gpkg)
+  return(zip_code_short_sf)
 }
 
 
+get_zip_code_short_neighbours <- function(get_zip_code_short_sf) {
+  zip_code_short_sf <- st_simplify(zip_code_short_sf, preserveTopology = TRUE,dTolerance = 1e3)
+  print(zip_code_short_sf)
+
+
+  # zip_code_short_sf.2 <- st_crop(zip_code_short_sf, st_bbox(states_sf))
+  which(st_is_empty(zip_code_short_sf))
+
+  # zip_code_short_sf[81,] %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2)
+  # zip_code_short_sf[81,]  %>% st_geometry() %>% st_simplify(preserveTopology = TRUE,dTolerance = 1e3) %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2)
+  # ?st_precision
+  # # st_set_precision(zip_code_short_sf,1/500e3)
+  # # st_precision(zip_code_short_sf)
+  # ?st_simplify
+
+  coords_sf <- st_centroid(st_geometry(zip_code_short_sf))
+
+  # debugonce(poly2nb)
+  poly.nb <- poly2nb(st_geometry(zip_code_short_sf),snap = 1e3)
+  poly.nb
+  plot(poly.nb, coords_sf); title(main="poly2nb")
+
+
+
+  ?knearneigh
+  knn4 <- knearneigh(coords_sf,k=4L)
+  knn4.nb <- knn2nb(knn4, row.names = zip_code_short_sf$ZCTA3CE20)
+  knn4.nb
+
+  plot(knn4.nb, coords_sf); title( main="knn2nb")
+  return(list(knn4.nb=knn4.nb, poly.nb=poly.nb, coords_sf=coords_sf))
+}

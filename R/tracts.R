@@ -57,15 +57,17 @@ get_NRI_tracts_sf <- function(statefips) {
 
   query <- "select STATEABBRV,STATEFIPS,COUNTY,COUNTYTYPE,COUNTYFIPS,STCOFIPS
   ,TRACT,TRACTFIPS
-POPULATION,BUILDVALUE,AREA,RISK_VALUE
+,POPULATION,BUILDVALUE,AREA,RISK_VALUE
       ,RISK_SCORE
     ,EAL_SCORE,EAL_RATNG,EAL_VALB
     ,ALR_VALB
-    ,SOVI_SCORE,SOVI_RATNG,SOVI_SPCTL,RESL_SCORE,RESL_RATNG,RESL_SPCTL,RESL_VALUE,CRF_VALUE
+    ,SOVI_SCORE,SOVI_RATNG,SOVI_SPCTL
+    ,RESL_SCORE,RESL_RATNG,RESL_SPCTL,RESL_VALUE
+    ,CRF_VALUE
     ,AVLN_ALRB,CFLD_ALRB,CWAV_ALRB,ERQK_ALRB,HAIL_ALRB,HWAV_ALRB,HRCN_ALRB,ISTM_ALRB,LNDS_ALRB,LTNG_ALRB,RFLD_ALRB,SWND_ALRB,TRND_ALRB,TSUN_ALRB,VLCN_ALRB,WFIR_ALRB,WNTW_ALRB
   FROM NRI_CensusTracts"
 
-  query <- "select * FROM NRI_CensusTracts"
+  # query <- "select * FROM NRI_CensusTracts"
 
   if(!missing(statefips)) {
     # stopifnot(nchar(statefips)==2L)
@@ -89,12 +91,7 @@ POPULATION,BUILDVALUE,AREA,RISK_VALUE
 
 
   # add coastline -----------------------------------------------------------
-  coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
-
-  Pacific_coastline_sf <- coastline_sf %>% subset(NAME=="Pacific") %>% st_geometry() %>% st_combine()
-
-  NRI_tracts_sf$Pacific_distance <- st_distance(st_centroid(st_geometry(NRI_tracts_sf[,])), Pacific_coastline_sf)
-
+  # coastline_sf <- tigris::coastline(keep_zipped_shapefile =TRUE) %>% st_transform(st_crs(3857)) # %>% subset(NAME!="Arctic")
   # coastline_lst <- split(coastline_sf, f = coastline_sf$NAME)
   #
   # tmp_df <- lapply(coastline_lst, . %>% st_intersects(x=NRI_tracts,y=.) %>% (function(x) lengths(x)>0)) %>% as.data.frame()

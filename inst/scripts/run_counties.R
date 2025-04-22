@@ -24,11 +24,20 @@ args(get_counties_sf)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE);counties_sf <- get_counties_sf()
 counties_sf
 st_crs(counties_sf)
+
+table(counties_sf$STUSPS)
+
+
+
 dev.off()
-counties_sf %>% subset(STCOFIPS=="06037") %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=FALSE)
+counties_sf %>%
+  # subset(STCOFIPS=="06037") %>%
+  st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE)
 
 
-plot(counties_sf[10,], add=TRUE)
+
+
+# plot(counties_sf[10,], add=TRUE)
 
 # counties_dt -------------------------------------------------------------
 

@@ -5,22 +5,30 @@ library(configr)
 configr::read.config()
 devtools::load_all("~/fstutils/", export_all = TRUE)
 devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE)
-
+library(sf); sf_use_s2(FALSE)
+library(tigris)
 options(tigris_year=2020L)
-browseURL("https://www2.census.gov/geo/tiger/TIGER2010/ZCTA5")
+browseURL( "https://www2.census.gov/geo/tiger/GENZ2020/shp/")
+#browseURL("https://www2.census.gov/geo/tiger/TIGER2010/ZCTA5")
 browseURL("https://www2.census.gov/geo/tiger/TIGER2020/ZCTA5")
 
 
+library(spdep)
 # CA zctas ----------------------------------------------------------------
 # ZCTAs are only available by state for 2000 and 2010.
-zctas <-zctas_vect(cb=TRUE
+debugonce(zctas)
+?zctas
+?load_tiger
+?st_transform
+zctas_sf <- zctas(cb=TRUE
                      # , starts_with = '902'
                      #                     , state='CA'
                      , year=2020
-                     , keep_zipped_shapefile =TRUE) %>% project("epsg:3857")
-zctas
+                     , keep_zipped_shapefile =TRUE) %>% st_transform("epsg:3857")
+zctas_sf
 
 plot(zctas)
+
 # zctas920-------------------------------------------------------------------
 
 ?zctas
@@ -76,8 +84,7 @@ tab20_zcta520_county20_natl[, .(county_count=uniqueN(GEOID_COUNTY_20)
 
 # zip_code_short ----------------------------------------------------------
 
-devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); zip_code_short <- get_zip_code_short_vect( )
-
-
-
-(zcta920 <- zip_code_short[zip_code_short$ZCTA3CE20=="920"]) %>% plot()
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); zip_code_short_sf <- get_zip_code_short_sf( )
+devtools::load_all("~/Spatial/FEMA/femar", reset=TRUE, export_all = TRUE); out <- get_zip_code_short_neighbours( zip_code_short_sf)
+str(out)
+# (zcta920_sf <- zip_code_short_sf[zip_code_short_sf$ZCTA3CE20=="920",])  %>% st_geometry() %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2, col="grey")

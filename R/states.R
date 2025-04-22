@@ -1,5 +1,8 @@
 
-
+#' @export
+state.fips <- unique(tigris::fips_codes[, c('state','state_code')])
+row.names(state.fips) <- state.fips$state
+conus_states <- state.fips %>% subset(! state_code %in% c('02','15') & as.integer(state_code)<60, 'state', drop = TRUE)
 
 #' @import stringi
 validate_state<- function (state, verbose = interactive())
@@ -144,6 +147,8 @@ get_states_sf <- function(year=getOption("tigris_year",2020L)){
     # saveRDS(states_sf, states_sf_rds);print(file.info(states_sf_rds))
 
   # ; str(states_sf)
+    states_sf <- states_sf[order(states_sf$STUSPS),]
+
   return(states_sf)
 }
 
