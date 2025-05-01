@@ -1,12 +1,22 @@
 # configr::read.config()
 lcc <- "+proj=lcc +lat_1=60 +lat_2=30 +lon_0=-60"
 
+options("tigris_year"=2020L)
 # get_cbsa_sf --------------------------------------------------------------------
 #' @export
-get_cbsa_sf <- function(year = getOption("tigris_year",2020L)){
+get_cbsa_sf <- function(){
   # ?core_based_statistical_areas
   #  tigris::core_based_statistical_areas is not currently available for years prior to 2010.
-  cbsa_sf <- tigris::core_based_statistical_areas(cb=TRUE, year=year, keep_zipped_shapefile=TRUE)
+
+  states_sf <- tigris::states(cb=TRUE
+
+                              , class="sf"
+                              , keep_zipped_shapefile =TRUE, progress_bar = FALSE) %>%
+    subset(STATEFP!="02" & STATEFP !="15" & STATEFP<60)
+  ?tigris::load_tiger
+  cbsa_sf <- tigris::core_based_statistical_areas(cb=TRUE, keep_zipped_shapefile=TRUE
+                                                  , filter_by=sf::st_bbox(states_sf))
+  print(cbsa_sf)
   # (cbsa_lcc_sf <- cbsa_sf %>% st_transform(st_crs(lcc)))
   # cbsa_sf%>% subset(CBSAFP=="37700")
   return(cbsa_sf)

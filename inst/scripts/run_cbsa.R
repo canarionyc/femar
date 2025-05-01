@@ -11,6 +11,9 @@ devtools::load_all("~/Spatial/FEMA/femar/")
 cbsa_sf <- get_cbsa_sf()
 cbsa_sf
 
+cbsa_sf['NAME'] %>% plot(axes=TRUE, graticule=TRUE, reset=TRUE, las=2)
+
+
 cbsa_sf%>%subset(CBSAFP == 26420)
 cbsa_sf%>%subset(CSAFP == 408)
 cbsa_sf%>%subset(grepl(pattern = "Kiryas Joel", NAME))
@@ -25,13 +28,13 @@ cbsa_sf %>% subset(select='NAME') %>% plot(axes=TRUE, graticule=TRUE, reset=FALS
 str(cbsa_sf)
 
 
-# cbsa_vect ----------------------------------------------------------------
 
-library(terra)
-devtools::load_all("~/Spatial/FEMA/femar/"); (cbsa_vect <- core_based_statistical_areas_vect(cb = TRUE,keep_zipped_shapefile = TRUE))
-# cbsa_vect <- terra::vect(cbsa_sf )
 
-table(cbsa_vect$LSAD, useNA = "ifany")
+# library(terra)
+# devtools::load_all("~/Spatial/FEMA/femar/"); (cbsa_vect <- core_based_statistical_areas_vect(cb = TRUE,keep_zipped_shapefile = TRUE))
+# # cbsa_vect <- terra::vect(cbsa_sf )
+#
+# table(cbsa_vect$LSAD, useNA = "ifany")
 
 
 
